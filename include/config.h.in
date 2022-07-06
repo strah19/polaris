@@ -1,0 +1,4 @@
+// the configured options and settings for Polaris
+#define POLARIS_VERSION_MAJOR @POLARIS_VERSION_MAJOR@
+#define POLARIS_VERSION_MINOR @POLARIS_VERSION_MINOR@
+#cmakedefine USE_VM
