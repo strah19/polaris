@@ -2,6 +2,12 @@
 #include "config.h"
 #include "error.h"
 #include "lexer.h"
+#include "benchmark.h"
+
+// From VM
+#include "vm.h"
+#include "opcodes.h"
+#include "debug.h"
 
 void run_file(const char* filepath);
 char* open_file(const char* filepath);
@@ -9,6 +15,23 @@ void repl();
 void compile(const char* source);
 
 int main(int argc, char* argv[]) {
+    init_vm();
+
+    BytecodeChunk bytecode;
+    init_chunk(&bytecode);
+    write_chunk(OP_CONSTANT, &bytecode, 1);
+    write_chunk(add_constant(1.2, &bytecode), &bytecode, 1);
+    write_chunk(OP_CONSTANT, &bytecode, 3);
+    write_chunk(add_constant(55, &bytecode), &bytecode, 3);
+    write_chunk(OP_NEGATE, &bytecode, 3);
+    write_chunk(OP_PLUS, &bytecode, 3);
+    write_chunk(OP_RETURN, &bytecode, 3);
+
+    interpret(&bytecode);
+
+    free_chunk(&bytecode);
+    free_vm();
+
     if (argc == 1) 
         repl();
     else if (argc == 2) 
@@ -21,7 +44,11 @@ int main(int argc, char* argv[]) {
 
 void run_file(const char* filepath) {
     char* start = open_file(filepath);
+
+    begin_benchmark("compiler");
     compile(start);
+    stop_benchmark();
+    
     free(start);
 }
 

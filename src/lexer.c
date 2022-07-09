@@ -109,8 +109,8 @@ Token single_character(char single_character_tokens, Lexer* lexer) {
     case ')': return init_token(T_RPAR,        lexer);
     case '{': return init_token(T_LCURLY,      lexer);
     case '}': return init_token(T_RCURLY,      lexer);
-    case '=': return init_token((check('=', lexer)) ? T_COMPARE_EQUAL : T_EQUAL, lexer);
-    case '!': return init_token((check('=', lexer)) ? T_NOT_EQUAL : T_EXCLAMATION, lexer);
+    case '=': return init_token((check('=',    lexer)) ? T_COMPARE_EQUAL : T_EQUAL, lexer);
+    case '!': return init_token((check('=',    lexer)) ? T_NOT_EQUAL : T_EXCLAMATION, lexer);
     case '+': return init_token(T_PLUS,        lexer);
     case '-': return init_token(T_MINUS,       lexer);
     case '*': return init_token(T_STAR,        lexer);
@@ -119,10 +119,11 @@ Token single_character(char single_character_tokens, Lexer* lexer) {
     case '&': return init_token(T_AMPERSAND,   lexer);
     case '#': return init_token(T_POUND,       lexer);
     case ';': return init_token(T_SEMICOLON,   lexer);
-    case '<': return init_token((check('=', lexer)) ? T_LTE : T_LARROW, lexer);
-    case '>': return init_token((check('=', lexer)) ? T_GTE : T_RARROW, lexer);
+    case '<': return init_token((check('=',    lexer)) ? T_LTE : T_LARROW, lexer);
+    case '>': return init_token((check('=',    lexer)) ? T_GTE : T_RARROW, lexer);
     case '[': return init_token(T_LBRACKET,    lexer);
     case ']': return init_token(T_RBRACKET,    lexer);
+    case ':': return init_token(T_COLON,       lexer);
     case '"': return string(lexer);
     default:  return error_token("Unknown character's found in lexer", lexer);
     }
@@ -130,10 +131,19 @@ Token single_character(char single_character_tokens, Lexer* lexer) {
 
 int keywords(Lexer* lexer) {
     switch (*lexer->start) {
-    case 'i': {
-        return (match("f", 1, lexer) ? T_IF : 
-               (match("nt", 2, lexer) ? T_INT : T_IDENTIFIER));
-    }
+    case 'i': return (match("f",      1, lexer) ? T_IF      : 
+                     (match("nt",     2, lexer) ? T_INT     : T_IDENTIFIER));
+    case 'e': return (match("lse",    3, lexer) ? T_ELSE    : 
+                     (match("lif",    3, lexer) ? T_ELIF    : T_IDENTIFIER));
+    case 's': return (match("tring",  5, lexer) ? T_STRING  : T_IDENTIFIER);
+    case 'b': return (match("oolean", 6, lexer) ? T_BOOLEAN : 
+                     (match("reak",   4, lexer) ? T_BREAK   : T_IDENTIFIER));
+    case 'f': return (match("loat",   4, lexer) ? T_FLOAT   : 
+                     (match("or",     2, lexer) ? T_FOR     : 
+                     (match("unc",    3, lexer) ? T_FUNC    : T_IDENTIFIER)));
+    case 'w': return (match("hile",   4, lexer) ? T_WHILE   : T_IDENTIFIER);
+    case 'r': return (match("eturn",  5, lexer) ? T_RETURN  : T_IDENTIFIER);
+    case 'c' :return (match("har",    3, lexer) ? T_CHAR    : T_IDENTIFIER);
     }
 
     return T_IDENTIFIER;

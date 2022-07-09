@@ -1,14 +1,13 @@
-!= == 
- // comment
-<= > <
-/ / 
+</ this is a comment />
 
-"string"
+//this is a single line comment
 
-3
+v : int = 3;
+p : float = 1.1;
+k : string = "hello world";
 
-3.34 5
-
-lol
-if
-int
+if v != 3 {
+    v = v + 1;
+} else {
+    v = v - 1;
+}
