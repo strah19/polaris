@@ -26,3 +26,5 @@ install(FILES "${PROJECT_BINARY_DIR}/include/config.h"
         DESTINATION include)
 
 enable_testing()
+
+add_test(NAME runs COMMAND POLARIS "../tests/basic.pol")
