@@ -54,7 +54,7 @@ void parser_error(Token* token, const char* msg) {
     if (parser.panic) return;
     parser.panic = true;
     parser.error_found = true;
-    report_error("on line %d at %.*s: %s.\n", token->line, token->size, token->start, msg);
+    report_error("on line %d at '%.*s' : %s.\n", token->line, token->size, token->start, msg);
 }
 
 bool errors() {
@@ -119,21 +119,37 @@ static void parse_binary() {
 }
 
 static void parse_unary() {
-
+    int prefix = parser.previous.type;
+    expression();
+    switch (prefix) {
+    case T_MINUS: 
+        emit_bytecode(OP_NEGATE);
+        break;
+    }
 }
 
 static void parse_parenthesis() {
-
+    expression();
+    consume(T_RPAR, "Expected ')");
 }
 
 static void parse_number() {
-    emit_bytecode(OP_CONSTANT);
     int constant_addr = add_constant(strtod(parser.previous.start, NULL), current_compiling_chunk());
     if (constant_addr > 255) {
-        parser_error_at_current("Max constants in one chunk is 256");
-        constant_addr = 0;
+        append_new_chunk();
+        constant_addr = add_constant(strtod(parser.previous.start, NULL), current_compiling_chunk());
     }
+    emit_bytecode(OP_CONSTANT);
     emit_bytecode(constant_addr);
+}
+
+void append_new_chunk() {
+    BytecodeChunk* next = (BytecodeChunk*) malloc(sizeof(BytecodeChunk));
+    if (!next) fatal_error("Unable to initalize new chunk of bytecode!\n");
+    init_chunk(next);
+    emit_return();
+    append_chunk(current_chunk, next);
+    set_current_chunk(next);
 }
 
 static ParserRule* get_rule(TokenType token) {

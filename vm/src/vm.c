@@ -30,45 +30,53 @@ Value pop() {
 
 VMResults run_vm(BytecodeChunk* chunk) {
     vm.chunk = chunk;
-    vm.ip = chunk->code;
+    bool run = true;
+    while (vm.chunk) {
+        vm.ip = vm.chunk->code;
 
-    while (true) {
-        uint8_t instruction = *vm.ip;
+        while (run) {
+            uint8_t instruction = *vm.ip;
 
-    #ifdef DEBUG_EXECUTION
-        if (vm.stack != vm.top) {
-            printf("stack: ");
-            for (Value* i = vm.stack; i < vm.top; i++) {
-                printf ("[ ");
-                print_value(*i);
-                printf(" ]");
+        #ifdef DEBUG_EXECUTION
+            if (vm.stack != vm.top) {
+                printf("stack: ");
+                for (Value* i = vm.stack; i < vm.top; i++) {
+                    printf ("[ ");
+                    print_value(*i);
+                    printf(" ]");
+                }
+                printf("\n");
             }
-            printf("\n");
-        }
-        disassemble_instruction(vm.chunk, (int) (vm.ip - vm.chunk->code));
-    #endif
+            disassemble_instruction(vm.chunk, (int) (vm.ip - vm.chunk->code));
+        #endif
 
-        switch (instruction) {
-        case OP_RETURN: return VM_OK;
-        case OP_CONSTANT: 
-            push(vm.chunk->constants.values[*(++vm.ip)]);
-            break;
-        case OP_NEGATE: 
-            push(-pop());
-            break;
-        case OP_PLUS: 
-            BINARY(+);
-            break;
-        case OP_MINUS: 
-            BINARY(-);
-            break;
-        case OP_MULTIPLY: 
-            BINARY(*);
-            break;
-        case OP_DIVIDE: 
-            BINARY(/);
-            break;
+            switch (instruction) {
+            case OP_RETURN: run = false; break;
+            case OP_CONSTANT: 
+                push(vm.chunk->constants.values[*(++vm.ip)]);
+                break;
+            case OP_NEGATE: 
+                push(-pop());
+                break;
+            case OP_PLUS: 
+                BINARY(+);
+                break;
+            case OP_MINUS: 
+                BINARY(-);
+                break;
+            case OP_MULTIPLY: 
+                BINARY(*);
+                break;
+            case OP_DIVIDE: 
+                BINARY(/);
+                break;
+            }
+            vm.ip++;
         }
-        vm.ip++;
+        vm.chunk = vm.chunk->next;
+        if (vm.chunk) 
+            run = true;
+        else 
+            return VM_OK;
     }
 }

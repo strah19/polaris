@@ -54,4 +54,6 @@ extern void emit_bytecode(uint8_t code);
 
 extern void emit_return();
 
+extern void append_new_chunk();
+
 #endif // !PARSER_H
