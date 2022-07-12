@@ -2,29 +2,27 @@
 
 #define MAX_NESTED 255
 
-Lexer init_lexer(const char* source) {
-    Lexer lexer;
+static Lexer lexer;
 
+void init_lexer(const char* source) {
     lexer.current = source;
     lexer.start = source;
     lexer.line = 1;
-
-    return lexer;
 }
 
-Token scan_token(Lexer* lexer) {
-    Token error = skip_whitespaces(lexer);
+Token scan_token() {
+    Token error = skip_whitespaces();
     if (error.type != T_OK)
         return error;
 
-    lexer->start = lexer->current;
-    if (is_eof(lexer)) return init_token(T_EOF, lexer);
+    lexer.start = lexer.current;
+    if (is_eof()) return init_token(T_EOF);
 
     char first = advance(lexer);
-    if (is_digit(first)) return number(lexer);
-    if (is_alpha(first)) return identifier(lexer);
+    if (is_digit(first)) return number();
+    if (is_alpha(first)) return identifier();
 
-    return single_character(first, lexer);
+    return single_character(first);
 }
 
 bool is_digit(char c) {
@@ -35,193 +33,193 @@ bool is_alpha(char c) {
     return ((c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || (c == '_'));
 }
 
-Token number(Lexer* lexer) {
-    while (is_digit(peek(lexer)) && !is_eof(lexer)) 
-        advance(lexer);
+Token number() {
+    while (is_digit(peek()) && !is_eof()) 
+        advance();
     
-    if (peek(lexer) == '.' && is_digit(peek_ahead(lexer))) {
-        advance(lexer);
+    if (peek() == '.' && is_digit(peek_ahead())) {
+        advance();
 
-        while (is_digit(peek(lexer)) && !is_eof(lexer)) 
-            advance(lexer);
-        return init_token(T_FLOAT_CONST, lexer);
+        while (is_digit(peek()) && !is_eof()) 
+            advance();
+        return init_token(T_FLOAT_CONST);
     }
-    return init_token(T_INT_CONST, lexer);
+    return init_token(T_INT_CONST);
 }
 
-Token identifier(Lexer* lexer) {
-    while ((is_alpha(peek(lexer)) || is_digit(peek(lexer))) && !is_eof(lexer)) 
-        advance(lexer);
-    return init_token(keywords(lexer), lexer);
+Token identifier() {
+    while ((is_alpha(peek()) || is_digit(peek())) && !is_eof()) 
+        advance();
+    return init_token(keywords());
 }
 
-Token skip_whitespaces(Lexer* lexer) {
+Token skip_whitespaces() {
     while (true) {
-        char c = peek(lexer);
+        char c = peek();
         switch (c) {
         case '\t':
         case ' ':
         case '\r':
-            advance(lexer);
+            advance();
             break;
         case '\n': 
-            lexer->line++;
-            advance(lexer);
+            lexer.line++;
+            advance();
             break;
         case '/':
-            if (peek_ahead(lexer) == '/') {
-                while (peek(lexer) != '\n' && !is_eof(lexer)) {
-                    advance(lexer);
+            if (peek_ahead() == '/') {
+                while (peek() != '\n' && !is_eof()) {
+                    advance();
                 }
             } else 
-                return init_token(T_OK, lexer);
+                return init_token(T_OK);
             break;
         case '<':
-            if (peek_ahead(lexer) == '/') {
+            if (peek_ahead() == '/') {
                 int nested = 1;
-                advance_by(2, lexer);
-                while (!is_eof(lexer) && nested > 0) {
-                    if (peek(lexer) == '/' && peek_ahead(lexer) == '>')
+                advance_by(2);
+                while (!is_eof() && nested > 0) {
+                    if (peek() == '/' && peek_ahead() == '>')
                         nested--;
-                    else if (peek(lexer) == '<' && peek_ahead(lexer) == '/')
+                    else if (peek() == '<' && peek_ahead() == '/')
                         nested++;                              
-                    else if (peek(lexer) == '\n')
-                        lexer->line++;      
+                    else if (peek() == '\n')
+                        lexer.line++;      
 
                     if (nested > MAX_NESTED)
-                        return error_token("Nested comment has reached limit", lexer);         
+                        return error_token("Nested comment has reached limit");         
 
-                    advance(lexer);
+                    advance();
                 }
-                advance(lexer);
+                advance();
             } else
-                return init_token(T_OK, lexer);
+                return init_token(T_OK);
             break;
         default:
-            return init_token(T_OK, lexer);
+            return init_token(T_OK);
         }
     }
 }
 
-Token single_character(char single_character_tokens, Lexer* lexer) {
+Token single_character(char single_character_tokens) {
     switch (single_character_tokens) {
-    case '(': return init_token(T_LPAR,        lexer);
-    case ')': return init_token(T_RPAR,        lexer);
-    case '{': return init_token(T_LCURLY,      lexer);
-    case '}': return init_token(T_RCURLY,      lexer);
-    case '=': return init_token((check('=',    lexer)) ? T_COMPARE_EQUAL : T_EQUAL, lexer);
-    case '!': return init_token((check('=',    lexer)) ? T_NOT_EQUAL : T_EXCLAMATION, lexer);
-    case '+': return init_token(T_PLUS,        lexer);
-    case '-': return init_token(T_MINUS,       lexer);
-    case '*': return init_token(T_STAR,        lexer);
-    case '/': return init_token(T_SLASH,       lexer);
-    case '|': return init_token(T_LINE,        lexer);
-    case '&': return init_token(T_AMPERSAND,   lexer);
-    case '#': return init_token(T_POUND,       lexer);
-    case ';': return init_token(T_SEMICOLON,   lexer);
-    case '<': return init_token((check('=',    lexer)) ? T_LTE : T_LARROW, lexer);
-    case '>': return init_token((check('=',    lexer)) ? T_GTE : T_RARROW, lexer);
-    case '[': return init_token(T_LBRACKET,    lexer);
-    case ']': return init_token(T_RBRACKET,    lexer);
-    case ':': return init_token(T_COLON,       lexer);
-    case '"': return string(lexer);
-    default:  return error_token("Unknown character's found in lexer", lexer);
+    case '(': return init_token(T_LPAR    );
+    case ')': return init_token(T_RPAR    );
+    case '{': return init_token(T_LCURLY  );
+    case '}': return init_token(T_RCURLY  );
+    case '=': return init_token((check('=')) ? T_COMPARE_EQUAL : T_EQUAL);
+    case '!': return init_token((check('=')) ? T_NOT_EQUAL : T_EXCLAMATION);
+    case '+': return init_token(T_PLUS    );
+    case '-': return init_token(T_MINUS   );
+    case '*': return init_token(T_STAR    );
+    case '/': return init_token(T_SLASH   );
+    case '|': return init_token(T_LINE    );
+    case '&': return init_token(T_AMPERSAND);
+    case '#': return init_token(T_POUND   );
+    case ';': return init_token(T_SEMICOLON);
+    case '<': return init_token((check('=')) ? T_LTE : T_LARROW);
+    case '>': return init_token((check('=')) ? T_GTE : T_RARROW);
+    case '[': return init_token(T_LBRACKET);
+    case ']': return init_token(T_RBRACKET);
+    case ':': return init_token(T_COLON   );
+    case '"': return string();
+    default:  return error_token("Unknown character's found in lexer");
     }
 }
 
-int keywords(Lexer* lexer) {
-    switch (*lexer->start) {
-    case 'i': return (match("f",      1, lexer) ? T_IF      : 
-                     (match("nt",     2, lexer) ? T_INT     : T_IDENTIFIER));
-    case 'e': return (match("lse",    3, lexer) ? T_ELSE    : 
-                     (match("lif",    3, lexer) ? T_ELIF    : T_IDENTIFIER));
-    case 's': return (match("tring",  5, lexer) ? T_STRING  : T_IDENTIFIER);
-    case 'b': return (match("oolean", 6, lexer) ? T_BOOLEAN : 
-                     (match("reak",   4, lexer) ? T_BREAK   : T_IDENTIFIER));
-    case 'f': return (match("loat",   4, lexer) ? T_FLOAT   : 
-                     (match("or",     2, lexer) ? T_FOR     : 
-                     (match("unc",    3, lexer) ? T_FUNC    : T_IDENTIFIER)));
-    case 'w': return (match("hile",   4, lexer) ? T_WHILE   : T_IDENTIFIER);
-    case 'r': return (match("eturn",  5, lexer) ? T_RETURN  : T_IDENTIFIER);
-    case 'c' :return (match("har",    3, lexer) ? T_CHAR    : T_IDENTIFIER);
+int keywords() {
+    switch (*lexer.start) {
+    case 'i': return (match("f",      1) ? T_IF      : 
+                     (match("nt",     2) ? T_INT     : T_IDENTIFIER));
+    case 'e': return (match("lse",    3) ? T_ELSE    : 
+                     (match("lif",    3) ? T_ELIF    : T_IDENTIFIER));
+    case 's': return (match("tring",  5) ? T_STRING  : T_IDENTIFIER);
+    case 'b': return (match("oolean", 6) ? T_BOOLEAN : 
+                     (match("reak",   4) ? T_BREAK   : T_IDENTIFIER));
+    case 'f': return (match("loat",   4) ? T_FLOAT   : 
+                     (match("or",     2) ? T_FOR     : 
+                     (match("unc",    3) ? T_FUNC    : T_IDENTIFIER)));
+    case 'w': return (match("hile",   4) ? T_WHILE   : T_IDENTIFIER);
+    case 'r': return (match("eturn",  5) ? T_RETURN  : T_IDENTIFIER);
+    case 'c' :return (match("har",    3) ? T_CHAR    : T_IDENTIFIER);
     }
 
     return T_IDENTIFIER;
 }
 
-bool match(const char* keyword, int size, Lexer* lexer) {
-    if (size + 1 != lexer->current - lexer->start) return false;
+bool match(const char* keyword, int size) {
+    if (size + 1 != lexer.current - lexer.start) return false;
     int i = 1;  // The index starts at one because we already verified the first character in the switch statement in 'keywords'.
-    while ((lexer->start + i) < lexer->current) {
-        if (lexer->start[i] != keyword[i - 1]) return false;
+    while ((lexer.start + i) < lexer.current) {
+        if (lexer.start[i] != keyword[i - 1]) return false;
         i++;
     }
     return true;
 }
 
-Token string(Lexer* lexer) {
-    while (peek(lexer) != '"' && !is_eof(lexer)) {
-        if (peek(lexer) == '\n') 
-            lexer->line++;
-        advance(lexer);
+Token string() {
+    while (peek() != '"' && !is_eof()) {
+        if (peek() == '\n') 
+            lexer.line++;
+        advance();
     }
-    if (is_eof(lexer)) return error_token("Unterminating string", lexer);
-    advance(lexer);
-    return init_token(T_STRING_CONST, lexer);
+    if (is_eof()) return error_token("Unterminating string");
+    advance();
+    return init_token(T_STRING_CONST);
 }
 
-Token init_token(int token_type, Lexer* lexer) {
+Token init_token(int token_type) {
     Token token;
 
     token.type = token_type;
-    token.line = lexer->line;
-    token.start = lexer->start;
-    token.size = (int) (lexer->current - lexer->start);
+    token.line = lexer.line;
+    token.start = lexer.start;
+    token.size = (int) (lexer.current - lexer.start);
 
     return token;
 }
 
-Token error_token(const char* msg, Lexer* lexer) {
+Token error_token(const char* msg) {
     Token token;
 
     token.type = T_ERROR;
-    token.line = lexer->line;
+    token.line = lexer.line;
     token.start = msg;
     token.size = (int) strlen(msg);
 
     return token;
 }
 
-bool is_eof(Lexer* lexer) {
-    return (*lexer->current == '\0');
+bool is_eof() {
+    return (*lexer.current == '\0');
 }
 
-char advance(Lexer* lexer) {
-    lexer->current++;
-    return lexer->current[-1];
+char advance() {
+    lexer.current++;
+    return lexer.current[-1];
 }
 
-char advance_by(int by, Lexer* lexer) {
+char advance_by(int by) {
     char c;
     while (by > 0) {
-        c = advance(lexer);
+        c = advance();
         by--;
     }
     return c;
 }
 
-char peek(Lexer* lexer) {
-    return (*lexer->current);
+char peek() {
+    return (*lexer.current);
 }
 
-char peek_ahead(Lexer* lexer) {
+char peek_ahead() {
     if (is_eof(lexer)) return '\0'; // Nothing left to get
-    return lexer->current[1];
+    return lexer.current[1];
 }
 
-bool check(char expected, Lexer* lexer) {
-    if (is_eof(lexer)) return false;
-    if (peek(lexer) != expected) return false;
-    advance(lexer);
+bool check(char expected) {
+    if (is_eof()) return false;
+    if (peek() != expected) return false;
+    advance();
     return true;
 }

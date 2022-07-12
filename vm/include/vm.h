@@ -2,6 +2,7 @@
 #define VM_H
 
 #include "bytecode.h"
+#include "opcodes.h"
 
 #define DEBUG_EXECUTION
 #define MAX_STACK 256
@@ -14,18 +15,16 @@ typedef struct {
 } VM;
 
 typedef enum {
-    INTERPRET_OK,
-    INTERPRET_COMPILER_ERROR,
-    INTERPRET_RUNTIME_ERROR
-} InterpreterResults;
+    VM_OK,
+    VM_COMPILER_ERROR,
+    VM_RUNTIME_ERROR
+} VMResults;
 
 extern void init_vm();
 
 extern void free_vm();
 
-extern InterpreterResults interpret(BytecodeChunk* chunk);
-
-extern InterpreterResults run_vm();
+extern VMResults run_vm(BytecodeChunk* chunk);
 
 extern void push(Value value);
 

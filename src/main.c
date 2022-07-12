@@ -3,53 +3,56 @@
 #include "error.h"
 #include "lexer.h"
 #include "benchmark.h"
+#include "parser.h"
 
-// From VM
-#include "vm.h"
-#include "opcodes.h"
-#include "debug.h"
+// For VM
+#ifdef USE_VM
+    #include "vm.h"
+    #include "opcodes.h"
+    #include "debug.h"
+#endif // !USE_VM
 
-void run_file(const char* filepath);
+VMResults run_file(const char* filepath);
 char* open_file(const char* filepath);
 void repl();
-void compile(const char* source);
+VMResults run(const char* source);
+bool compile(const char* source, BytecodeChunk* chunk);
+void end_compilation();
 
 int main(int argc, char* argv[]) {
     init_vm();
-
-    BytecodeChunk bytecode;
-    init_chunk(&bytecode);
-    write_chunk(OP_CONSTANT, &bytecode, 1);
-    write_chunk(add_constant(1.2, &bytecode), &bytecode, 1);
-    write_chunk(OP_CONSTANT, &bytecode, 3);
-    write_chunk(add_constant(55, &bytecode), &bytecode, 3);
-    write_chunk(OP_NEGATE, &bytecode, 3);
-    write_chunk(OP_PLUS, &bytecode, 3);
-    write_chunk(OP_RETURN, &bytecode, 3);
-
-    interpret(&bytecode);
-
-    free_chunk(&bytecode);
-    free_vm();
-
+    VMResults result;
     if (argc == 1) 
         repl();
     else if (argc == 2) 
-        run_file(argv[1]);
+        result = run_file(argv[1]);
     else 
         fatal_error("Incorrect number of arguments passed to Polaris.\n");
+
+    free_vm();
+
+    switch (result) {
+    case VM_COMPILER_ERROR: fatal_error("Exitng with compiler errors.\n");
+    case VM_RUNTIME_ERROR:  fatal_error("Exiting with runtime errors.\n");
+    default: printf("Exiting with no errors.\n");
+    }
 
     return 0;
 }
 
-void run_file(const char* filepath) {
+void repl() {
+    
+}
+
+VMResults run_file(const char* filepath) {
     char* start = open_file(filepath);
 
     begin_benchmark("compiler");
-    compile(start);
+    VMResults result = run(start);
     stop_benchmark();
     
     free(start);
+    return result;
 }
 
 char* open_file(const char* filepath) {
@@ -74,19 +77,34 @@ char* open_file(const char* filepath) {
     return buffer;
 }
 
-void repl() {
-    
+
+VMResults run(const char* source) {
+    BytecodeChunk chunk;
+    init_chunk(&chunk);
+
+    if (!compile(source, &chunk)) {
+        free_chunk(&chunk);
+        return VM_COMPILER_ERROR;
+    }
+
+    VMResults results = run_vm(&chunk);
+    free_chunk(&chunk);
+    return results;
 }
 
-void compile(const char* source) {
-    Lexer lexer = init_lexer(source);
+bool compile(const char* source, BytecodeChunk* chunk) {
+    set_current_chunk(chunk);
+    init_lexer(source);
+    init_parser();
 
-    while (true) {
-        Token token = scan_token(&lexer);
+    advance_parser();
+    expression();
+    consume(T_SEMICOLON, "Expected ';'");
 
-        if (token.type == T_ERROR) fatal_error("%.*s.\n", token.size, token.start);
-        else if (token.type == T_EOF) break;
+    end_compilation();
+    return !errors();
+}
 
-        printf ("%d : '%.*s' (%d)\n", token.line, token.size, token.start, token.type);
-    }
+void end_compilation() {
+    emit_return();
 }

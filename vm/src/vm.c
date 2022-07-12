@@ -5,8 +5,8 @@
 #include <stdbool.h>
 
 #define BINARY(op) \
-    { Value a = pop(); \
-    Value b = pop(); \
+    { Value b = pop(); \
+    Value a = pop(); \
     push(a op b); }\
 
 static VM vm;
@@ -28,14 +28,10 @@ Value pop() {
     return *(--vm.top);
 }
 
-InterpreterResults interpret(BytecodeChunk* chunk) {
+VMResults run_vm(BytecodeChunk* chunk) {
     vm.chunk = chunk;
     vm.ip = chunk->code;
 
-    return run_vm();
-}
-
-InterpreterResults run_vm() {
     while (true) {
         uint8_t instruction = *vm.ip;
 
@@ -53,7 +49,7 @@ InterpreterResults run_vm() {
     #endif
 
         switch (instruction) {
-        case OP_RETURN: return INTERPRET_OK;
+        case OP_RETURN: return VM_OK;
         case OP_CONSTANT: 
             push(vm.chunk->constants.values[*(++vm.ip)]);
             break;

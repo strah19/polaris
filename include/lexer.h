@@ -34,42 +34,42 @@ typedef struct {
     int size;
 } Token;
 
-extern Lexer init_lexer(const char* source);
+extern void init_lexer(const char* source);
 
-extern Token scan_token(Lexer* lexer);
+extern Token scan_token();
 
-extern Token init_token(int token_type, Lexer* lexer);
+extern Token init_token(int token_type);
 
-extern Token error_token(const char* msg, Lexer* lexer);
+extern Token error_token(const char* msg);
 
-extern char advance(Lexer* lexer);
+extern char advance();
 
-extern char advance_by(int by, Lexer* lexer);
+extern char advance_by(int by);
 
-extern char peek(Lexer* lexer);
+extern char peek();
 
-extern bool is_eof(Lexer* lexer);
+extern bool is_eof();
 
-extern Token single_character(char single_character_tokens, Lexer* lexer);
+extern Token single_character(char single_character_tokens);
 
-extern int keywords(Lexer* lexer);
+extern int keywords();
 
-extern bool check(char expected, Lexer* lexer);
+extern bool check(char expected);
 
-extern char peek_ahead(Lexer* lexer);
+extern char peek_ahead();
 
-extern Token skip_whitespaces(Lexer* lexer);
+extern Token skip_whitespaces();
 
-extern Token string(Lexer* lexer);
+extern Token string();
 
-extern Token identifier(Lexer* lexer);
+extern Token identifier();
 
 extern bool is_digit(char c);
 
 extern bool is_alpha(char c);
 
-extern Token number(Lexer* lexer);
+extern Token number();
 
-extern bool match(const char* keyword, int size, Lexer* lexer);
+extern bool match(const char* keyword, int size);
 
 #endif // !LEXER_H
