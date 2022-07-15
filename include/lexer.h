@@ -34,42 +34,8 @@ typedef struct {
     int size;
 } Token;
 
-extern void init_lexer(const char* source);
+extern void lexer_init(const char* source);
 
-extern Token scan_token();
-
-extern Token init_token(int token_type);
-
-extern Token error_token(const char* msg);
-
-extern char advance();
-
-extern char advance_by(int by);
-
-extern char peek();
-
-extern bool is_eof();
-
-extern Token single_character(char single_character_tokens);
-
-extern int keywords();
-
-extern bool check(char expected);
-
-extern char peek_ahead();
-
-extern Token skip_whitespaces();
-
-extern Token string();
-
-extern Token identifier();
-
-extern bool is_digit(char c);
-
-extern bool is_alpha(char c);
-
-extern Token number();
-
-extern bool match(const char* keyword, int size);
+extern Token lexer_scan();
 
 #endif // !LEXER_H

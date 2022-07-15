@@ -5,13 +5,41 @@
 
 static Lexer lexer;
 
-void init_lexer(const char* source) {
+static Token init_token(int token_type);
+static Token error_token(const char* msg);
+static char  advance();
+static char  advance_by(int by);
+static char  peek();
+static bool  is_eof();
+static Token single_character(char single_character_tokens);
+static int   keywords();
+static bool  check(char expected);
+static char  peek_ahead();
+static Token skip_whitespaces();
+static Token string();
+static Token identifier();
+static bool  is_digit(char c);
+static bool  is_alpha(char c);
+static Token number();
+static bool  match(const char* keyword, int size);
+
+/**
+ * @brief Initalizes the lexer.
+ * 
+ * @param source 
+ */
+void lexer_init(const char* source) {
     lexer.current = source;
     lexer.start = source;
     lexer.line = 1;
 }
 
-Token scan_token() {
+/**
+ * @brief Will scan a single token out of the code.
+ * 
+ * @return Token 
+ */
+Token lexer_scan() {
     Token error = skip_whitespaces();
     if (error.type != T_OK)
         return error;

@@ -1,6 +1,30 @@
+/**
+* @file compiler.c
+* @author strah19
+* @date July 12, 2022
+* @version 1.0
+*
+* @section LICENSE
+*
+* This program is free software; you can redistribute it and/or
+* modify it under the terms of the MIT License as published
+* by the Free Software Foundation.
+*
+* @section DESCRIPTION
+*
+* The actual compiler of the polaris that will do a single run 
+* and convert it to bytecode.
+*/
+
 #include "compiler.h"
 #include "parser.h"
 
+/**
+ * @brief Polaris compiler...duh.
+ * 
+ * @param source 
+ * @return VMResults 
+ */
 VMResults compiler_run(const char* source) {
     Bytecode bytecode;
     bytecode_init(&bytecode);
@@ -15,9 +39,17 @@ VMResults compiler_run(const char* source) {
     return results;
 }
 
+/**
+ * @brief Will do a single pass and compile into bytecode.
+ * 
+ * @param source 
+ * @param bytecode 
+ * @return true 
+ * @return false 
+ */
 bool compiler_compile(const char* source, Bytecode* bytecode) {
     set_current_bytecode(bytecode);
-    init_lexer(source);
+    lexer_init(source);
     init_parser();
 
     advance_parser();
@@ -28,6 +60,10 @@ bool compiler_compile(const char* source, Bytecode* bytecode) {
     return !errors();
 }
 
+/**
+ * @brief Runs at the end of compilation.
+ * 
+ */
 void compiler_end_compilation() {
     emit_return();
 }

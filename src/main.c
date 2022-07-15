@@ -33,14 +33,14 @@
 #endif // !USE_VM
 
 VMResults run_source_file(const char* filepath);
-void repl();
+VMResults repl();
 
 int main(int argc, char* argv[]) {
     vm_init();
 
     VMResults result;
     if (argc == 1) 
-        repl();
+        result = repl();
     else if (argc == 2) 
         result = run_source_file(argv[1]);
     else 
@@ -57,15 +57,16 @@ int main(int argc, char* argv[]) {
     return 0;
 }
 
-void repl() {
+VMResults repl() {
     while (true) {
         printf (">>> ");
         char buffer[MAX_REPL_SIZE];
         if (!fgets(buffer, sizeof(buffer), stdin)) {
-            report_error("\nNothing entered into REPL.\n");
-            return;
+            report_error("Nothing entered into REPL.\n");
+            continue;
         }
-        if (compiler_run(buffer) != VM_OK) return; 
+        VMResults results = compiler_run(buffer);
+        if (results != VM_OK) return results; 
     }
 }
 

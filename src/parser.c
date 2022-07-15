@@ -31,7 +31,7 @@ void advance_parser() {
     parser.previous = parser.current;
 
     while (true) {
-        parser.current = scan_token();
+        parser.current = lexer_scan();
 
         if (parser.current.type != T_ERROR) break;
 

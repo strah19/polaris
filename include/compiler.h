@@ -6,7 +6,7 @@
 
 extern VMResults compiler_run();
 
-extern bool compiler_compile();
+extern bool compiler_compile(const char* source, Bytecode* bytecode);
 
 extern void compiler_end_compilation();
 
