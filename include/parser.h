@@ -46,9 +46,9 @@ typedef struct {
 
 extern void expression();
 
-extern BytecodeChunk* current_compiling_chunk();
+extern Bytecode* current_compiling_chunk();
 
-extern void set_current_chunk(BytecodeChunk* chunk);
+extern void set_current_bytecode(Bytecode* chunk);
 
 extern void emit_bytecode(uint8_t code);
 

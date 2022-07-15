@@ -1,12 +1,41 @@
+/**
+* @file value.c
+* @author strah19
+* @date July 13, 2022
+* @version 1.0
+*
+* @section LICENSE
+*
+* This program is free software; you can redistribute it and/or
+* modify it under the terms of the MIT License as published
+* by the Free Software Foundation.
+*
+* @section DESCRIPTION
+*
+* Lays out the structure for values in the virtual machine 
+* and the value array in a bytecode chunk.
+*/
+
 #include "value.h"
 
-void init_value_array(ValueArray* array) {
+/**
+ * @brief Initializes an array of values.
+ * 
+ * @param array 
+ */
+void value_init(Values* array) {
     array->capacity = 0;
     array->count = 0;
     array->values = NULL;
 }
 
-void write_value_array(Value value, ValueArray* array) {
+/**
+ * @brief Writes a value into the array.
+ * 
+ * @param value 
+ * @param array 
+ */
+void value_write(Value value, Values* array) {
     if (array->capacity < array->count + 1) {
         array->capacity = NEW_CAPACITY(array->capacity);
         array->values = REALLOC(Value, array->values, array->capacity);
@@ -15,11 +44,21 @@ void write_value_array(Value value, ValueArray* array) {
     array->values[array->count++] = value;
 }
 
-void free_value_array(ValueArray* array) {
+/**
+ * @brief Frees up the array.
+ * 
+ * @param array 
+ */
+void value_free(Values* array) {
     FREE(Value, array->values);
-    init_value_array(array);
+    value_init(array);
 }
 
-void print_value(Value value) {
+/**
+ * @brief Prints the value to stdout.
+ * 
+ * @param value 
+ */
+void value_print(Value value) {
     printf("%g", value);
 }

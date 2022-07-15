@@ -7,3 +7,10 @@
 - Lexer close to done, need to finish adding all keywords.
 ***7/12/2022***
 - Working on the pratt parser.
+- Reorganize, regroup, and refactor time!
+    - bytecode *DONE*
+    - debug *DONE*
+    - mem *DONE*
+    - opcodes *DONE*
+    - value *DONE*
+    - vm

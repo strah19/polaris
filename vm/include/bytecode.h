@@ -3,31 +3,30 @@
 
 #include <stdint.h>
 #include <stdio.h>
+
 #include "value.h"
 
-struct BytecodeChunk {
+struct Bytecode {
     int capacity;
     int count;
     uint8_t* code;
     int* line;
-    ValueArray constants;
-    struct BytecodeChunk* next;
+    Values constants;
+    struct Bytecode* next;
 };
 
-typedef struct BytecodeChunk BytecodeChunk;
+typedef struct Bytecode Bytecode;
 
-extern void init_chunk(BytecodeChunk* chunk);
+extern void bytecode_init(Bytecode* bytecode);
 
-extern void write_chunk(uint8_t code, BytecodeChunk* chunk, int line);
+extern void bytecode_write(uint8_t code, int line, Bytecode* bytecode);
 
-extern void pop_chunk(BytecodeChunk* chunk);
+extern void bytecode_pop(Bytecode* bytecode);
 
-extern int add_constant(Value value, BytecodeChunk* chunk);
+extern int  bytecode_add_constant(Value value, Bytecode* bytecode);
 
-extern void free_chunk(BytecodeChunk* chunk);
+extern void bytecode_free(Bytecode* bytecode);
 
-extern void append_chunk(BytecodeChunk* chunk, BytecodeChunk* append);
-
-extern BytecodeChunk* get_head_chunk(BytecodeChunk* chunk);
+extern void bytecode_append(Bytecode* bytecode, Bytecode* append);
 
 #endif // !BYTECODE_H

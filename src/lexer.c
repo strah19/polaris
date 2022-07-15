@@ -1,4 +1,5 @@
 #include "lexer.h"
+#include <string.h>
 
 #define MAX_NESTED 255
 

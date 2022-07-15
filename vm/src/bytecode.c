@@ -1,50 +1,102 @@
-#include "bytecode.h"
-#include <stdlib.h>
-#include "mem.h"
+/**
+* @file bytecode.c
+* @author strah19
+* @date July 12, 2022
+* @version 1.0
+*
+* @section LICENSE
+*
+* This program is free software; you can redistribute it and/or
+* modify it under the terms of the MIT License as published
+* by the Free Software Foundation.
+*
+* @section DESCRIPTION
+*
+* Lays out a single 'block' of possible bytes for the virtual 
+* machine to execute at a single given time. 
+*/
 
-void init_chunk(BytecodeChunk* chunk) {
-    chunk->capacity = 0;
-    chunk->count = 0;
-    chunk->line = NULL;
-    chunk->code = NULL;
-    chunk->next = NULL;
-    init_value_array(&chunk->constants);
+#include "bytecode.h"
+#include "mem.h"
+#include <stdlib.h>
+
+/**
+ * @brief Initializesthe bytecode chunk.
+ * 
+ * @param bytecode 
+ */
+void bytecode_init(Bytecode* bytecode) {
+    bytecode->capacity = 0;
+    bytecode->count = 0;
+    bytecode->line = NULL;
+    bytecode->code = NULL;
+    bytecode->next = NULL;
+    value_init(&bytecode->constants);
 }
 
-void write_chunk(uint8_t code, BytecodeChunk* chunk, int line) {
-    if (chunk->capacity < chunk->count + 1) {
-        chunk->capacity = NEW_CAPACITY(chunk->capacity);
-        chunk->code = REALLOC(uint8_t,  chunk->code, chunk->capacity);
-        chunk->line = REALLOC(int, chunk->line, chunk->capacity);
+/**
+ * @brief Will write a code to a 'byte chunk' (plus the line number for errors).
+ * 
+ * @param code 
+ * @param bytecode 
+ * @param line 
+ */
+void bytecode_write(uint8_t code, int line, Bytecode* bytecode) {
+    if (bytecode->capacity < bytecode->count + 1) {
+        bytecode->capacity = NEW_CAPACITY(bytecode->capacity);
+        bytecode->code = REALLOC(uint8_t,  bytecode->code, bytecode->capacity);
+        bytecode->line = REALLOC(int, bytecode->line, bytecode->capacity);
     }
 
-    chunk->code[chunk->count++] = code;
-    chunk->line[chunk->count - 1] = line;
+    bytecode->code[bytecode->count++] = code;
+    bytecode->line[bytecode->count - 1] = line;
 }
 
-void pop_chunk(BytecodeChunk* chunk) {
-    chunk->count--;
+/**
+ * @brief Moves the count back once, meaning it ignores the last code in execution.
+ * 
+ * @param bytecode 
+ */
+void bytecode_pop(Bytecode* bytecode) {
+    bytecode->count--;
 }
 
-// Will return the address of the constant
-int add_constant(Value value, BytecodeChunk* chunk) {
-    write_value_array(value, &chunk->constants);
-    return chunk->constants.count - 1;
+/**
+ * @brief Adds constant to bytecode and returns constants index in array.
+ * 
+ * @param value 
+ * @param bytecode 
+ * @return int 
+ */
+int bytecode_add_constant(Value value, Bytecode* bytecode) {
+    value_write(value, &bytecode->constants);
+    return bytecode->constants.count - 1;
 }
 
-void free_chunk(BytecodeChunk* chunk) {
-    FREE(uint8_t, chunk->code);
-    FREE(int, chunk->line);
-    free_value_array(&chunk->constants);
-    init_chunk(chunk);
+/**
+ * @brief Free's the code from the chunk.
+ * 
+ * @param bytecode 
+ */
+void bytecode_free(Bytecode* bytecode) {
+    FREE(uint8_t, bytecode->code);
+    FREE(int, bytecode->line);
+    value_free(&bytecode->constants);
+
+    if (bytecode->next) {
+        bytecode_free(bytecode->next);
+        free (bytecode->next);
+    }
+    
+    bytecode_init(bytecode);
 }
 
-void append_chunk(BytecodeChunk* chunk, BytecodeChunk* append) {
-    chunk->next = append;
-}
-
-BytecodeChunk* get_head_chunk(BytecodeChunk* chunk) {
-    BytecodeChunk* head = chunk;
-    while (head->next) head = head->next;
-    return head;
+/**
+ * @brief Appends another chunk to the current bytecode.
+ * 
+ * @param bytecode 
+ * @param append 
+ */
+void bytecode_append(Bytecode* bytecode, Bytecode* append) {
+    bytecode->next = append;
 }

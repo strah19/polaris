@@ -1,6 +1,6 @@
 #include "benchmark.h"
 #include <time.h>
-#include "common.h"
+#include <stdio.h>
 
 static const char* benchmark_name;
 static clock_t start_time;

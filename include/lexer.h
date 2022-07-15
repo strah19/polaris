@@ -1,7 +1,7 @@
 #ifndef LEXER_H
 #define LEXER_H
 
-#include "common.h"
+#include <stdbool.h>
 
 typedef enum {
     // Single character tokens

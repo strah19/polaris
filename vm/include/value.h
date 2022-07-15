@@ -9,14 +9,14 @@ typedef struct {
     int capacity;
     int count;
     Value* values;
-} ValueArray;
+} Values;
 
-extern void init_value_array(ValueArray* array);
+extern void value_init(Values* array);
 
-extern void write_value_array(Value value, ValueArray* array);
+extern void value_write(Value value, Values* array);
 
-extern void free_value_array(ValueArray* array);
+extern void value_free(Values* array);
 
-extern void print_value(Value value);
+extern void value_print(Value value);
 
 #endif // !VALUE_H

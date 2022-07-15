@@ -1,5 +1,7 @@
 #include "error.h"
-#include "common.h"
+#include <stdio.h>
+#include <stdarg.h>
+#include <stdlib.h>
 
 void fatal_error(const char* fmt, ...) {
     va_list args;

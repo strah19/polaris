@@ -8,8 +8,8 @@
 #define MAX_STACK 256
 
 typedef struct {
-    BytecodeChunk* chunk;
-    uint8_t* ip;    // Instruction pointer
+    Bytecode* bytecode;
+    uint8_t* ip;   
     Value stack[MAX_STACK];
     Value* top;
 } VM;
@@ -20,14 +20,14 @@ typedef enum {
     VM_RUNTIME_ERROR
 } VMResults;
 
-extern void init_vm();
+extern void vm_init();
 
-extern void free_vm();
+extern void vm_free();
 
-extern VMResults run_vm(BytecodeChunk* chunk);
+extern VMResults vm_run(Bytecode* bytecode);
 
-extern void push(Value value);
+extern void vm_push(Value value);
 
-extern Value pop();
+extern Value vm_pop();
 
 #endif // !VM_H
