@@ -1,8 +1,31 @@
+/**
+* @file misc.c
+* @author strah19
+* @date July 12, 2022
+* @version 1.0
+*
+* @section LICENSE
+*
+* This program is free software; you can redistribute it and/or
+* modify it under the terms of the MIT License as published
+* by the Free Software Foundation.
+*
+* @section DESCRIPTION
+*
+* Miscellaneous functions that can be used throughout the code base.
+*/
+
 #include "misc.h"
 #include "error.h"
 #include <stdio.h>
 #include <stdlib.h>
 
+/**
+ * @brief Will open a file and return a char*.
+ * 
+ * @param filepath 
+ * @return char* 
+ */
 char* open_file(const char* filepath) {
     FILE* file = fopen(filepath, "rb");
 
