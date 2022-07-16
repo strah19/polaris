@@ -1,5 +1,5 @@
 /**
-* @file compiler.c
+* @file benchmark.c
 * @author strah19
 * @date July 15, 2022
 * @version 1.0

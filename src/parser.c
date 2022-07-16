@@ -1,10 +1,27 @@
+/**
+* @file parser.c
+* @author strah19
+* @date July 16, 2022
+* @version 1.0
+*
+* @section LICENSE
+*
+* This program is free software; you can redistribute it and/or
+* modify it under the terms of the MIT License as published
+* by the Free Software Foundation.
+*
+* @section DESCRIPTION
+*
+* The main part of the compiler!
+*/
+
 #include "parser.h"
 #include "error.h"
+#include "code_generator.h"
 
 static Parser parser;
-static Bytecode* current_chunk = NULL;
 
-static void precedence_parser(int prec);
+static void parse_precedence(int prec);
 static void parse_binary();
 static void parse_unary();
 static void parse_parenthesis();
@@ -22,26 +39,25 @@ static ParserRule rules [] = {
     [T_SEMICOLON]   = { NULL,              NULL,         PREC_NONE    }
 };
 
-void init_parser() {
+void parser_init() {
     parser.error_found = false;
     parser.panic = false;
+    generator_get_parser(&parser);
 }
 
-void advance_parser() {
+void parser_advance() {
     parser.previous = parser.current;
 
     while (true) {
         parser.current = lexer_scan();
-
         if (parser.current.type != T_ERROR) break;
-
         parser_error_at_current(parser.current.start);
     }
 }
 
-void consume(TokenType type, const char* msg) {
+void parser_consume(TokenType type, const char* msg) {
     if (parser.current.type == type) 
-        advance_parser();
+        parser_advance();
     else
         parser_error_at_current(msg);
 }
@@ -54,35 +70,22 @@ void parser_error(Token* token, const char* msg) {
     if (parser.panic) return;
     parser.panic = true;
     parser.error_found = true;
-    report_error("on line %d at '%.*s' : %s.\n", token->line, token->size, token->start, msg);
+    if (token->type == T_EOF)
+        report_error("At the end of the file : %s.\n", msg);
+    else
+        report_error("on line %d at '%.*s' : %s.\n", token->line, token->size, token->start, msg);
 }
 
-bool errors() {
+bool parser_get_errors() {
     return parser.error_found;
 }
 
-Bytecode* current_compiling_chunk() {
-    return current_chunk;
+void parser_expression() {
+    parse_precedence(PREC_NONE);
 }
 
-void set_current_bytecode(Bytecode* chunk) {
-    current_chunk = chunk;
-}
-
-void emit_bytecode(uint8_t code) {
-    bytecode_write(code, parser.previous.line, current_chunk);
-}
-
-void emit_return() {
-    emit_bytecode(OP_RETURN);
-}
-
-void expression() {
-    precedence_parser(PREC_NONE);
-}
-
-static void precedence_parser(int prec) {
-    advance_parser();
+static void parse_precedence(int prec) {
+    parser_advance();
     ParseFn left = get_rule(parser.previous.type)->prefix;
     if (!left) {
         parser_error(&parser.previous, "Expected prefix-style expression");
@@ -91,28 +94,27 @@ static void precedence_parser(int prec) {
     left();
 
     while (parser.current.type != T_EOF && prec < get_rule(parser.current.type)->precedence) {
-        advance_parser();
+        parser_advance();
         get_rule(parser.previous.type)->infix();
     }
 }
 
 static void parse_binary() {
     int op = parser.previous.type;
-
-    precedence_parser(get_rule(op)->precedence);
+    parse_precedence(get_rule(op)->precedence);
 
     switch(op) {
     case T_PLUS: 
-        emit_bytecode(OP_PLUS);
+        generator_emit_bytecode(OP_PLUS);
         break;
     case T_MINUS: 
-        emit_bytecode(OP_MINUS);
+        generator_emit_bytecode(OP_MINUS);
         break;
     case T_STAR: 
-        emit_bytecode(OP_MULTIPLY);
+        generator_emit_bytecode(OP_MULTIPLY);
         break;
     case T_SLASH: 
-        emit_bytecode(OP_DIVIDE);
+        generator_emit_bytecode(OP_DIVIDE);
         break;
     }
 
@@ -120,36 +122,27 @@ static void parse_binary() {
 
 static void parse_unary() {
     int prefix = parser.previous.type;
-    expression();
+    parser_expression();
     switch (prefix) {
     case T_MINUS: 
-        emit_bytecode(OP_NEGATE);
+        generator_emit_bytecode(OP_NEGATE);
         break;
     }
 }
 
 static void parse_parenthesis() {
-    expression();
-    consume(T_RPAR, "Expected ')");
+    parser_expression();
+    parser_consume(T_RPAR, "Expected ')");
 }
 
 static void parse_number() {
-    int constant_addr = bytecode_add_constant(strtod(parser.previous.start, NULL), current_compiling_chunk());
+    int constant_addr = bytecode_add_constant(strtod(parser.previous.start, NULL), generator_get_current_bytecode());
     if (constant_addr > 255) {
-        append_new_chunk();
-        constant_addr = bytecode_add_constant(strtod(parser.previous.start, NULL), current_compiling_chunk());
+        generator_append_new_chunk();
+        constant_addr = bytecode_add_constant(strtod(parser.previous.start, NULL), generator_get_current_bytecode());
     }
-    emit_bytecode(OP_CONSTANT);
-    emit_bytecode(constant_addr);
-}
-
-void append_new_chunk() {
-    Bytecode* next = (Bytecode*) malloc(sizeof(Bytecode));
-    if (!next) fatal_error("Unable to initalize new chunk of bytecode!\n");
-    bytecode_init(next);
-    emit_return();
-    bytecode_append(current_chunk, next);
-    set_current_bytecode(next);
+    generator_emit_bytecode(OP_CONSTANT);
+    generator_emit_bytecode(constant_addr);
 }
 
 static ParserRule* get_rule(TokenType token) {

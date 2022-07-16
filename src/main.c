@@ -65,8 +65,7 @@ VMResults repl() {
             report_error("Nothing entered into REPL.\n");
             continue;
         }
-        VMResults results = compiler_run(buffer);
-        if (results != VM_OK) return results; 
+        compiler_run(buffer);
     }
 }
 

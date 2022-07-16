@@ -4,13 +4,6 @@
 #include "lexer.h"
 #include "vm.h"
 
-typedef struct {
-    Token current;
-    Token previous;
-    bool error_found;
-    bool panic;
-} Parser;
-
 typedef enum {
     PREC_NONE,
     PREC_ASSIGNMENT,
@@ -24,17 +17,12 @@ typedef enum {
     PREC_PRIMARY
 } Precedence;
 
-extern void init_parser();
-
-extern void advance_parser();
-
-extern void consume(TokenType type, const char* msg);
-
-extern void parser_error_at_current(const char* msg);
-
-extern void parser_error(Token* token, const char* msg);
-
-extern bool errors();
+typedef struct {
+    Token current;
+    Token previous;
+    bool error_found;
+    bool panic;
+} Parser;
 
 typedef void (*ParseFn)();
 
@@ -44,16 +32,19 @@ typedef struct {
     Precedence precedence;
 } ParserRule;
 
-extern void expression();
+extern void parser_init();
 
-extern Bytecode* current_compiling_chunk();
+extern void parser_advance();
 
-extern void set_current_bytecode(Bytecode* chunk);
+extern void parser_consume(TokenType type, const char* msg);
 
-extern void emit_bytecode(uint8_t code);
+extern void parser_error_at_current(const char* msg);
 
-extern void emit_return();
+extern void parser_error(Token* token, const char* msg);
 
-extern void append_new_chunk();
+extern bool parser_get_errors();
+
+extern void parser_expression();
+
 
 #endif // !PARSER_H

@@ -1,3 +1,20 @@
+/**
+* @file lexer.c
+* @author strah19
+* @date July 16, 2022
+* @version 1.0
+*
+* @section LICENSE
+*
+* This program is free software; you can redistribute it and/or
+* modify it under the terms of the MIT License as published
+* by the Free Software Foundation.
+*
+* @section DESCRIPTION
+*
+* Very simple lexer, does one token at a time.
+*/
+
 #include "lexer.h"
 #include <string.h>
 

@@ -18,6 +18,7 @@
 
 #include "compiler.h"
 #include "parser.h"
+#include "code_generator.h"
 
 /**
  * @brief Polaris compiler...duh.
@@ -48,16 +49,16 @@ VMResults compiler_run(const char* source) {
  * @return false 
  */
 bool compiler_compile(const char* source, Bytecode* bytecode) {
-    set_current_bytecode(bytecode);
+    generator_set_current_bytecode(bytecode);
     lexer_init(source);
-    init_parser();
+    parser_init();
 
-    advance_parser();
-    expression();
-    consume(T_SEMICOLON, "Expected ';'");
+    parser_advance();
+    parser_expression();
+    parser_consume(T_SEMICOLON, "Expected ';'");
 
     compiler_end_compilation();
-    return !errors();
+    return !parser_get_errors();
 }
 
 /**
@@ -65,5 +66,5 @@ bool compiler_compile(const char* source, Bytecode* bytecode) {
  * 
  */
 void compiler_end_compilation() {
-    emit_return();
+    generator_emit_return();
 }
