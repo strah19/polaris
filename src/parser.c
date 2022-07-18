@@ -28,7 +28,8 @@ static void parse_parenthesis();
 static void parse_float();
 static void parse_int();
 static void parse_binary();
-static void parse_number(int type);
+static void parse_boolean();
+static void parse_primary(int type);
 static int  get_constant_address(int type);
 static ParserRule* get_rule(TokenType token);
 
@@ -55,7 +56,9 @@ static ParserRule rules [] = {
     [T_NOT]           = { parse_unary,       NULL,        PREC_UNARY       },
     [T_AMPERSAND]     = { NULL,              parse_infix, PREC_BITWISE_AND },
     [T_LINE]          = { NULL,              parse_infix, PREC_BITWISE_OR  },
-    [T_CARET]         = { NULL,              parse_infix, PREC_BITWISE_XOR }
+    [T_CARET]         = { NULL,              parse_infix, PREC_BITWISE_XOR },
+    [T_TRUE]          = { parse_boolean,     NULL,        PREC_PRIMARY     },
+    [T_FALSE]         = { parse_boolean,     NULL,        PREC_PRIMARY     }
 };
 
 void parser_init() {
@@ -158,7 +161,7 @@ static void parse_parenthesis() {
     parser_consume(T_RPAR, "Expected ')");
 }
 
-void parse_number(int type) {
+void parse_primary(int type) {
     int constant_addr = get_constant_address(type);
     if (constant_addr > 255) {
         generator_append_new_chunk();
@@ -173,6 +176,8 @@ int get_constant_address(int type) {
     case T_INT_CONST:    return generator_emit_int_constant(parser.previous);
     case T_FLOAT_CONST:  return generator_emit_float_constant(parser.previous);
     case T_BINARY_CONST: return generator_emit_binary_constant(parser.previous);
+    case T_TRUE:         return generator_emit_true();
+    case T_FALSE:        return generator_emit_false();
     default: 
         parser_error(&parser.previous, "Unknown type found");
         return 0;
@@ -180,17 +185,46 @@ int get_constant_address(int type) {
 }
 
 static void parse_float() {
-    parse_number(T_FLOAT_CONST);
+    parse_primary(T_FLOAT_CONST);
 }
 
 static void parse_int() {
-    parse_number(T_INT_CONST);
+    parse_primary(T_INT_CONST);
 }
 
 static void parse_binary() {
-    parse_number(T_BINARY_CONST);
+    parse_primary(T_BINARY_CONST);
+}
+
+static void parse_boolean() {
+    switch (parser.previous.type) {
+    case T_TRUE:  parse_primary(T_TRUE);  break;
+    case T_FALSE: parse_primary(T_FALSE); break;
+    default: return;
+    }
 }
 
 static ParserRule* get_rule(TokenType token) {
     return &rules[token];
+}
+
+bool parser_match(TokenType type) {
+    if (parser_check(type)) {
+        parser_advance();
+        return true;
+    }
+    return false;
+}
+
+bool parser_check(TokenType type) {
+    return (type == parser.current.type);
+}
+
+void parse_decleration() {
+    parse_statement();
+}
+
+void parse_statement() {
+    parser_expression();
+    parser_consume(T_SEMICOLON, "Expected ';'");
 }

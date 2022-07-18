@@ -41,8 +41,8 @@ bool compiler_compile(const char* source, Bytecode* bytecode) {
     parser_init();
 
     parser_advance();
-    parser_expression();
-    parser_consume(T_SEMICOLON, "Expected ';'");
+    while (!parser_match(T_EOF))
+        parse_decleration();
 
     compiler_end_compilation();
     return !parser_get_errors();

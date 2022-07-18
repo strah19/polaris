@@ -37,13 +37,27 @@ int debug_disassemble_instruction(Bytecode* bytecode, int off) {
 
     uint8_t instruction = bytecode->code[off];
     switch (instruction) {
-    case OP_RETURN:   return debug_simple_instruction("OP_RETURN",   off);
-    case OP_NEGATE:   return debug_simple_instruction("OP_NEGATE",   off);
-    case OP_PLUS:     return debug_simple_instruction("OP_PLUS",     off);
-    case OP_MINUS:    return debug_simple_instruction("OP_MINUS",    off);
-    case OP_MULTIPLY: return debug_simple_instruction("OP_MULTIPLY", off);
-    case OP_DIVIDE:   return debug_simple_instruction("OP_DIVDE",    off);
-    case OP_CONSTANT: return debug_constant_instruction(bytecode,    off);
+    case OP_RETURN:    return debug_simple_instruction("OP_RETURN",    off);
+    case OP_NEGATE:    return debug_simple_instruction("OP_NEGATE",    off);
+    case OP_PLUS:      return debug_simple_instruction("OP_PLUS",      off);
+    case OP_MINUS:     return debug_simple_instruction("OP_MINUS",     off);
+    case OP_MULTIPLY:  return debug_simple_instruction("OP_MULTIPLY",  off);
+    case OP_DIVIDE:    return debug_simple_instruction("OP_DIVDE",     off);
+    case OP_MODULO:    return debug_simple_instruction("OP_MODULO",    off);
+    case OP_AND:       return debug_simple_instruction("OP_AND",       off);
+    case OP_OR:        return debug_simple_instruction("OP_OR",        off);
+    case OP_EQUAL:     return debug_simple_instruction("OP_EQUAL",     off);
+    case OP_NOT_EQUAL: return debug_simple_instruction("OP_NOT_EQUAL", off);
+    case OP_LT:        return debug_simple_instruction("OP_LT",        off);
+    case OP_GT:        return debug_simple_instruction("OP_GT",        off);
+    case OP_LTE:       return debug_simple_instruction("OP_LTE",       off);
+    case OP_GTE:       return debug_simple_instruction("OP_GTE",       off);
+    case OP_NOT:       return debug_simple_instruction("OP_NOT",       off);
+    case OP_BIT_NOT:   return debug_simple_instruction("OP_BIT_NOT",   off);
+    case OP_BIT_OR:    return debug_simple_instruction("OP_BIT_OR",    off);
+    case OP_BIT_AND:   return debug_simple_instruction("OP_BIT_AND",   off);
+    case OP_BIT_XOR:   return debug_simple_instruction("OP_BIT_XOR",   off);
+    case OP_CONSTANT:  return debug_constant_instruction(bytecode,     off);
     default:
         printf("Unknown opcode %d\n", instruction);
         return off + 1;

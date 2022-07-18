@@ -26,6 +26,8 @@
     Value a = vm_pop(); \
     if (IS_FLOAT(a) && IS_FLOAT(b)) vm_push(FLOAT_VALUE(AS_FLOAT(a) op AS_FLOAT(b))); \
     else if (IS_INT(a) && IS_INT(b)) vm_push(INT_VALUE(AS_INT(a) op AS_INT(b))); \
+    else if (IS_BOOLEAN(a) && IS_BOOLEAN(b)) vm_push(BOOLEAN_VALUE(AS_BOOLEAN(a) op AS_BOOLEAN(b))); \
+    else if (IS_BINARY(a) && IS_BINARY(b)) vm_push(BINARY_VALUE(AS_BINARY(a) op AS_BINARY(b))); \
     else return vm_runtime_error("Operands must be numbers in '%s' operation and must match.\n", #op); \
     }\
 
@@ -33,7 +35,9 @@
     { Value b = vm_pop(); \
     Value a = vm_pop(); \
     if (IS_INT(a) && IS_INT(b)) vm_push(INT_VALUE(AS_INT(a) op AS_INT(b))); \
-    else return vm_runtime_error("Operands must be integers for '%s' operation.\n", #op); \
+    else if (IS_BOOLEAN(a) && IS_BOOLEAN(b)) vm_push(BOOLEAN_VALUE(AS_BOOLEAN(a) op AS_BOOLEAN(b))); \
+    else if (IS_BINARY(a) && IS_BINARY(b)) vm_push(BINARY_VALUE(AS_BINARY(a) op AS_BINARY(b))); \
+    else return vm_runtime_error("Operands must be integers, booleans, or binaries for '%s' operation.\n", #op); \
     }\
 
 static VM vm;
@@ -77,23 +81,23 @@ VMResults vm_run(Bytecode* bytecode) {
                 break;
 
             case OP_NEGATE: {
-                if (!IS_NUMBER(vm_peek()))
+                if (!IS_NUMBER(vm_peek(0)))
                     return vm_runtime_error("Can only negate numbers.\n");
-                if (IS_FLOAT(vm_peek())) vm_push(FLOAT_VALUE(-AS_FLOAT(vm_pop()))); 
+                if (IS_FLOAT(vm_peek(0))) vm_push(FLOAT_VALUE(-AS_FLOAT(vm_pop()))); 
                 else vm_push(INT_VALUE(-AS_INT(vm_pop())));     
                 break;
             }
             case OP_NOT: {
-                if (!IS_NUMBER(vm_peek())) 
+                if (!IS_NUMBER(vm_peek(0))) 
                     return vm_runtime_error("Can only not numbers.\n");
-                if (IS_FLOAT(vm_peek())) vm_push(FLOAT_VALUE(!AS_FLOAT(vm_pop()))); 
+                if (IS_FLOAT(vm_peek(0))) vm_push(FLOAT_VALUE(!AS_FLOAT(vm_pop()))); 
                 else vm_push(INT_VALUE(!AS_INT(vm_pop()))); 
                 break;
             }
             case OP_BIT_NOT: {
-                if (!IS_INT(vm_peek()) && !IS_BINARY(vm_peek()))
+                if (!IS_INT(vm_peek(0)) && !IS_BINARY(vm_peek(0)))
                     return vm_runtime_error("Can only use bitwise not on integers.\n");
-                if (IS_INT(vm_peek())) vm_push(INT_VALUE(~AS_INT(vm_pop())));
+                if (IS_INT(vm_peek(0))) vm_push(INT_VALUE(~AS_INT(vm_pop())));
                 else vm_push(BINARY_VALUE(~AS_BINARY(vm_pop())));
                 break;
             }
@@ -101,7 +105,11 @@ VMResults vm_run(Bytecode* bytecode) {
             case OP_PLUS:      BINARY(+);  break;
             case OP_MINUS:     BINARY(-);  break;
             case OP_MULTIPLY:  BINARY(*);  break;
-            case OP_DIVIDE:    BINARY(/);  break;
+            case OP_DIVIDE:   {
+                if (IS_NUMERIC(vm_peek(0)) && AS_INT(vm_peek(0)) == 0)
+                    return vm_runtime_error("Cannot divide by 0.\n");
+                BINARY(/);  break;
+            } 
             case OP_EQUAL:     BINARY(==); break;
             case OP_NOT_EQUAL: BINARY(!=); break;
             case OP_LT:        BINARY(<);  break;
@@ -133,8 +141,8 @@ void vm_reset_stack() {
     vm.top = vm.stack;
 }
 
-Value vm_peek() {
-    return vm.top[-1];
+Value vm_peek(int off) {
+    return vm.top[-1 - off];
 }
 
 int vm_runtime_error(const char* fmt, ...) {

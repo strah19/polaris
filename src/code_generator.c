@@ -68,3 +68,11 @@ int generator_emit_binary_constant(Token token) {
 
     return bytecode_add_constant(BINARY_VALUE(strtol(token.start, NULL, 2)), generator_get_current_bytecode());
 }
+
+int generator_emit_true() {
+    return bytecode_add_constant(BOOLEAN_VALUE(true), generator_get_current_bytecode());
+}
+
+int generator_emit_false() {
+    return bytecode_add_constant(BOOLEAN_VALUE(false), generator_get_current_bytecode());
+}

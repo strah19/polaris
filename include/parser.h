@@ -39,6 +39,10 @@ extern void parser_init();
 
 extern void parser_advance();
 
+extern bool parser_match(TokenType type);
+
+extern bool parser_check(TokenType type);
+
 extern void parser_consume(TokenType type, const char* msg);
 
 extern void parser_error_at_current(const char* msg);
@@ -48,5 +52,9 @@ extern void parser_error(Token* token, const char* msg);
 extern bool parser_get_errors();
 
 extern void parser_expression();
+
+extern void parse_decleration();
+
+extern void parse_statement();
 
 #endif // !PARSER_H

@@ -3,6 +3,7 @@
 
 #include "mem.h"
 #include <stdbool.h>
+#include <stdint.h>
 
 typedef enum {
     TYPE_INT,
@@ -37,6 +38,8 @@ typedef struct {
 #define IS_BOOLEAN(value) (value.type == TYPE_BOOLEAN)
 #define IS_BINARY(value) (value.type == TYPE_BINARY)
 #define IS_NUMBER(value) (value.type == TYPE_FLOAT || value.type == TYPE_INT)
+#define IS_NUMERIC(value) (value.type == TYPE_FLOAT || value.type == TYPE_INT || value.type == TYPE_BOOLEAN || value.type == TYPE_BINARY)
+
 
 typedef struct {
     int    capacity;

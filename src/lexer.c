@@ -187,12 +187,14 @@ int keywords() {
                      (match("reak",   4) ? T_BREAK   : T_IDENTIFIER));
     case 'f': return (match("loat",   4) ? T_FLOAT   : 
                      (match("or",     2) ? T_FOR     : 
-                     (match("unc",    3) ? T_FUNC    : T_IDENTIFIER)));
+                     (match("unc",    3) ? T_FUNC    :
+                     (match("alse",   4) ? T_FALSE   : T_IDENTIFIER))));
     case 'w': return (match("hile",   4) ? T_WHILE   : T_IDENTIFIER);
     case 'r': return (match("eturn",  5) ? T_RETURN  : T_IDENTIFIER);
     case 'c' :return (match("har",    3) ? T_CHAR    : T_IDENTIFIER);
     case 'a': return (match("nd",     2) ? T_AND     : T_IDENTIFIER);
     case 'o': return (match("r",      1) ? T_OR      : T_IDENTIFIER);
+    case 't': return (match("rue",    3) ? T_TRUE    : T_IDENTIFIER);
     }
 
     return T_IDENTIFIER;

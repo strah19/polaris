@@ -32,7 +32,7 @@ extern Value vm_pop();
 
 extern void vm_reset_stack();
 
-extern Value vm_peek();
+extern Value vm_peek(int off);
 
 extern int vm_runtime_error(const char* fmt, ...);
 
