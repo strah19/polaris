@@ -103,6 +103,7 @@ void debug_disassemble_stack(Value* stack, Value* top) {
         for (Value* i = stack; i < top; i++) {
             printf ("[ ");
             value_print(*i);
+            printf(" (%d) ", i->type);
             printf(" ]");
         }
         printf("\n");

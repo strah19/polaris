@@ -60,5 +60,8 @@ void value_free(Values* array) {
  * @param value 
  */
 void value_print(Value value) {
-    printf("%g", value);
+    switch (value.type) {
+    case TYPE_FLOAT: printf("%g", AS_FLOAT(value)); break;
+    case TYPE_INT:   printf("%d", AS_INT(value)); break;
+    }
 }

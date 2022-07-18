@@ -32,4 +32,6 @@ extern Value vm_pop();
 
 extern void vm_reset_stack();
 
+extern Value vm_peek();
+
 #endif // !VM_H

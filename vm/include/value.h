@@ -27,6 +27,7 @@ typedef struct {
 
 #define IS_INT(value)   (value.type == TYPE_INT)
 #define IS_FLOAT(value) (value.type == TYPE_FLOAT)
+#define IS_NUMBER(value) (value.type == TYPE_FLOAT || value.type == TYPE_INT)
 
 typedef struct {
     int    capacity;

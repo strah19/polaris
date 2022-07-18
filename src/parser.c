@@ -25,7 +25,9 @@ static void parse_precedence(int prec);
 static void parse_binary();
 static void parse_unary();
 static void parse_parenthesis();
-static void parse_number();
+static void parse_float();
+static void parse_int();
+static void parse_number(int type);
 static ParserRule* get_rule(TokenType token);
 
 static ParserRule rules [] = {
@@ -33,8 +35,8 @@ static ParserRule rules [] = {
     [T_MINUS]         = { parse_unary,       parse_binary, PREC_TERM    },
     [T_STAR]          = { NULL,              parse_binary, PREC_FACTOR  },
     [T_SLASH]         = { NULL,              parse_binary, PREC_FACTOR  },
-    [T_INT_CONST]     = { parse_number,      NULL,         PREC_PRIMARY },
-    [T_FLOAT_CONST]   = { parse_number,      NULL,         PREC_PRIMARY },
+    [T_INT_CONST]     = { parse_int,         NULL,         PREC_PRIMARY },
+    [T_FLOAT_CONST]   = { parse_float,       NULL,         PREC_PRIMARY },
     [T_LPAR]          = { parse_parenthesis, NULL,         PREC_NONE    },
     [T_SEMICOLON]     = { NULL,              NULL,         PREC_NONE    },
     [T_PERCENT]       = { NULL,              parse_binary, PREC_FACTOR  },
@@ -145,14 +147,29 @@ static void parse_parenthesis() {
     parser_consume(T_RPAR, "Expected ')");
 }
 
-static void parse_number() {
-    int constant_addr = bytecode_add_constant(strtod(parser.previous.start, NULL), generator_get_current_bytecode());
+void parse_number(int type) {
+    int constant_addr = 0;
+    if (type == T_INT_CONST)
+        constant_addr = generator_emit_int_constant(parser.previous);
+    else if (type == T_FLOAT_CONST)
+        constant_addr = generator_emit_float_constant(parser.previous);
     if (constant_addr > 255) {
         generator_append_new_chunk();
-        constant_addr = bytecode_add_constant(strtod(parser.previous.start, NULL), generator_get_current_bytecode());
+        if (type == T_INT_CONST)
+            constant_addr = generator_emit_int_constant(parser.previous);
+        else if (type == T_FLOAT_CONST)
+            constant_addr = generator_emit_float_constant(parser.previous);
     }
     generator_emit_bytecode(OP_CONSTANT);
     generator_emit_bytecode(constant_addr);
+}
+
+static void parse_float() {
+    parse_number(T_FLOAT_CONST);
+}
+
+static void parse_int() {
+    parse_number(T_INT_CONST);
 }
 
 static ParserRule* get_rule(TokenType token) {

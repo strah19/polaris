@@ -23,51 +23,30 @@
 #define BINARY(op) \
     { Value b = vm_pop(); \
     Value a = vm_pop(); \
-    vm_push(a op b); }\
+    if (IS_FLOAT(a) && IS_FLOAT(b)) vm_push(FLOAT_VALUE(AS_FLOAT(a) op AS_FLOAT(b))); \
+    else if (IS_INT(a) && IS_INT(b)) vm_push(INT_VALUE(AS_INT(a) op AS_INT(b))); \
+    else printf("Operands must be numbers!\n"); \
+    }\
 
 static VM vm;
 
-/**
- * @brief Sets up the stack.
- * 
- */
 void vm_init() {
     vm.top = vm.stack;
 }
 
-/**
- * @brief Frees any memory from the virtual machine.
- * 
- */
 void vm_free() {
 
 }
 
-/**
- * @brief Pushs value onto the stack.
- * 
- * @param value 
- */
 void vm_push(Value value) {
     *vm.top = value;
     vm.top++;
 }
 
-/**
- * @brief Pops value from stack.
- * 
- * @return Value 
- */
 Value vm_pop() {
     return *(--vm.top);
 }
 
-/**
- * @brief Runs a piece of bytecode.
- * 
- * @param bytecode 
- * @return VMResults 
- */
 VMResults vm_run(Bytecode* bytecode) {
     vm.bytecode = bytecode;
     bool run = true;
@@ -89,8 +68,26 @@ VMResults vm_run(Bytecode* bytecode) {
                 vm_push(vm.bytecode->constants.values[*(++vm.ip)]);
                 break;
 
-            case OP_NEGATE:  vm_push(-vm_pop()); break;
-            case OP_NOT:     vm_push(!vm_pop()); break;
+            case OP_NEGATE: {
+                if (!IS_NUMBER(vm_peek())) {
+                    printf("Can only negate numbers.\n");
+                    return VM_RUNTIME_ERROR;
+                }
+                if (IS_FLOAT(vm_peek())) vm_push(FLOAT_VALUE(-AS_FLOAT(vm_pop()))); 
+                else vm_push(INT_VALUE(-AS_INT(vm_pop()))); 
+                
+                break;
+            }
+            case OP_NOT: {
+                if (!IS_NUMBER(vm_peek())) {
+                    printf("Can only not numbers.\n");
+                    return VM_RUNTIME_ERROR;
+                }
+                if (IS_FLOAT(vm_peek())) vm_push(FLOAT_VALUE(!AS_FLOAT(vm_pop()))); 
+                else vm_push(INT_VALUE(!AS_INT(vm_pop()))); 
+                
+                break;
+            }
 
             case OP_PLUS:      BINARY(+);  break;
             case OP_MINUS:     BINARY(-);  break;
@@ -114,12 +111,13 @@ VMResults vm_run(Bytecode* bytecode) {
         else 
             return VM_OK;
     }
+    return VM_OK;
 }
 
-/**
- * @brief Empty stack.
- * 
- */
 void vm_reset_stack() {
     vm.top = vm.stack;
+}
+
+Value vm_peek() {
+    return vm.top[-1];
 }
