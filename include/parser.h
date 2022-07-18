@@ -7,8 +7,8 @@
 typedef enum {
     PREC_NONE,
     PREC_ASSIGNMENT,
-    PREC_AND,
     PREC_OR,
+    PREC_AND,
     PREC_EQUAL,
     PREC_COMPARE,
     PREC_TERM,
@@ -45,6 +45,5 @@ extern void parser_error(Token* token, const char* msg);
 extern bool parser_get_errors();
 
 extern void parser_expression();
-
 
 #endif // !PARSER_H

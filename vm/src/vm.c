@@ -88,21 +88,22 @@ VMResults vm_run(Bytecode* bytecode) {
             case OP_CONSTANT: 
                 vm_push(vm.bytecode->constants.values[*(++vm.ip)]);
                 break;
-            case OP_NEGATE: 
-                vm_push(-vm_pop());
-                break;
-            case OP_PLUS: 
-                BINARY(+);
-                break;
-            case OP_MINUS: 
-                BINARY(-);
-                break;
-            case OP_MULTIPLY: 
-                BINARY(*);
-                break;
-            case OP_DIVIDE: 
-                BINARY(/);
-                break;
+
+            case OP_NEGATE:  vm_push(-vm_pop()); break;
+            case OP_NOT:     vm_push(!vm_pop()); break;
+
+            case OP_PLUS:      BINARY(+);  break;
+            case OP_MINUS:     BINARY(-);  break;
+            case OP_MULTIPLY:  BINARY(*);  break;
+            case OP_DIVIDE:    BINARY(/);  break;
+            case OP_EQUAL:     BINARY(==); break;
+            case OP_NOT_EQUAL: BINARY(!=); break;
+            case OP_LT:        BINARY(<);  break;
+            case OP_GT:        BINARY(>);  break;
+            case OP_LTE:       BINARY(<=); break;
+            case OP_GTE:       BINARY(>=); break;
+            case OP_AND:       BINARY(&&); break;
+            case OP_OR:        BINARY(||); break;
             }
             vm.ip++;
         }
@@ -113,4 +114,12 @@ VMResults vm_run(Bytecode* bytecode) {
         else 
             return VM_OK;
     }
+}
+
+/**
+ * @brief Empty stack.
+ * 
+ */
+void vm_reset_stack() {
+    vm.top = vm.stack;
 }

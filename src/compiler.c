@@ -37,6 +37,7 @@ VMResults compiler_run(const char* source) {
 
     VMResults results = vm_run(&bytecode);
     bytecode_free(&bytecode);
+    vm_reset_stack();
     return results;
 }
 

@@ -29,14 +29,24 @@ static void parse_number();
 static ParserRule* get_rule(TokenType token);
 
 static ParserRule rules [] = {
-    [T_PLUS]        = { NULL,              parse_binary, PREC_TERM    },
-    [T_MINUS]       = { parse_unary,       parse_binary, PREC_TERM    },
-    [T_STAR]        = { NULL,              parse_binary, PREC_FACTOR  },
-    [T_SLASH]       = { NULL,              parse_binary, PREC_FACTOR  },
-    [T_INT_CONST]   = { parse_number,      NULL,         PREC_PRIMARY },
-    [T_FLOAT_CONST] = { parse_number,      NULL,         PREC_PRIMARY },
-    [T_LPAR]        = { parse_parenthesis, NULL,         PREC_NONE    },
-    [T_SEMICOLON]   = { NULL,              NULL,         PREC_NONE    }
+    [T_PLUS]          = { NULL,              parse_binary, PREC_TERM    },
+    [T_MINUS]         = { parse_unary,       parse_binary, PREC_TERM    },
+    [T_STAR]          = { NULL,              parse_binary, PREC_FACTOR  },
+    [T_SLASH]         = { NULL,              parse_binary, PREC_FACTOR  },
+    [T_INT_CONST]     = { parse_number,      NULL,         PREC_PRIMARY },
+    [T_FLOAT_CONST]   = { parse_number,      NULL,         PREC_PRIMARY },
+    [T_LPAR]          = { parse_parenthesis, NULL,         PREC_NONE    },
+    [T_SEMICOLON]     = { NULL,              NULL,         PREC_NONE    },
+    [T_PERCENT]       = { NULL,              parse_binary, PREC_FACTOR  },
+    [T_LARROW]        = { NULL,              parse_binary, PREC_COMPARE },
+    [T_RARROW]        = { NULL,              parse_binary, PREC_COMPARE },
+    [T_LTE]           = { NULL,              parse_binary, PREC_COMPARE },
+    [T_GTE]           = { NULL,              parse_binary, PREC_COMPARE },
+    [T_COMPARE_EQUAL] = { NULL,              parse_binary, PREC_EQUAL   },
+    [T_NOT_EQUAL]     = { NULL,              parse_binary, PREC_EQUAL   },
+    [T_AND]           = { NULL,              parse_binary, PREC_AND     },
+    [T_OR]            = { NULL,              parse_binary, PREC_OR      },
+    [T_EXCLAMATION]   = { parse_unary,       NULL,         PREC_UNARY   }
 };
 
 void parser_init() {
@@ -104,18 +114,19 @@ static void parse_binary() {
     parse_precedence(get_rule(op)->precedence);
 
     switch(op) {
-    case T_PLUS: 
-        generator_emit_bytecode(OP_PLUS);
-        break;
-    case T_MINUS: 
-        generator_emit_bytecode(OP_MINUS);
-        break;
-    case T_STAR: 
-        generator_emit_bytecode(OP_MULTIPLY);
-        break;
-    case T_SLASH: 
-        generator_emit_bytecode(OP_DIVIDE);
-        break;
+    case T_PLUS:          generator_emit_bytecode(OP_PLUS);      break;
+    case T_MINUS:         generator_emit_bytecode(OP_MINUS);     break;
+    case T_STAR:          generator_emit_bytecode(OP_MULTIPLY);  break;
+    case T_SLASH:         generator_emit_bytecode(OP_DIVIDE);    break;
+    case T_PERCENT:       generator_emit_bytecode(OP_MODULO);    break;
+    case T_LARROW:        generator_emit_bytecode(OP_LT);        break;
+    case T_RARROW:        generator_emit_bytecode(OP_GT);        break;
+    case T_LTE:           generator_emit_bytecode(OP_LTE);       break;
+    case T_GTE:           generator_emit_bytecode(OP_GTE);       break;
+    case T_COMPARE_EQUAL: generator_emit_bytecode(OP_EQUAL);     break;
+    case T_NOT_EQUAL:     generator_emit_bytecode(OP_NOT_EQUAL); break;
+    case T_OR:            generator_emit_bytecode(OP_OR);        break;
+    case T_AND:           generator_emit_bytecode(OP_AND);       break;
     }
 
 }
@@ -124,9 +135,8 @@ static void parse_unary() {
     int prefix = parser.previous.type;
     parser_expression();
     switch (prefix) {
-    case T_MINUS: 
-        generator_emit_bytecode(OP_NEGATE);
-        break;
+    case T_MINUS:       generator_emit_bytecode(OP_NEGATE); break;
+    case T_EXCLAMATION: generator_emit_bytecode(OP_NOT); break;
     }
 }
 

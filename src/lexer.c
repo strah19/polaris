@@ -163,11 +163,14 @@ Token single_character(char single_character_tokens) {
     case '&': return init_token(T_AMPERSAND);
     case '#': return init_token(T_POUND   );
     case ';': return init_token(T_SEMICOLON);
-    case '<': return init_token((check('=')) ? T_LTE : T_LARROW);
-    case '>': return init_token((check('=')) ? T_GTE : T_RARROW);
+    case '<': return init_token((check('=')) ? T_LTE : check('<') ? T_LSHIFT : T_LARROW);
+    case '>': return init_token((check('=')) ? T_GTE : check('>') ? T_RSHIFT : T_RARROW);
     case '[': return init_token(T_LBRACKET);
     case ']': return init_token(T_RBRACKET);
     case ':': return init_token(T_COLON   );
+    case '%': return init_token(T_PERCENT );
+    case '^': return init_token(T_CARET   );
+    case '~': return init_token(T_NOT     );
     case '"': return string();
     default:  return error_token("Unknown character's found in lexer");
     }
@@ -188,6 +191,8 @@ int keywords() {
     case 'w': return (match("hile",   4) ? T_WHILE   : T_IDENTIFIER);
     case 'r': return (match("eturn",  5) ? T_RETURN  : T_IDENTIFIER);
     case 'c' :return (match("har",    3) ? T_CHAR    : T_IDENTIFIER);
+    case 'a': return (match("nd",     2) ? T_AND     : T_IDENTIFIER);
+    case 'o': return (match("r",      1) ? T_OR      : T_IDENTIFIER);
     }
 
     return T_IDENTIFIER;

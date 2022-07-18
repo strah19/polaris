@@ -30,4 +30,6 @@ extern void vm_push(Value value);
 
 extern Value vm_pop();
 
+extern void vm_reset_stack();
+
 #endif // !VM_H
