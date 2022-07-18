@@ -21,12 +21,6 @@
 #include <stdarg.h>
 #include <stdlib.h>
 
-/**
- * @brief Will print an error with a red error flag and end the program.
- * 
- * @param fmt 
- * @param ... 
- */
 void fatal_error(const char* fmt, ...) {
     va_list args;
     va_start(args, fmt);
@@ -38,12 +32,6 @@ void fatal_error(const char* fmt, ...) {
     exit(EXIT_FAILURE);
 }
 
-/**
- * @brief Will print an error with a red error flag.
- * 
- * @param fmt 
- * @param ... 
- */
 void report_warning(const char* fmt, ...) {
     va_list args;
     va_start(args, fmt);
@@ -54,12 +42,6 @@ void report_warning(const char* fmt, ...) {
     va_end(args);
 }
 
-/**
- * @brief Will print a warning with a yellow warning flag.
- * 
- * @param fmt 
- * @param ... 
- */
 void report_error(const char* fmt, ...) {
     va_list args;
     va_start(args, fmt);

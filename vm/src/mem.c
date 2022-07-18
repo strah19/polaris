@@ -17,13 +17,6 @@
 
 #include "mem.h"
 
-/**
- * @brief Will wrap C's realloc function with so simple error checking.
- * 
- * @param pointer 
- * @param new_size 
- * @return void* 
- */
 void* reallocate(void* pointer, size_t new_size) {
     if (new_size == 0) {
         free(pointer);

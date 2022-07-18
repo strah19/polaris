@@ -34,4 +34,6 @@ extern void vm_reset_stack();
 
 extern Value vm_peek();
 
+extern int vm_runtime_error(const char* fmt, ...);
+
 #endif // !VM_H

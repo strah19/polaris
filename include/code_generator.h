@@ -20,4 +20,6 @@ extern int generator_emit_float_constant(Token token);
 
 extern int generator_emit_int_constant(Token token);
 
+extern int generator_emit_binary_constant(Token token);
+
 #endif // !CODE_GENERATOR_H

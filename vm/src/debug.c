@@ -21,25 +21,12 @@
 static int debug_simple_instruction(const char* name, int off);
 static int debug_constant_instruction(Bytecode* bytecode, int off);
 
-/**
- * @brief Takes a chunk of codes and disassembles them.
- * 
- * @param bytecode 
- * @param name 
- */
 void debug_disassemble_bytecode(Bytecode* bytecode, const char* name) {
     printf("----- %s -----\n", name);
     for (int i = 0; i < bytecode->count;) 
         i = debug_disassemble_instruction(bytecode, i);
 }
 
-/**
- * @brief Disassembles specific instructions.
- * 
- * @param bytecode 
- * @param off 
- * @return int 
- */
 int debug_disassemble_instruction(Bytecode* bytecode, int off) {
     printf ("%04d ", off);
 
@@ -63,25 +50,11 @@ int debug_disassemble_instruction(Bytecode* bytecode, int off) {
     }
 }
 
-/**
- * @brief Only when an instruction needs its name when being disassembled.
- * 
- * @param name 
- * @param off 
- * @return int 
- */
 int debug_simple_instruction(const char* name, int off) {
     printf("%s\n", name);
     return off + 1;
 }
 
-/**
- * @brief Describe the constant instruction when being disassembled.
- * 
- * @param bytecode 
- * @param off 
- * @return int 
- */
 int debug_constant_instruction(Bytecode* bytecode, int off) {
     uint8_t constant_address = bytecode->code[off + 1];
     printf("OP_CONSTANT ");
@@ -91,12 +64,6 @@ int debug_constant_instruction(Bytecode* bytecode, int off) {
     return off + 2;
 }
 
-/**
- * @brief Shows the current stack formatted.
- * 
- * @param stack 
- * @param top 
- */
 void debug_disassemble_stack(Value* stack, Value* top) {
     if (stack != top) {
         printf("stack: ");

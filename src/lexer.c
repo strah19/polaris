@@ -17,6 +17,7 @@
 
 #include "lexer.h"
 #include <string.h>
+#include <stdio.h>
 
 #define MAX_NESTED 255
 
@@ -38,24 +39,15 @@ static Token identifier();
 static bool  is_digit(char c);
 static bool  is_alpha(char c);
 static Token number();
+static Token binary();
 static bool  match(const char* keyword, int size);
 
-/**
- * @brief Initalizes the lexer.
- * 
- * @param source 
- */
 void lexer_init(const char* source) {
     lexer.current = source;
     lexer.start = source;
     lexer.line = 1;
 }
 
-/**
- * @brief Will scan a single token out of the code.
- * 
- * @return Token 
- */
 Token lexer_scan() {
     Token error = skip_whitespaces();
     if (error.type != T_OK)
@@ -65,6 +57,7 @@ Token lexer_scan() {
     if (is_eof()) return init_token(T_EOF);
 
     char first = advance(lexer);
+    if (first == '0' && peek() == 'b') return binary();
     if (is_digit(first)) return number();
     if (is_alpha(first)) return identifier();
 
@@ -91,6 +84,13 @@ Token number() {
         return init_token(T_FLOAT_CONST);
     }
     return init_token(T_INT_CONST);
+}
+
+Token binary() {
+    advance();
+    while (peek() == '0' || peek() == '1')
+        advance();
+    return init_token(T_BINARY_CONST);
 }
 
 Token identifier() {
@@ -264,7 +264,7 @@ char peek() {
 }
 
 char peek_ahead() {
-    if (is_eof(lexer)) return '\0'; // Nothing left to get
+    if (is_eof()) return '\0'; // Nothing left to get
     return lexer.current[1];
 }
 

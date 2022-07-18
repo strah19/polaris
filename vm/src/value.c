@@ -17,24 +17,14 @@
 */
 
 #include "value.h"
+#include <math.h>
 
-/**
- * @brief Initializes an array of values.
- * 
- * @param array 
- */
 void value_init(Values* array) {
     array->capacity = 0;
     array->count = 0;
     array->values = NULL;
 }
 
-/**
- * @brief Writes a value into the array.
- * 
- * @param value 
- * @param array 
- */
 void value_write(Value value, Values* array) {
     if (array->capacity < array->count + 1) {
         array->capacity = NEW_CAPACITY(array->capacity);
@@ -44,24 +34,37 @@ void value_write(Value value, Values* array) {
     array->values[array->count++] = value;
 }
 
-/**
- * @brief Frees up the array.
- * 
- * @param array 
- */
 void value_free(Values* array) {
     FREE(Value, array->values);
     value_init(array);
 }
 
-/**
- * @brief Prints the value to stdout.
- * 
- * @param value 
- */
+char* int_to_bin(int a, char *buffer, int buf_size) {
+    buffer += (buf_size - 1);
+
+    for (int i = 31; i >= 0; i--) {
+        *buffer-- = (a & 1) + '0';
+
+        a >>= 1;
+    }
+
+    return buffer;
+}
+
+#define BUF_SIZE 33
+
 void value_print(Value value) {
     switch (value.type) {
-    case TYPE_FLOAT: printf("%g", AS_FLOAT(value)); break;
-    case TYPE_INT:   printf("%d", AS_INT(value)); break;
+    case TYPE_FLOAT:   printf("%g", AS_FLOAT(value));   break;
+    case TYPE_INT:     printf("%d", AS_INT(value));     break;
+    case TYPE_BOOLEAN: printf("%d", AS_BOOLEAN(value)); break;
+    case TYPE_BINARY:  {
+        char buffer[BUF_SIZE];
+        buffer[BUF_SIZE - 1] = '\0';
+        int_to_bin(AS_BINARY(value), buffer, BUF_SIZE - 1);
+        printf("%s", buffer);
+        break;
+    }
+    default: printf("(null)"); break;
     }
 }

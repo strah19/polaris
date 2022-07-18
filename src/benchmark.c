@@ -22,21 +22,12 @@
 static const char* benchmark_name;
 static clock_t start_time;
 
-/**
- * @brief Place at the beginning of an operation and will start a clock.
- * 
- * @param name 
- */
 void begin_benchmark(const char* name) {
     benchmark_name = name;
     printf("Beginning '%s' benchmark.\n", name);
     start_time = clock();
 }
 
-/**
- * @brief Will stop the benchmark and print how long it lasted.
- * 
- */
 void stop_benchmark() {
   double elapsed_time = (double)(clock() - start_time) / CLOCKS_PER_SEC;
   printf("Benchmark '%s' done in %f seconds\n", benchmark_name, elapsed_time);

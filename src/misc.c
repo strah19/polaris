@@ -20,12 +20,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-/**
- * @brief Will open a file and return a char*.
- * 
- * @param filepath 
- * @return char* 
- */
 char* open_file(const char* filepath) {
     FILE* file = fopen(filepath, "rb");
 

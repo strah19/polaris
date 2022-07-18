@@ -57,3 +57,14 @@ int generator_emit_float_constant(Token token) {
 int generator_emit_int_constant(Token token) {
     return bytecode_add_constant(INT_VALUE(atoi(token.start)), generator_get_current_bytecode());
 }
+
+int generator_emit_binary_constant(Token token) {
+    token.start += 2;
+    token.size -= 2;
+    if (token.size > 32) {
+        parser_error(&token, "Overflow! Binary constant must be 32 bits or less");
+        return 0;
+    }
+
+    return bytecode_add_constant(BINARY_VALUE(strtol(token.start, NULL, 2)), generator_get_current_bytecode());
+}

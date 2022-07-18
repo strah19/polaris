@@ -20,12 +20,6 @@
 #include "parser.h"
 #include "code_generator.h"
 
-/**
- * @brief Polaris compiler...duh.
- * 
- * @param source 
- * @return VMResults 
- */
 VMResults compiler_run(const char* source) {
     Bytecode bytecode;
     bytecode_init(&bytecode);
@@ -41,14 +35,6 @@ VMResults compiler_run(const char* source) {
     return results;
 }
 
-/**
- * @brief Will do a single pass and compile into bytecode.
- * 
- * @param source 
- * @param bytecode 
- * @return true 
- * @return false 
- */
 bool compiler_compile(const char* source, Bytecode* bytecode) {
     generator_set_current_bytecode(bytecode);
     lexer_init(source);
@@ -62,10 +48,6 @@ bool compiler_compile(const char* source, Bytecode* bytecode) {
     return !parser_get_errors();
 }
 
-/**
- * @brief Runs at the end of compilation.
- * 
- */
 void compiler_end_compilation() {
     generator_emit_return();
 }

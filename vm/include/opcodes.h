@@ -19,9 +19,10 @@ typedef enum {
     OP_AND,
     OP_OR,
     OP_NOT,
-    OP_BIN_AND,
-    OP_BIN_OR,
-    OP_BIN_NOT,
+    OP_BIT_AND,
+    OP_BIT_OR,
+    OP_BIT_NOT,
+    OP_BIT_XOR,
     OP_LSHIFT,
     OP_RSHIFT
 } Opcodes;

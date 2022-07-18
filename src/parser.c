@@ -22,33 +22,40 @@
 static Parser parser;
 
 static void parse_precedence(int prec);
-static void parse_binary();
+static void parse_infix();
 static void parse_unary();
 static void parse_parenthesis();
 static void parse_float();
 static void parse_int();
+static void parse_binary();
 static void parse_number(int type);
+static int  get_constant_address(int type);
 static ParserRule* get_rule(TokenType token);
 
 static ParserRule rules [] = {
-    [T_PLUS]          = { NULL,              parse_binary, PREC_TERM    },
-    [T_MINUS]         = { parse_unary,       parse_binary, PREC_TERM    },
-    [T_STAR]          = { NULL,              parse_binary, PREC_FACTOR  },
-    [T_SLASH]         = { NULL,              parse_binary, PREC_FACTOR  },
-    [T_INT_CONST]     = { parse_int,         NULL,         PREC_PRIMARY },
-    [T_FLOAT_CONST]   = { parse_float,       NULL,         PREC_PRIMARY },
-    [T_LPAR]          = { parse_parenthesis, NULL,         PREC_NONE    },
-    [T_SEMICOLON]     = { NULL,              NULL,         PREC_NONE    },
-    [T_PERCENT]       = { NULL,              parse_binary, PREC_FACTOR  },
-    [T_LARROW]        = { NULL,              parse_binary, PREC_COMPARE },
-    [T_RARROW]        = { NULL,              parse_binary, PREC_COMPARE },
-    [T_LTE]           = { NULL,              parse_binary, PREC_COMPARE },
-    [T_GTE]           = { NULL,              parse_binary, PREC_COMPARE },
-    [T_COMPARE_EQUAL] = { NULL,              parse_binary, PREC_EQUAL   },
-    [T_NOT_EQUAL]     = { NULL,              parse_binary, PREC_EQUAL   },
-    [T_AND]           = { NULL,              parse_binary, PREC_AND     },
-    [T_OR]            = { NULL,              parse_binary, PREC_OR      },
-    [T_EXCLAMATION]   = { parse_unary,       NULL,         PREC_UNARY   }
+    [T_PLUS]          = { NULL,              parse_infix, PREC_TERM        },
+    [T_MINUS]         = { parse_unary,       parse_infix, PREC_TERM        },
+    [T_STAR]          = { NULL,              parse_infix, PREC_FACTOR      },
+    [T_SLASH]         = { NULL,              parse_infix, PREC_FACTOR      },
+    [T_INT_CONST]     = { parse_int,         NULL,        PREC_PRIMARY     },
+    [T_FLOAT_CONST]   = { parse_float,       NULL,        PREC_PRIMARY     },
+    [T_BINARY_CONST]  = { parse_binary,      NULL,        PREC_PRIMARY     },
+    [T_LPAR]          = { parse_parenthesis, NULL,        PREC_NONE        },
+    [T_SEMICOLON]     = { NULL,              NULL,        PREC_NONE        },
+    [T_PERCENT]       = { NULL,              parse_infix, PREC_FACTOR      },
+    [T_LARROW]        = { NULL,              parse_infix, PREC_COMPARE     },
+    [T_RARROW]        = { NULL,              parse_infix, PREC_COMPARE     },
+    [T_LTE]           = { NULL,              parse_infix, PREC_COMPARE     },
+    [T_GTE]           = { NULL,              parse_infix, PREC_COMPARE     },
+    [T_COMPARE_EQUAL] = { NULL,              parse_infix, PREC_EQUAL       },
+    [T_NOT_EQUAL]     = { NULL,              parse_infix, PREC_EQUAL       },
+    [T_AND]           = { NULL,              parse_infix, PREC_AND         },
+    [T_OR]            = { NULL,              parse_infix, PREC_OR          },
+    [T_EXCLAMATION]   = { parse_unary,       NULL,        PREC_UNARY       },
+    [T_NOT]           = { parse_unary,       NULL,        PREC_UNARY       },
+    [T_AMPERSAND]     = { NULL,              parse_infix, PREC_BITWISE_AND },
+    [T_LINE]          = { NULL,              parse_infix, PREC_BITWISE_OR  },
+    [T_CARET]         = { NULL,              parse_infix, PREC_BITWISE_XOR }
 };
 
 void parser_init() {
@@ -111,7 +118,7 @@ static void parse_precedence(int prec) {
     }
 }
 
-static void parse_binary() {
+static void parse_infix() {
     int op = parser.previous.type;
     parse_precedence(get_rule(op)->precedence);
 
@@ -129,6 +136,9 @@ static void parse_binary() {
     case T_NOT_EQUAL:     generator_emit_bytecode(OP_NOT_EQUAL); break;
     case T_OR:            generator_emit_bytecode(OP_OR);        break;
     case T_AND:           generator_emit_bytecode(OP_AND);       break;
+    case T_AMPERSAND:     generator_emit_bytecode(OP_BIT_AND);   break;
+    case T_LINE:          generator_emit_bytecode(OP_BIT_OR);    break;
+    case T_CARET:         generator_emit_bytecode(OP_BIT_XOR);   break;
     }
 
 }
@@ -137,8 +147,9 @@ static void parse_unary() {
     int prefix = parser.previous.type;
     parser_expression();
     switch (prefix) {
-    case T_MINUS:       generator_emit_bytecode(OP_NEGATE); break;
-    case T_EXCLAMATION: generator_emit_bytecode(OP_NOT); break;
+    case T_MINUS:       generator_emit_bytecode(OP_NEGATE);  break;
+    case T_EXCLAMATION: generator_emit_bytecode(OP_NOT);     break;
+    case T_NOT:         generator_emit_bytecode(OP_BIT_NOT); break;
     }
 }
 
@@ -148,20 +159,24 @@ static void parse_parenthesis() {
 }
 
 void parse_number(int type) {
-    int constant_addr = 0;
-    if (type == T_INT_CONST)
-        constant_addr = generator_emit_int_constant(parser.previous);
-    else if (type == T_FLOAT_CONST)
-        constant_addr = generator_emit_float_constant(parser.previous);
+    int constant_addr = get_constant_address(type);
     if (constant_addr > 255) {
         generator_append_new_chunk();
-        if (type == T_INT_CONST)
-            constant_addr = generator_emit_int_constant(parser.previous);
-        else if (type == T_FLOAT_CONST)
-            constant_addr = generator_emit_float_constant(parser.previous);
+        constant_addr = get_constant_address(type);
     }
     generator_emit_bytecode(OP_CONSTANT);
     generator_emit_bytecode(constant_addr);
+}
+
+int get_constant_address(int type) {
+    switch (type) {
+    case T_INT_CONST:    return generator_emit_int_constant(parser.previous);
+    case T_FLOAT_CONST:  return generator_emit_float_constant(parser.previous);
+    case T_BINARY_CONST: return generator_emit_binary_constant(parser.previous);
+    default: 
+        parser_error(&parser.previous, "Unknown type found");
+        return 0;
+    }
 }
 
 static void parse_float() {
@@ -170,6 +185,10 @@ static void parse_float() {
 
 static void parse_int() {
     parse_number(T_INT_CONST);
+}
+
+static void parse_binary() {
+    parse_number(T_BINARY_CONST);
 }
 
 static ParserRule* get_rule(TokenType token) {
