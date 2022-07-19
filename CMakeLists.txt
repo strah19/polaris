@@ -11,7 +11,6 @@ option(USE_VM "Use Polaris's implemented virtual machine" ON)
 configure_file(${PROJECT_SOURCE_DIR}/include/config.h.in ${PROJECT_SOURCE_DIR}/include/config.h)
 
 include_directories(include)
-include_directories(include/interpreter)
 file(GLOB SOURCES "src/*.cpp")
 
 if(USE_VM)
