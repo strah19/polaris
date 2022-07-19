@@ -195,6 +195,7 @@ int keywords() {
     case 'a': return (match("nd",     2) ? T_AND     : T_IDENTIFIER);
     case 'o': return (match("r",      1) ? T_OR      : T_IDENTIFIER);
     case 't': return (match("rue",    3) ? T_TRUE    : T_IDENTIFIER);
+    case 'p': return (match("rint",   4) ? T_PRINT   : T_IDENTIFIER);
     }
 
     return T_IDENTIFIER;

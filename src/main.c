@@ -20,6 +20,7 @@
 #include "benchmark.h"
 #include "compiler.h"
 #include "misc.h"
+#include "parser.h"
 #include <time.h>
 
 #define MAX_REPL_SIZE 256
@@ -50,7 +51,7 @@ int main(int argc, char* argv[]) {
     vm_free();
 
     switch (result) {
-    case VM_COMPILER_ERROR: fatal_error("Exiting with compiler errors.\n");
+    case VM_COMPILER_ERROR: fatal_error("Exiting with %d compiler errors.\n", parser_get_errors());
     case VM_RUNTIME_ERROR:  fatal_error("Exiting with runtime errors.\n");
     default: printf("Exiting with no errors.\n");
     }

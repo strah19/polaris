@@ -73,7 +73,7 @@ int debug_constant_instruction(Bytecode* bytecode, int off) {
     uint8_t constant_address = bytecode->code[off + 1];
     printf("OP_CONSTANT ");
     printf("%04d '", constant_address);
-    value_print(bytecode->constants.values[constant_address]);
+    value_print(bytecode->constants.values[constant_address], false);
     printf("'\n");
     return off + 2;
 }
@@ -83,7 +83,7 @@ void debug_disassemble_stack(Value* stack, Value* top) {
         printf("stack: ");
         for (Value* i = stack; i < top; i++) {
             printf ("[ ");
-            value_print(*i);
+            value_print(*i, false);
             printf(" (%d) ", i->type);
             printf(" ]");
         }

@@ -17,7 +17,10 @@
 */
 
 #include "value.h"
-#include <math.h>
+
+#define BIN_BUF_SIZE 33
+
+static char* int_to_bin(int a, char *buffer, int buf_size);
 
 void value_init(Values* array) {
     array->capacity = 0;
@@ -39,32 +42,28 @@ void value_free(Values* array) {
     value_init(array);
 }
 
-char* int_to_bin(int a, char *buffer, int buf_size) {
+static char* int_to_bin(int a, char *buffer, int buf_size) {
     buffer += (buf_size - 1);
-
     for (int i = 31; i >= 0; i--) {
         *buffer-- = (a & 1) + '0';
-
         a >>= 1;
     }
-
     return buffer;
 }
 
-#define BUF_SIZE 33
-
-void value_print(Value value) {
+void value_print(Value value, bool newline) {
     switch (value.type) {
     case TYPE_FLOAT:   printf("%g", AS_FLOAT(value));   break;
     case TYPE_INT:     printf("%d", AS_INT(value));     break;
     case TYPE_BOOLEAN: printf("%d", AS_BOOLEAN(value)); break;
     case TYPE_BINARY:  {
-        char buffer[BUF_SIZE];
-        buffer[BUF_SIZE - 1] = '\0';
-        int_to_bin(AS_BINARY(value), buffer, BUF_SIZE - 1);
+        char buffer[BIN_BUF_SIZE];
+        buffer[BIN_BUF_SIZE - 1] = '\0';
+        int_to_bin(AS_BINARY(value), buffer, BIN_BUF_SIZE - 1);
         printf("%s", buffer);
         break;
     }
     default: printf("(null)"); break;
     }
+    printf("%s", (newline) ? "\n" : "");
 }

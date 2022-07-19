@@ -24,7 +24,8 @@ typedef enum {
     OP_BIT_NOT,
     OP_BIT_XOR,
     OP_LSHIFT,
-    OP_RSHIFT
+    OP_RSHIFT,
+    OP_PRINT
 } Opcodes;
 
 #endif // !OPCODES_H

@@ -14,6 +14,7 @@ typedef enum {
     PREC_BITWISE_AND,
     PREC_EQUAL,
     PREC_COMPARE,
+    PREC_BITWISE_SHIFT,
     PREC_TERM,
     PREC_FACTOR,
     PREC_UNARY,
@@ -23,7 +24,7 @@ typedef enum {
 typedef struct {
     Token current;
     Token previous;
-    bool error_found;
+    int errors;
     bool panic;
 } Parser;
 
@@ -49,12 +50,16 @@ extern void parser_error_at_current(const char* msg);
 
 extern void parser_error(Token* token, const char* msg);
 
-extern bool parser_get_errors();
+extern int parser_get_errors();
 
-extern void parser_expression();
+extern void parse_expression();
 
 extern void parse_decleration();
 
 extern void parse_statement();
+
+extern void parse_print_statement();
+
+extern void parser_synchronize();
 
 #endif // !PARSER_H

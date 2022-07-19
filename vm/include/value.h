@@ -40,7 +40,6 @@ typedef struct {
 #define IS_NUMBER(value) (value.type == TYPE_FLOAT || value.type == TYPE_INT)
 #define IS_NUMERIC(value) (value.type == TYPE_FLOAT || value.type == TYPE_INT || value.type == TYPE_BOOLEAN || value.type == TYPE_BINARY)
 
-
 typedef struct {
     int    capacity;
     int    count;
@@ -53,6 +52,6 @@ extern void value_write(Value value, Values* array);
 
 extern void value_free(Values* array);
 
-extern void value_print(Value value);
+extern void value_print(Value value, bool newline);
 
 #endif // !VALUE_H
