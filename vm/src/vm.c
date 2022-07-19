@@ -126,6 +126,7 @@ VMResults vm_run(Bytecode* bytecode) {
             case OP_LSHIFT:  INT_BINARY(<<);  break;
             case OP_RSHIFT:  INT_BINARY(>>);  break;
             case OP_PRINT: value_print(vm_pop(), true);
+            case OP_POP: vm_pop(); break;
 
             }
             vm.ip++;

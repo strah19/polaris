@@ -57,6 +57,8 @@ int debug_disassemble_instruction(Bytecode* bytecode, int off) {
     case OP_BIT_OR:    return debug_simple_instruction("OP_BIT_OR",    off);
     case OP_BIT_AND:   return debug_simple_instruction("OP_BIT_AND",   off);
     case OP_BIT_XOR:   return debug_simple_instruction("OP_BIT_XOR",   off);
+    case OP_PRINT:     return debug_simple_instruction("OP_PRINT",     off);
+    case OP_POP:       return debug_simple_instruction("OP_POP",       off);
     case OP_CONSTANT:  return debug_constant_instruction(bytecode,     off);
     default:
         printf("Unknown opcode %d\n", instruction);

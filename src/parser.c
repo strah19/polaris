@@ -95,9 +95,9 @@ void parser_error(Token* token, const char* msg) {
     parser.panic = true;
     parser.errors++;
     if (token->type == T_EOF)
-        report_error("At the end of the file : %s.\n", msg);
+        report_error("At the end of the file %s.\n", msg);
     else
-        report_error("on line %d at '%.*s' : %s.\n", token->line, token->size, token->start, msg);
+        report_error("on line %d at '%.*s' %s.\n", token->line, token->size, token->start, msg);
 }
 
 int parser_get_errors() {
@@ -231,7 +231,7 @@ void parse_decleration() {
 }
 
 void parser_synchronize() {
-    while (!parser_check(T_SEMICOLON))
+    while (!parser_check(T_SEMICOLON) && !parser_check(T_EOF))
         parser_advance();
     parser_advance();
     parser.panic = false;
@@ -241,11 +241,17 @@ void parse_statement() {
     if (parser_match(T_PRINT))
         parse_print_statement();
     else
-        parse_expression();
-    parser_consume(T_SEMICOLON, "Expected ';'");
+        parse_expression_statement();
 }
 
 void parse_print_statement() {
     parse_expression();
     generator_emit_bytecode(OP_PRINT);
+    parser_consume(T_SEMICOLON, "Expected ';' after print statement");
+}
+
+void parse_expression_statement() {
+    parse_expression();
+    generator_emit_bytecode(OP_POP);
+    parser_consume(T_SEMICOLON, "Expected ';' after expression statement");
 }

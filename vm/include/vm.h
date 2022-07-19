@@ -4,7 +4,6 @@
 #include "bytecode.h"
 #include "opcodes.h"
 
-//#define DEBUG_EXECUTION
 #define MAX_STACK 256
 
 typedef struct {

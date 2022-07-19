@@ -60,6 +60,8 @@ extern void parse_statement();
 
 extern void parse_print_statement();
 
+extern void parse_expression_statement();
+
 extern void parser_synchronize();
 
 #endif // !PARSER_H
