@@ -15,6 +15,10 @@
 #define AST_NEW(type, ...) \
     static_cast<type*>(default_ast(new type(__VA_ARGS__)))
 
+static Precedence PRECEDENCE [] = {
+    [T_PLUS] = PREC_TERM
+};
+
 Ast* Parser::default_ast(Ast* ast) {
     ast->line = peek()->line;
     ast->file = filepath;
@@ -128,6 +132,51 @@ Ast_VarDecleration* Parser::parse_variable_decleration() {
     return nullptr;
 }
 
-Ast_Expression* Parser::parse_expression() {
+Ast_Expression* Parser::parse_expression(Precedence precedence) {
+    Token* left = advance();
+    Ast_Expression* expression;
+    if (is_unary(left)) expression = parse_unary_expression();
+    else if (is_primary(left)) expression = parse_primary_expression();
+    else throw parser_error(left, "Expected unary or primary expression"); 
+
+   while (peek()->type != T_EOF && precedence < PRECEDENCE[peek()->type]) {
+        advance();
+        expression = parse_binary_expression(expression);
+    }
+    return expression;
+}
+
+Ast_Expression* Parser::parse_unary_expression() {
+    int op = peek(-1)->type;
+    Ast_Expression* expression = parse_expression();
+    switch (op) {
+    case T_MINUS: return AST_NEW(Ast_UnaryExpression, expression, AST_UNARY_MINUS);
+    }
     return nullptr;
+}
+
+Ast_Expression* Parser::parse_primary_expression() {
+    Ast_PrimaryExpression* primary = AST_NEW(Ast_PrimaryExpression);
+    primary->type_value = AST_TYPE_INT;
+    primary->int_const = atoi(peek(-1)->start);
+    return primary;
+}
+
+Ast_Expression* Parser::parse_binary_expression(Ast_Expression* left) {
+    int op = peek(-1)->type;
+    Ast_Expression* right = parse_expression(PRECEDENCE[op]);
+
+    switch (op) {
+    case T_PLUS: return AST_NEW(Ast_BinaryExpression, left, AST_OPERATOR_ADD, right);
+    }
+
+    return nullptr;
+}
+
+bool Parser::is_unary(Token* token) {
+    return (token->type == T_MINUS);
+}
+
+bool Parser::is_primary(Token* token) {
+    return (token->type == T_INT_CONST);
 }

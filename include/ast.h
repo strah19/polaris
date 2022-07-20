@@ -4,7 +4,7 @@
 #include <cinttypes>
 #include <stdio.h>
 
-enum {
+enum AstType {
     AST_EXPRESSION,
     AST_UNARY,
     AST_PRIMARY,
@@ -21,13 +21,13 @@ enum {
     AST_IF,
     AST_ELIF,
     AST_ELSE,
-    AST_FOR,
     AST_WHILE,
     AST_RETURN,
-    AST_TRANSLATION_UNIT
+    AST_TRANSLATION_UNIT,
+    AST_NONE,
 };
 
-enum {
+enum AstOperatorType {
     AST_OPERATOR_MULTIPLICATIVE,
     AST_OPERATOR_DIVISION,
     AST_OPERATOR_MODULO,
@@ -49,14 +49,14 @@ enum {
     AST_OPERATOR_NONE
 };
 
-enum {
+enum AstUnaryType {
     AST_UNARY_MINUS,
     AST_UNARY_NOT,
     AST_UNARY_BIT_NOT,
     AST_UNARY_NONE
 };
 
-enum {
+enum AstEqualType {
     AST_EQUAL,
     AST_EQUAL_PLUS,
     AST_EQUAL_MINUS,
@@ -65,22 +65,22 @@ enum {
     AST_EQUAL_MOD
 };
 
-enum {
-    AST_FLOAT,
-    AST_INT,
-    AST_BOOLEAN,
-    AST_STRING,
-    AST_NESTED,
-    AST_CHAR,
-    AST_INPUT,
-    AST_ID,
-    AST_CAST,
-    AST_FUNC_CALL,
-    AST_VOID,
+enum AstDataType {
+    AST_TYPE_FLOAT,
+    AST_TYPE_INT,
+    AST_TYPE_BOOLEAN,
+    AST_TYPE_STRING,
+    AST_TYPE_NESTED,
+    AST_TYPE_CHAR,
+    AST_TYPE_INPUT,
+    AST_TYPE_ID,
+    AST_TYPE_CAST,
+    AST_TYPE_CALL,
+    AST_TYPE_VOID,
     AST_TYPE_NONE
 };
 
-enum {
+enum AstSpecifierType {
     AST_SPECIFIER_NONE  = 0x00,
     AST_SPECIFIER_CONST = 0x01
 };
@@ -93,7 +93,7 @@ struct Ast {
     Ast() { }
     ~Ast() { printf("AST\n"); }
 
-	int type = 0;
+	AstType type = AST_NONE;
     uint32_t line = 0;
     const char* file;
 };
@@ -116,30 +116,30 @@ struct Ast_FunctionCall {
 };
 
 struct Ast_Cast {
-    Ast_Cast(Ast_Expression* expression, int cast_type) : cast_type(cast_type), expression(expression) { }
+    Ast_Cast(Ast_Expression* expression, AstDataType cast_type) : cast_type(cast_type), expression(expression) { }
     ~Ast_Cast() {
         printf("Cast\n");
         delete expression;
     }
     Ast_Expression* expression = nullptr;
-    int cast_type = AST_TYPE_NONE;
+    AstDataType cast_type = AST_TYPE_NONE;
 };
 
 struct Ast_PrimaryExpression : public Ast_Expression {
     Ast_PrimaryExpression() { type = AST_PRIMARY; }
-    Ast_PrimaryExpression(const char* ident) : ident(ident), type_value(AST_ID) { type = AST_PRIMARY; }
-    Ast_PrimaryExpression(float float_const) : float_const(float_const), type_value(AST_FLOAT) { type = AST_PRIMARY; }
-    Ast_PrimaryExpression(char char_const) : char_const(char_const), type_value(AST_CHAR) { type = AST_PRIMARY; }
+    Ast_PrimaryExpression(const char* ident) : ident(ident), type_value(AST_TYPE_ID) { type = AST_PRIMARY; }
+    Ast_PrimaryExpression(float float_const) : float_const(float_const), type_value(AST_TYPE_FLOAT) { type = AST_PRIMARY; }
+    Ast_PrimaryExpression(char char_const) : char_const(char_const), type_value(AST_TYPE_CHAR) { type = AST_PRIMARY; }
     ~Ast_PrimaryExpression() {
         printf("Primary\n");
         switch (type_value) {
-        case AST_NESTED:    delete nested; break;
-        case AST_CAST:      delete cast;   break;
-        case AST_FUNC_CALL: delete call;   break;
+        case AST_TYPE_NESTED:    delete nested; break;
+        case AST_TYPE_CAST:      delete cast;   break;
+        case AST_TYPE_CALL:      delete call;   break;
+        default:                                break;
         }
     }
-    int type_value = AST_TYPE_NONE;
-    int array_size = -1;
+    AstDataType type_value = AST_TYPE_NONE;
 
     union {
         int         int_const;
@@ -148,7 +148,7 @@ struct Ast_PrimaryExpression : public Ast_Expression {
         const char* string;
         char        char_const;
         bool        boolean;
-        int         input_type;
+        AstDataType input_type;
         
         Ast_FunctionCall* call;
         Ast_Expression*   nested;
@@ -158,13 +158,14 @@ struct Ast_PrimaryExpression : public Ast_Expression {
 
 struct Ast_BinaryExpression : public Ast_Expression {
     Ast_BinaryExpression() { type = AST_BINARY; }
-    Ast_BinaryExpression(Ast_Expression* left, int op, Ast_Expression* right) : left(left), op(op), right(right) { type = AST_BINARY; }
+    Ast_BinaryExpression(Ast_Expression* left, AstOperatorType op, Ast_Expression* right) 
+        : left(left), op(op), right(right) { type = AST_BINARY; }
     ~Ast_BinaryExpression() {
         printf("Binary\n");
         delete left;
         delete right;
     }
-    int op = AST_OPERATOR_NONE;
+    AstOperatorType op = AST_OPERATOR_NONE;
 
     Ast_Expression* left = nullptr;
     Ast_Expression* right = nullptr;
@@ -178,23 +179,23 @@ struct Ast_BinaryExpression : public Ast_Expression {
 
 struct Ast_UnaryExpression : public Ast_Expression {
     Ast_UnaryExpression() { type = AST_UNARY; }
-    Ast_UnaryExpression(Ast_Expression* next, int op) : op(op), next(next) { type = AST_UNARY; }
+    Ast_UnaryExpression(Ast_Expression* next, AstUnaryType op) : op(op), next(next) { type = AST_UNARY; }
     ~Ast_UnaryExpression() {
         printf("Unary\n");
         delete next;
     }
     Ast_Expression* next = nullptr;
-    int op = AST_UNARY_NONE;
+    AstUnaryType op = AST_UNARY_NONE;
 };
 
 struct Ast_Assignment : public Ast_Expression {
     Ast_Assignment() { type = AST_ASSIGNMENT; }
-    Ast_Assignment(Ast_Expression* expression, const char* id, int equal_type = AST_EQUAL) : expression(expression), id(id), equal_type(equal_type) { type = AST_ASSIGNMENT; }
+    Ast_Assignment(Ast_Expression* expression, const char* id, AstEqualType equal_type = AST_EQUAL) : expression(expression), id(id), equal_type(equal_type) { type = AST_ASSIGNMENT; }
     ~Ast_Assignment() {
         printf("Assignment\n");
         delete expression;
     }
-    int equal_type = AST_EQUAL;
+    AstEqualType equal_type = AST_EQUAL;
     const char* id = nullptr;
     Ast_Expression* expression = nullptr;
 };
@@ -278,15 +279,15 @@ struct Ast_WhileLoop : Ast_ConditionalStatement {
 
 struct Ast_VarDecleration : public Ast_Decleration {
     Ast_VarDecleration() { type = AST_VAR_DECLERATION; }
-    Ast_VarDecleration(const char* ident, Ast_Expression* expression, int type_value, int specifiers) 
+    Ast_VarDecleration(const char* ident, Ast_Expression* expression, AstDataType type_value, AstSpecifierType specifiers) 
         : ident(ident), expression(expression), type_value(type_value), specifiers(specifiers) { type = AST_VAR_DECLERATION; }
     ~Ast_VarDecleration() {
         printf("VarDec\n");
         delete expression;
     }
 
-    int type_value = AST_TYPE_NONE;
-    int specifiers = AST_SPECIFIER_NONE;
+    AstDataType type_value = AST_TYPE_NONE;
+    AstSpecifierType specifiers = AST_SPECIFIER_NONE;
     const char* ident = nullptr;
 
     Ast_Expression* expression = nullptr;
@@ -294,7 +295,7 @@ struct Ast_VarDecleration : public Ast_Decleration {
 
 struct Ast_Function : public Ast_Decleration {
     Ast_Function() { type = AST_FUNCTION; }
-    Ast_Function(const char* ident, int return_type, const std::vector<Ast_VarDecleration*> args, Ast_Scope* scope) : 
+    Ast_Function(const char* ident, AstDataType return_type, const std::vector<Ast_VarDecleration*> args, Ast_Scope* scope) : 
         ident(ident), return_type(return_type), args(args), scope(scope) { type = AST_FUNCTION; }
     ~Ast_Function() {
         printf("Function\n");
@@ -304,7 +305,7 @@ struct Ast_Function : public Ast_Decleration {
 
 
     const char* ident = nullptr;
-    int return_type = AST_VOID;
+    AstDataType return_type = AST_TYPE_VOID;
     std::vector<Ast_VarDecleration*> args;
     Ast_Scope* scope = nullptr;
 };

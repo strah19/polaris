@@ -5,6 +5,23 @@
 #include "ast.h"
 #include <cinttypes>
 
+enum Precedence {
+    PREC_NONE,
+    PREC_ASSIGNMENT,
+    PREC_OR,
+    PREC_AND,
+    PREC_BITWISE_OR,
+    PREC_BITWISE_XOR,
+    PREC_BITWISE_AND,
+    PREC_EQUAL,
+    PREC_COMPARE,
+    PREC_BITWISE_SHIFT,
+    PREC_TERM,
+    PREC_FACTOR,
+    PREC_UNARY,
+    PREC_PRIMARY
+};
+
 struct ParserError {
     Token* token = nullptr;
 
@@ -37,7 +54,14 @@ private:
     Ast_Function*            parse_function();
     Ast_VarDecleration*      parse_variable_decleration();
     Ast_ExpressionStatement* parse_expression_statement();
-    Ast_Expression*          parse_expression();
+    Ast_Expression*          parse_expression(Precedence precedence = PREC_NONE);
+
+    Ast_Expression* parse_binary_expression(Ast_Expression* left);
+    Ast_Expression* parse_unary_expression();
+    Ast_Expression* parse_primary_expression();
+
+    bool is_unary(Token* token);
+    bool is_primary(Token* token);
 private:
     Token* tokens = nullptr;
     uint32_t current = 0;
