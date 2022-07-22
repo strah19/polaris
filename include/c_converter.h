@@ -5,6 +5,7 @@
 
 static const char* PREAMBLE_BOILERPLATE = 
 "#include <stdio.h>\n"
+"#include <stdbool.h>\n"
 "#include <stdint.h>\n\n"
 "typedef uint32_t u32;\n"
 "typedef int32_t i32;\n"

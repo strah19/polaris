@@ -92,10 +92,13 @@ ParserError Parser::parser_error(Token* token, const char* msg) {
 }
 
 void Parser::parser_warning(Token* token, const char* msg) {
-    if (filepath)
-        report_warning("In file '%s', near '%.*s' on line %d, '%s'.\n", filepath, token->size, token->start, token->line, msg);
-    else 
-        report_warning("Near '%.*s' on line %d, '%s'.\n", token->size, token->start, token->line, msg);}
+    if (show_warnings) {
+        if (filepath)
+            report_warning("In file '%s', near '%.*s' on line %d, '%s'.\n", filepath, token->size, token->start, token->line, msg);
+        else 
+            report_warning("Near '%.*s' on line %d, '%s'.\n", token->size, token->start, token->line, msg);
+    }
+}
 
 Token* Parser::consume(int type, const char* msg) {
     if (check(type)) return advance();
@@ -128,7 +131,7 @@ void Parser::synchronize() {
 
 Ast_Decleration* Parser::parse_decleration() {
     try {
-        if (peek()->type == T_IDENTIFIER && peek(1)->type == T_COLON) {
+        if (peek()->type == T_IDENTIFIER && (peek(1)->type == T_COLON || peek(1)->type == T_COLON_EQUAL)) {
             if (peek(2)->type == T_FUNC)
                 return parse_function();
             return parse_variable_decleration();
@@ -158,25 +161,30 @@ Ast_Function* Parser::parse_function() {
 
 Ast_VarDecleration* Parser::parse_variable_decleration() {
     consume(T_IDENTIFIER, "Expected an identifier in variable decleration");
-    char* id = (char*) peek(-1)->start;
-    id[peek(-1)->size] = '\0';
+    Token* start_token = peek(-1);
+    char* id = (char*) start_token->start;
+    id[start_token->size] = '\0';
 
-    consume(T_COLON, "Expected colon in variable decleration");
-
-    AstDataType var_type = parse_type();
-
-    Ast_Expression* expression = nullptr;
-    if (match(T_EQUAL))
-        expression = parse_expression();
+    if (match(T_COLON)) {
+        AstDataType var_type = parse_type();
+        Ast_Expression* expression = nullptr;
+        if (match(T_EQUAL))
+            expression = parse_expression(PREC_NONE, var_type);
+        consume(T_SEMICOLON, "Expected ';' in variable decleration");
+        return AST_NEW(Ast_VarDecleration, id, expression, var_type, AST_SPECIFIER_NONE);
+    }
+    consume(T_COLON_EQUAL, "Expected ':' or ':=' in variable decleration");  
+    Ast_Expression* expression = parse_expression();
     consume(T_SEMICOLON, "Expected ';' in variable decleration");
-    return AST_NEW(Ast_VarDecleration, id, expression, var_type, AST_SPECIFIER_NONE);
+    AstDataType type = search_expression_for_type(start_token, expression);
+    return AST_NEW(Ast_VarDecleration, id, expression, type, AST_SPECIFIER_NONE);
 }
 
-Ast_Expression* Parser::parse_expression(Precedence precedence) {
+Ast_Expression* Parser::parse_expression(Precedence precedence, AstDataType expected_type) {
     Token* left = advance();
     Ast_Expression* expression;
     if (is_unary(left)) expression = parse_unary_expression();
-    else if (is_primary(left)) expression = parse_primary_expression();
+    else if (is_primary(left)) expression = parse_primary_expression(expected_type);
     else throw parser_error(left, "Expected unary or primary expression"); 
 
    while (peek()->type != T_EOF && precedence < PRECEDENCE[peek()->type]) {
@@ -198,18 +206,37 @@ Ast_Expression* Parser::parse_unary_expression() {
     }
 }
 
-Ast_Expression* Parser::parse_primary_expression() {
+Ast_Expression* Parser::parse_primary_expression(AstDataType expected_type) {
     Ast_PrimaryExpression* primary = AST_NEW(Ast_PrimaryExpression);
+    bool check_expected_type = (expected_type == AST_TYPE_NONE) ? false : true;
 
     switch (peek(-1)->type) {
     case T_INT_CONST: {
         primary->type_value = AST_TYPE_INT;
         primary->int_const = atoi(peek(-1)->start);
+        if (check_expected_type && !is_type(primary, expected_type))
+            throw parser_error(peek(-1), "Integer is not allowed in this expression");
         break;
     }
     case T_FLOAT_CONST: {
         primary->type_value = AST_TYPE_FLOAT;
         primary->float_const = strtof(peek(-1)->start, NULL);
+        if (check_expected_type && !is_type(primary, expected_type))
+            throw parser_error(peek(-1), "Float is not allowed in this expression");
+        break;
+    }
+    case T_TRUE: {
+        primary->type_value = AST_TYPE_BOOLEAN;
+        primary->boolean = true;
+        if (check_expected_type && !is_type(primary, expected_type))
+            throw parser_error(peek(-1), "Boolean is not allowed in this expression");
+        break;
+    }
+    case T_FALSE: {
+        primary->type_value = AST_TYPE_BOOLEAN;
+        primary->boolean = false;
+        if (check_expected_type && !is_type(primary, expected_type))
+            throw parser_error(peek(-1), "Boolean is not allowed in this expression");
         break;
     }
     case T_LPAR: {
@@ -259,18 +286,27 @@ bool Parser::is_unary(Token* token) {
 }
 
 bool Parser::is_primary(Token* token) {
-    return (token->type == T_INT_CONST || token->type == T_FLOAT_CONST || token->type == T_LPAR);
+    return (token->type == T_INT_CONST || token->type == T_FLOAT_CONST || token->type == T_LPAR || 
+            token->type == T_TRUE || token->type == T_FALSE);
 }
 
 void Parser::check_types(Ast_PrimaryExpression* left, Ast_PrimaryExpression* right) {
-    if (left->type_value == right->type_value)
-        return;
-    if (!check_either(left, right, AST_TYPE_INT)) 
+    if (left->type_value == right->type_value)     return;
+    if (ignore_type(left, right, AST_TYPE_NESTED)) return; 
+    if (!check_either(left, right, AST_TYPE_INT))
         throw parser_error(peek(-1), "Type does not match with integer");
+    else if (!check_either(left, right, AST_TYPE_BOOLEAN))
+        throw parser_error(peek(-1), "Type does not match with boolean");
+    else if (!check_either(left, right, AST_TYPE_FLOAT))
+        throw parser_error(peek(-1), "Type does not match with float");
 }
 
 bool Parser::check_either(Ast_PrimaryExpression* left, Ast_PrimaryExpression* right, AstDataType type) {
     return ((is_type(left, type) && is_type(right, type)) || (!is_type(left, type) && !is_type(right, type)));
+}
+
+bool Parser::ignore_type(Ast_PrimaryExpression* left, Ast_PrimaryExpression* right, AstDataType type) {
+    return (is_type(left, type) || is_type(right, type));
 }
 
 bool Parser::is_type(Ast_PrimaryExpression* prim, AstDataType type) {
@@ -281,10 +317,39 @@ AstDataType Parser::parse_type() {
     AstDataType var_type = AST_TYPE_NONE;
 
     switch (peek()->type) {
-    case T_INT:   var_type = AST_TYPE_INT; break;
-    case T_FLOAT: var_type = AST_TYPE_FLOAT; break;
+    case T_INT:     var_type = AST_TYPE_INT;     break;
+    case T_FLOAT:   var_type = AST_TYPE_FLOAT;   break;
+    case T_BOOLEAN: var_type = AST_TYPE_BOOLEAN; break;
     default: throw parser_error(peek(), "Unknown type");
     }
     match(peek()->type);
     return var_type;
+}
+
+AstDataType Parser::search_expression_for_type(Token* token, Ast_Expression* expression) {
+    switch (expression->type) {
+    case AST_UNARY: {
+        return search_expression_for_type(token, AST_CAST(Ast_UnaryExpression, expression)->next);
+    }
+    case AST_BINARY: {
+        Ast_BinaryExpression* binary = AST_CAST(Ast_BinaryExpression, expression);
+        AstDataType type = search_expression_for_type(token, binary->left);
+        if (!real_type(type)) {
+            type = search_expression_for_type(token, binary->right);
+            if (!real_type(type))
+                break;
+        }
+        return type;
+    }
+    case AST_PRIMARY: {
+        Ast_PrimaryExpression* primary = AST_CAST(Ast_PrimaryExpression, expression);
+        return primary->type_value;
+    }
+    default: break;
+    }
+    throw parser_error(token, "Unknown type found in expression");
+}
+
+bool Parser::real_type(AstDataType type) {
+    return (type == AST_TYPE_INT || type == AST_TYPE_FLOAT || type == AST_TYPE_BOOLEAN);
 }

@@ -64,7 +64,6 @@ void run_src_file(const char* filepath) {
 
     Lexer lexer(src);
     Tokens tokens = lexer.run();
-    Lexer::log(tokens);
 
     Parser parser(&tokens[0], filepath);
     parser.parse();

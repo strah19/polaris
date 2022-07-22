@@ -47,6 +47,7 @@ public:
     bool        check(int type);
     bool        is_end();
     bool        has_errors() { return errors; }
+    void        warnings(bool set) { show_warnings = set; }
 private:
     Ast* default_ast(Ast* ast);
     void init(Token* tokens, const char* filepath);
@@ -57,18 +58,21 @@ private:
     Ast_Function*            parse_function();
     Ast_VarDecleration*      parse_variable_decleration();
     Ast_ExpressionStatement* parse_expression_statement();
-    Ast_Expression*          parse_expression(Precedence precedence = PREC_NONE);
+    Ast_Expression*          parse_expression(Precedence precedence = PREC_NONE, AstDataType expected_type = AST_TYPE_NONE);
 
     Ast_Expression* parse_binary_expression(Ast_Expression* left);
     Ast_Expression* parse_unary_expression();
-    Ast_Expression* parse_primary_expression();
+    Ast_Expression* parse_primary_expression(AstDataType expected_type = AST_TYPE_NONE);
 
     bool is_unary(Token* token);
     bool is_primary(Token* token);
 
     void check_types(Ast_PrimaryExpression* left, Ast_PrimaryExpression* right);
     bool check_either(Ast_PrimaryExpression* left, Ast_PrimaryExpression* right, AstDataType type);
+    bool ignore_type(Ast_PrimaryExpression* left, Ast_PrimaryExpression* right, AstDataType type);
     bool is_type(Ast_PrimaryExpression* prim, AstDataType type);
+    bool real_type(AstDataType type);
+    AstDataType search_expression_for_type(Token* token, Ast_Expression* expression);
     AstDataType parse_type();
 private:
     Token* tokens = nullptr;
@@ -76,6 +80,7 @@ private:
     const char* filepath = nullptr;
     Ast_TranslationUnit* unit = nullptr;
     bool errors = false;
+    bool show_warnings = true;
 };
 
 #endif //!PARSER_H

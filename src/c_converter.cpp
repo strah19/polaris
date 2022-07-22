@@ -75,9 +75,10 @@ void Converter::convert_variable_decleration(Ast_VarDecleration* variable_decler
 
 void Converter::convert_type(AstDataType type) {
     switch (type) {
-    case AST_TYPE_INT:   write("int ");   break;
-    case AST_TYPE_FLOAT: write("float "); break;
-    default:                              break;
+    case AST_TYPE_INT:     write("int ");   break;
+    case AST_TYPE_FLOAT:   write("float "); break; 
+    case AST_TYPE_BOOLEAN: write("bool ");  break;
+    default:                                break;
     }
 }
 
@@ -92,6 +93,11 @@ void Converter::convert_expression(Ast_Expression* expression) {
             write("(");
             convert_expression(primary->nested);
             write(")");
+            break;
+        }
+        case AST_TYPE_BOOLEAN: {
+            if (primary->boolean) write("true");
+            else                  write("false");
             break;
         }
         default: break;

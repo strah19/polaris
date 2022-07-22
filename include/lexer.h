@@ -14,7 +14,7 @@ enum TokenType {
     T_CARET,
 
     // Multi-character tokens
-    T_NOT_EQUAL, T_LTE, T_GTE, T_COMPARE_EQUAL, T_LSHIFT, T_RSHIFT,
+    T_NOT_EQUAL, T_LTE, T_GTE, T_COMPARE_EQUAL, T_LSHIFT, T_RSHIFT, T_COLON_EQUAL,
 
     // Keywords
     T_IF, T_ELIF, T_ELSE, T_FOR, T_WHILE, T_BREAK, T_RETURN, T_INT, T_BOOLEAN,
