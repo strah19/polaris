@@ -41,6 +41,7 @@ public:
     Token* advance();
 
     ParserError parser_error(Token* token, const char* msg);
+    void        parser_warning(Token* token, const char* msg);
     Token*      consume(int type, const char* msg);
     bool        match(int type);
     bool        check(int type);
@@ -64,6 +65,11 @@ private:
 
     bool is_unary(Token* token);
     bool is_primary(Token* token);
+
+    void check_types(Ast_PrimaryExpression* left, Ast_PrimaryExpression* right);
+    bool check_either(Ast_PrimaryExpression* left, Ast_PrimaryExpression* right, AstDataType type);
+    bool is_type(Ast_PrimaryExpression* prim, AstDataType type);
+    AstDataType parse_type();
 private:
     Token* tokens = nullptr;
     uint32_t current = 0;

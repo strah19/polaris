@@ -26,12 +26,15 @@ struct Converter {
 
     const char* objname  = "polaris";
     const char* filename = "polaris";
+    const char* flags = "";
     const char* build_directory = nullptr;
 private:
     void open_file();
     void convert_translation_unit(Ast_TranslationUnit* unit);
     void convert_expression_statement(Ast_ExpressionStatement* expression_statment);
+    void convert_variable_decleration(Ast_VarDecleration* variable_decleration);
 
+    void convert_type(AstDataType type);
     void convert_expression(Ast_Expression* expression);
     void semicolon();
     void write(const char* data);

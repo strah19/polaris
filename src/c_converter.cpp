@@ -21,10 +21,10 @@
 void Converter::run(Ast_TranslationUnit* unit) {
     open_file();
 
-    fprintf(file, PREAMBLE_BOILERPLATE);
-    fprintf(file, MAIN_BOILERPLATE);
+    write(PREAMBLE_BOILERPLATE);
+    write(MAIN_BOILERPLATE);
     convert_translation_unit(unit);
-    fprintf(file, POSTAMBLE_BOILERPLATE);
+    write(POSTAMBLE_BOILERPLATE);
 
     fclose(file);
 }
@@ -44,14 +44,17 @@ void Converter::open_file() {
 void Converter::convert_translation_unit(Ast_TranslationUnit* unit) {
     for (auto& dec : unit->declerations) {
         switch (dec->type) {
-        case AST_EXPRESSION_STATEMENT: convert_expression_statement(AST_CAST(Ast_ExpressionStatement, dec));
+        case AST_EXPRESSION_STATEMENT: convert_expression_statement(AST_CAST(Ast_ExpressionStatement, dec)); break;
+        case AST_VAR_DECLERATION:      convert_variable_decleration(AST_CAST(Ast_VarDecleration, dec));      break;
+        default: break;
         }
     }
 }
 
 void Converter::compile() {
     char run_buffer[MAX_CMD_LEN];
-    sprintf(run_buffer, "gcc %s.c -o %s", filename, objname);
+    sprintf(run_buffer, "gcc %s.c -o %s %s", filename, objname, flags);
+    printf("%s\n", run_buffer);
     system(run_buffer);
 }
 
@@ -60,18 +63,38 @@ void Converter::convert_expression_statement(Ast_ExpressionStatement* expression
     semicolon();
 }
 
+void Converter::convert_variable_decleration(Ast_VarDecleration* variable_decleration) {
+    convert_type(variable_decleration->type_value);
+    fprintf(file, "%s ", variable_decleration->ident);
+    if (variable_decleration->expression) {
+        write("= ");
+        convert_expression(variable_decleration->expression);
+    }
+    semicolon();
+}
+
+void Converter::convert_type(AstDataType type) {
+    switch (type) {
+    case AST_TYPE_INT:   write("int ");   break;
+    case AST_TYPE_FLOAT: write("float "); break;
+    default:                              break;
+    }
+}
+
 void Converter::convert_expression(Ast_Expression* expression) {
     switch (expression->type) {
     case AST_PRIMARY: {
         Ast_PrimaryExpression* primary = AST_CAST(Ast_PrimaryExpression, expression);
         switch (primary->type_value) {
-        case AST_TYPE_INT: fprintf(file, "%d", primary->int_const); break;
+        case AST_TYPE_INT:   fprintf(file, "%d", primary->int_const); break;
+        case AST_TYPE_FLOAT: fprintf(file, "%g.f", primary->float_const); break;
         case AST_TYPE_NESTED: {
             write("(");
             convert_expression(primary->nested);
             write(")");
             break;
         }
+        default: break;
         }
         break;
     }
@@ -97,6 +120,7 @@ void Converter::convert_expression(Ast_Expression* expression) {
         case AST_OPERATOR_BIT_XOR:               write("^");  break;
         case AST_OPERATOR_LSHIFT:                write("<<"); break;
         case AST_OPERATOR_RSHIFT:                write(">>"); break;
+        default:                                              break;
         }
         convert_expression(binary->right);
         break;
@@ -107,10 +131,12 @@ void Converter::convert_expression(Ast_Expression* expression) {
         case AST_UNARY_MINUS:   write("-"); break;
         case AST_UNARY_BIT_NOT: write("~"); break;
         case AST_UNARY_NOT:     write("!"); break;
+        default:                            break;
         }
         convert_expression(unary->next);
         break;
     }
+    default: break;
     }
 }
 
@@ -119,5 +145,5 @@ void Converter::semicolon() {
 }
 
 void Converter::write(const char* data) {
-    fprintf(file, data);
+    fprintf(file, "%s", data);
 }

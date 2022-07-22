@@ -43,6 +43,6 @@ void Benchmark::stop() {
     auto duration = end - start;
     auto ms = duration * 0.001;
 
-    printf("%s: %gms", name, ms);
+    printf("%s: %gms\n", name, ms);
     stopped = true;
 }
