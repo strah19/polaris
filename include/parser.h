@@ -35,6 +35,7 @@ public:
     Parser(Token* tokens, const char* filepath);
     ~Parser();
     void parse();
+    Ast_TranslationUnit* get_unit() { return unit; }
 
     Token* peek(int index = 0);
     Token* advance();
@@ -44,6 +45,7 @@ public:
     bool        match(int type);
     bool        check(int type);
     bool        is_end();
+    bool        has_errors() { return errors; }
 private:
     Ast* default_ast(Ast* ast);
     void init(Token* tokens, const char* filepath);
@@ -67,6 +69,7 @@ private:
     uint32_t current = 0;
     const char* filepath = nullptr;
     Ast_TranslationUnit* unit = nullptr;
+    bool errors = false;
 };
 
 #endif //!PARSER_H

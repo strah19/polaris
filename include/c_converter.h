@@ -5,21 +5,38 @@
 
 static const char* PREAMBLE_BOILERPLATE = 
 "#include <stdio.h>\n"
-"#include <stdint.h>\n\n";
+"#include <stdint.h>\n\n"
 "typedef uint32_t u32;\n"
 "typedef int32_t i32;\n"
 "typedef float f32;\n"
 "typedef double f64;\n"
 "typedef uint64_t u64;\n"
-"typedef int64_t i64;\n\n";
+"typedef int64_t i64;\n";
 
 static const char* MAIN_BOILERPLATE = 
 "\n"
 "int main(int argc, char *argv[]) {\n";
 
 static const char* POSTAMBLE_BOILERPLATE = 
-"\n}"
+"\n}";
 
-void convert_translation_unit(Ast_TranslationUnit* unit);
+struct Converter {
+    void run(Ast_TranslationUnit* unit);
+    void compile();
+
+    const char* objname  = "polaris";
+    const char* filename = "polaris";
+    const char* build_directory = nullptr;
+private:
+    void open_file();
+    void convert_translation_unit(Ast_TranslationUnit* unit);
+    void convert_expression_statement(Ast_ExpressionStatement* expression_statment);
+
+    void convert_expression(Ast_Expression* expression);
+    void semicolon();
+    void write(const char* data);
+private:
+    FILE* file = nullptr;
+};
 
 #endif //!C_CONVERTER_H

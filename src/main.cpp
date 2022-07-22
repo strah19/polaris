@@ -13,7 +13,9 @@
 #include "error.h"
 #include "lexer.h"
 #include "util.h"
+#include "c_converter.h"
 #include "parser.h"
+#include "benchmark.h"
 #include <stdio.h>
 #include <time.h>
 
@@ -27,7 +29,6 @@
 
 void repl();
 void run_src_file(const char* filepath);
-void run(const char* src, const char* filepath);
 
 int main(int argc, char* argv[]) {
 
@@ -53,22 +54,31 @@ void repl() {
             report_error("Nothing entered into REPL.\n");
             continue;
         }
-        run(buffer, nullptr);
     }
 }
 
 void run_src_file(const char* filepath) {
     char* src = open_file(filepath);
 
-    run(src, filepath);
+    Benchmark compiler_benchmark("Compiler");
 
-    delete src;
-}
-
-void run(const char* src, const char* filepath) {
     Lexer lexer(src);
     Tokens tokens = lexer.run();
     Lexer::log(tokens);
+
     Parser parser(&tokens[0], filepath);
     parser.parse();
+
+    if (!parser.has_errors()) {
+        Converter converter;
+        converter.filename = "basic";
+        converter.objname = "basic";
+        converter.run(parser.get_unit());
+        compiler_benchmark.stop();
+
+        //This is the C compiler
+        converter.compile();
+    } else fatal_error("Exiting with compiler error(s).\n");
+
+    delete src;
 }
