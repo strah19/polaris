@@ -42,13 +42,24 @@ void Converter::open_file() {
 }
 
 void Converter::convert_translation_unit(Ast_TranslationUnit* unit) {
-    for (auto& dec : unit->declerations) {
-        switch (dec->type) {
-        case AST_EXPRESSION_STATEMENT: convert_expression_statement(AST_CAST(Ast_ExpressionStatement, dec)); break;
-        case AST_VAR_DECLERATION:      convert_variable_decleration(AST_CAST(Ast_VarDecleration, dec));      break;
-        default: break;
-        }
+    for (auto& dec : unit->declerations)
+        convert_decleration(dec);
+}
+
+void Converter::convert_decleration(Ast_Decleration* decleration) {
+    switch (decleration->type) {
+    case AST_EXPRESSION_STATEMENT: convert_expression_statement(AST_CAST(Ast_ExpressionStatement, decleration)); break;
+    case AST_VAR_DECLERATION:      convert_variable_decleration(AST_CAST(Ast_VarDecleration, decleration));      break;
+    case AST_SCOPE:                convert_scope(AST_CAST(Ast_Scope, decleration));                              break;
+    default: break;
     }
+}
+
+void Converter::convert_scope(Ast_Scope* scope) {
+    write("{\n");
+    for (auto& dec : scope->declerations) 
+        convert_decleration(dec);
+    write("}\n");
 }
 
 void Converter::compile() {

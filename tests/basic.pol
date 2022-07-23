@@ -4,4 +4,8 @@
 1.0 + 3.0;
 var : int = (3 + 3) * 7;
 a := 3.0 ;
-b : boolean = 1.0;
+b : boolean = (true or false);
+
+{
+    f := 2;
+}

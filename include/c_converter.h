@@ -32,8 +32,10 @@ struct Converter {
 private:
     void open_file();
     void convert_translation_unit(Ast_TranslationUnit* unit);
+    void convert_decleration(Ast_Decleration* decleration);
     void convert_expression_statement(Ast_ExpressionStatement* expression_statment);
     void convert_variable_decleration(Ast_VarDecleration* variable_decleration);
+    void convert_scope(Ast_Scope* scope);
 
     void convert_type(AstDataType type);
     void convert_expression(Ast_Expression* expression);

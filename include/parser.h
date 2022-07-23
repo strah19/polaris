@@ -4,6 +4,8 @@
 #include "lexer.h"
 #include "ast.h"
 #include <cinttypes>
+#include <map>
+#include <string>
 
 enum Precedence {
     PREC_NONE,
@@ -28,6 +30,20 @@ struct ParserError {
     ParserError() = default;
     ParserError(Token* token) : token(token) { }
 };
+
+enum DefinitionType {
+    DEF_VAR, DEF_FUN, DEF_CLS
+};
+
+struct Scope {
+    Scope() = default;
+    std::map<std::string, DefinitionType> definitions;
+    Scope* previous = nullptr;
+
+    void add(const std::string& name, DefinitionType type);
+    bool in_scope(const std::string& name);
+    bool in_any(const std::string& name);
+};  
 
 class Parser {
 public:
@@ -58,6 +74,8 @@ private:
     Ast_Function*            parse_function();
     Ast_VarDecleration*      parse_variable_decleration();
     Ast_ExpressionStatement* parse_expression_statement();
+    Ast_Scope*               parse_scope();
+    Ast_IfStatement*         parse_if();
     Ast_Expression*          parse_expression(Precedence precedence = PREC_NONE, AstDataType expected_type = AST_TYPE_NONE);
 
     Ast_Expression* parse_binary_expression(Ast_Expression* left);
@@ -81,6 +99,9 @@ private:
     Ast_TranslationUnit* unit = nullptr;
     bool errors = false;
     bool show_warnings = true;
+
+    Scope* current_scope;
+    Scope main_scope;
 };
 
 #endif //!PARSER_H

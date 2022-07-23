@@ -20,6 +20,23 @@ static Precedence PRECEDENCE [T_OK] = {
     PREC_PRIMARY
 };
 
+void Scope::add(const std::string& name, DefinitionType type) {
+    definitions[name] = type;
+}
+
+bool Scope::in_scope(const std::string& name) {
+    return (definitions.find(name) != definitions.end());
+}
+
+bool Scope::in_any(const std::string& name) {
+    Scope* current = this;
+    while (current) {
+        if (current->in_scope(name)) return true;
+        current = current->previous;
+    }
+    return false;
+}
+
 Ast* Parser::default_ast(Ast* ast) {
     ast->line = peek()->line;
     ast->file = filepath;
@@ -58,6 +75,8 @@ void Parser::init(Token* tokens, const char* filepath) {
     this->tokens = tokens;
     this->filepath = filepath;
     unit = AST_NEW(Ast_TranslationUnit);
+
+    current_scope = &main_scope;
 }
 
 Parser::~Parser() {
@@ -145,7 +164,27 @@ Ast_Decleration* Parser::parse_decleration() {
 }
 
 Ast_Statement* Parser::parse_statement() {
+    if (match(T_LCURLY))  return parse_scope();
+    else if (match(T_IF)) return parse_if();
     return parse_expression_statement();
+}
+
+Ast_Scope* Parser::parse_scope() {
+    Ast_Scope* scope = AST_NEW(Ast_Scope);
+
+    Scope* previous_scope = current_scope;
+    current_scope = new Scope;
+    current_scope->previous = previous_scope;
+
+    while (!check(T_RCURLY) && !is_end()) {
+        scope->declerations.push_back(parse_decleration());
+    }
+
+    delete current_scope;
+    current_scope = previous_scope;
+
+    consume(T_RCURLY, "Expected '}' to end scope");
+    return scope;
 }
 
 Ast_ExpressionStatement* Parser::parse_expression_statement() {
@@ -165,6 +204,10 @@ Ast_VarDecleration* Parser::parse_variable_decleration() {
     char* id = (char*) start_token->start;
     id[start_token->size] = '\0';
 
+    if (current_scope->in_any(id))
+        throw parser_error(peek(-1), "Redecleration of variable");
+    current_scope->add(id, DEF_VAR);
+
     if (match(T_COLON)) {
         AstDataType var_type = parse_type();
         Ast_Expression* expression = nullptr;
@@ -178,6 +221,10 @@ Ast_VarDecleration* Parser::parse_variable_decleration() {
     consume(T_SEMICOLON, "Expected ';' in variable decleration");
     AstDataType type = search_expression_for_type(start_token, expression);
     return AST_NEW(Ast_VarDecleration, id, expression, type, AST_SPECIFIER_NONE);
+}
+
+Ast_IfStatement* Parser::parse_if() {
+    return nullptr;
 }
 
 Ast_Expression* Parser::parse_expression(Precedence precedence, AstDataType expected_type) {
@@ -281,15 +328,6 @@ Ast_Expression* Parser::parse_binary_expression(Ast_Expression* left) {
     }
 }
 
-bool Parser::is_unary(Token* token) {
-    return (token->type == T_MINUS || token->type == T_EXCLAMATION || token->type == T_NOT);
-}
-
-bool Parser::is_primary(Token* token) {
-    return (token->type == T_INT_CONST || token->type == T_FLOAT_CONST || token->type == T_LPAR || 
-            token->type == T_TRUE || token->type == T_FALSE);
-}
-
 void Parser::check_types(Ast_PrimaryExpression* left, Ast_PrimaryExpression* right) {
     if (left->type_value == right->type_value)     return;
     if (ignore_type(left, right, AST_TYPE_NESTED)) return; 
@@ -352,4 +390,13 @@ AstDataType Parser::search_expression_for_type(Token* token, Ast_Expression* exp
 
 bool Parser::real_type(AstDataType type) {
     return (type == AST_TYPE_INT || type == AST_TYPE_FLOAT || type == AST_TYPE_BOOLEAN);
+}
+
+bool Parser::is_unary(Token* token) {
+    return (token->type == T_MINUS || token->type == T_EXCLAMATION || token->type == T_NOT);
+}
+
+bool Parser::is_primary(Token* token) {
+    return (token->type == T_INT_CONST || token->type == T_FLOAT_CONST || token->type == T_LPAR || 
+            token->type == T_TRUE || token->type == T_FALSE);
 }
