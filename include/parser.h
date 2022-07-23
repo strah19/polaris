@@ -35,14 +35,19 @@ enum DefinitionType {
     DEF_VAR, DEF_FUN, DEF_CLS
 };
 
+struct Symbol {
+    AstDataType type;
+};
+
 struct Scope {
     Scope() = default;
-    std::map<std::string, DefinitionType> definitions;
+    std::map<std::string, Symbol> definitions;
     Scope* previous = nullptr;
 
-    void add(const std::string& name, DefinitionType type);
+    void add(const std::string& name, const Symbol& sym);
     bool in_scope(const std::string& name);
     bool in_any(const std::string& name);
+    Symbol get(const std::string& name); 
 };  
 
 class Parser {
@@ -78,6 +83,7 @@ private:
     Ast_IfStatement*         parse_if();
     Ast_Expression*          parse_expression(Precedence precedence = PREC_NONE, AstDataType expected_type = AST_TYPE_NONE);
 
+    Ast_Expression* parse_assignment_expression(Ast_Expression* expression);
     Ast_Expression* parse_binary_expression(Ast_Expression* left);
     Ast_Expression* parse_unary_expression();
     Ast_Expression* parse_primary_expression(AstDataType expected_type = AST_TYPE_NONE);

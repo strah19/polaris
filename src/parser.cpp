@@ -16,16 +16,23 @@
 #define AST_NEW(type, ...) \
     static_cast<type*>(default_ast(new type(__VA_ARGS__)))
 
-static Precedence PRECEDENCE [T_OK] = {
-    PREC_PRIMARY
-};
+static Precedence PRECEDENCE [T_OK] = { PREC_PRIMARY };
 
-void Scope::add(const std::string& name, DefinitionType type) {
-    definitions[name] = type;
+void Scope::add(const std::string& name, const Symbol& sym) {
+    definitions[name] = sym;
 }
 
 bool Scope::in_scope(const std::string& name) {
     return (definitions.find(name) != definitions.end());
+}
+
+Symbol Scope::get(const std::string& name) {
+    Scope* current = this;
+    while (current) {
+        if (current->in_scope(name)) return current->definitions[name];
+        current = current->previous;
+    }
+    return { AST_TYPE_NONE };
 }
 
 bool Scope::in_any(const std::string& name) {
@@ -59,6 +66,7 @@ Ast* Parser::default_ast(Ast* ast) {
     PRECEDENCE[T_CARET] =         PREC_BITWISE_XOR;
     PRECEDENCE[T_LSHIFT] =        PREC_BITWISE_SHIFT;
     PRECEDENCE[T_RSHIFT] =        PREC_BITWISE_SHIFT;
+    PRECEDENCE[T_EQUAL] =         PREC_ASSIGNMENT;
 
     return ast;
 }
@@ -206,7 +214,6 @@ Ast_VarDecleration* Parser::parse_variable_decleration() {
 
     if (current_scope->in_any(id))
         throw parser_error(peek(-1), "Redecleration of variable");
-    current_scope->add(id, DEF_VAR);
 
     if (match(T_COLON)) {
         AstDataType var_type = parse_type();
@@ -214,17 +221,22 @@ Ast_VarDecleration* Parser::parse_variable_decleration() {
         if (match(T_EQUAL))
             expression = parse_expression(PREC_NONE, var_type);
         consume(T_SEMICOLON, "Expected ';' in variable decleration");
+        current_scope->add(id, { var_type });
         return AST_NEW(Ast_VarDecleration, id, expression, var_type, AST_SPECIFIER_NONE);
     }
     consume(T_COLON_EQUAL, "Expected ':' or ':=' in variable decleration");  
     Ast_Expression* expression = parse_expression();
     consume(T_SEMICOLON, "Expected ';' in variable decleration");
-    AstDataType type = search_expression_for_type(start_token, expression);
-    return AST_NEW(Ast_VarDecleration, id, expression, type, AST_SPECIFIER_NONE);
+    AstDataType var_type = search_expression_for_type(start_token, expression);
+    current_scope->add(id, { var_type });
+    return AST_NEW(Ast_VarDecleration, id, expression, var_type, AST_SPECIFIER_NONE);
 }
 
 Ast_IfStatement* Parser::parse_if() {
-    return nullptr;
+    Ast_Expression* conditional = parse_expression();
+    consume(T_LCURLY, "Expected '{' in if statement");
+    Ast_Scope* scope = parse_scope();
+    return AST_NEW(Ast_IfStatement, conditional, scope);
 }
 
 Ast_Expression* Parser::parse_expression(Precedence precedence, AstDataType expected_type) {
@@ -236,7 +248,8 @@ Ast_Expression* Parser::parse_expression(Precedence precedence, AstDataType expe
 
    while (peek()->type != T_EOF && precedence < PRECEDENCE[peek()->type]) {
         advance();
-        expression = parse_binary_expression(expression);
+        if (peek(-1)->type == T_EQUAL) expression = parse_assignment_expression(expression);
+        else expression = parse_binary_expression(expression);
     }
     return expression;
 }
@@ -251,6 +264,13 @@ Ast_Expression* Parser::parse_unary_expression() {
     case T_NOT:         return AST_NEW(Ast_UnaryExpression, expression, AST_UNARY_BIT_NOT);
     default: throw parser_error(peek(-1), "Expected unary expression");
     }
+}
+
+Ast_Expression* Parser::parse_assignment_expression(Ast_Expression* expression) {
+    Ast_Expression* assign = parse_expression(PREC_ASSIGNMENT);
+    if (peek()->type == T_EQUAL && AST_CAST(Ast_PrimaryExpression, assign)->prim_type != AST_PRIM_ID)
+        throw parser_error(peek(-2), "Lvalue required as left operand of assignment"); 
+    return AST_NEW(Ast_Assignment, assign, expression, AST_EQUAL);
 }
 
 Ast_Expression* Parser::parse_primary_expression(AstDataType expected_type) {
@@ -298,7 +318,15 @@ Ast_Expression* Parser::parse_primary_expression(AstDataType expected_type) {
     }
     case T_IDENTIFIER: {
         primary->prim_type = AST_PRIM_ID;
+        char* id = (char*) peek(-1)->start;
+        id[peek(-1)->size] = '\0';
+        Symbol symbol = current_scope->get(std::string(id));
 
+        if (symbol.type == AST_TYPE_NONE) 
+            throw parser_error(peek(-1), "Undefined variable");
+
+        primary->type_value = symbol.type;
+        primary->ident = (const char*) id;
         break;
     }
     default: throw parser_error(peek(-1), "Expected a primary expression");

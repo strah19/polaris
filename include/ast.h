@@ -192,12 +192,12 @@ struct Ast_UnaryExpression : public Ast_Expression {
 
 struct Ast_Assignment : public Ast_Expression {
     Ast_Assignment() { type = AST_ASSIGNMENT; }
-    Ast_Assignment(Ast_Expression* expression, const char* id, AstEqualType equal_type = AST_EQUAL) : expression(expression), id(id), equal_type(equal_type) { type = AST_ASSIGNMENT; }
+    Ast_Assignment(Ast_Expression* expression, Ast_Expression* id, AstEqualType equal_type = AST_EQUAL) : expression(expression), id(id), equal_type(equal_type) { type = AST_ASSIGNMENT; }
     ~Ast_Assignment() {
         delete_expression(expression);
     }
     AstEqualType equal_type = AST_EQUAL;
-    const char* id = nullptr;
+    Ast_Expression* id = nullptr;
     Ast_Expression* expression = nullptr;
 };
 

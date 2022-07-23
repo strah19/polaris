@@ -8,4 +8,5 @@ b : boolean = (true or false);
 
 {
     f := 2;
+    var = f = (9 * 7 + 3) / 4;
 }

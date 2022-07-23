@@ -117,6 +117,10 @@ void Converter::convert_expression(Ast_Expression* expression) {
             write(")");
             break;
         }
+        case AST_PRIM_ID: {
+            write(primary->ident);
+            break;
+        }
         default: break;
         }
         break;
@@ -146,6 +150,13 @@ void Converter::convert_expression(Ast_Expression* expression) {
         default:                                              break;
         }
         convert_expression(binary->right);
+        break;
+    }
+    case AST_ASSIGNMENT: {
+        Ast_Assignment* assignment = AST_CAST(Ast_Assignment, expression);
+        convert_expression(assignment->id);
+        write("=");
+        convert_expression(assignment->expression);
         break;
     }
     case AST_UNARY: {
