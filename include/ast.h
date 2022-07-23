@@ -66,17 +66,21 @@ enum AstEqualType {
     AST_EQUAL_MOD
 };
 
+enum AstPrimaryType {
+    AST_PRIM_ID,
+    AST_PRIM_CAST,
+    AST_PRIM_CALL,
+    AST_PRIM_NESTED,
+    AST_PRIM_DATA,
+    AST_PRIM_NONE
+};
+
 enum AstDataType {
     AST_TYPE_FLOAT,
     AST_TYPE_INT,
     AST_TYPE_BOOLEAN,
     AST_TYPE_STRING,
-    AST_TYPE_NESTED,
     AST_TYPE_CHAR,
-    AST_TYPE_INPUT,
-    AST_TYPE_ID,
-    AST_TYPE_CAST,
-    AST_TYPE_CALL,
     AST_TYPE_VOID,
     AST_TYPE_NONE
 };
@@ -130,19 +134,18 @@ struct Ast_Cast {
 
 struct Ast_PrimaryExpression : public Ast_Expression {
     Ast_PrimaryExpression() { type = AST_PRIMARY; }
-    Ast_PrimaryExpression(const char* ident) : ident(ident), type_value(AST_TYPE_ID) { type = AST_PRIMARY; }
-    Ast_PrimaryExpression(float float_const) : float_const(float_const), type_value(AST_TYPE_FLOAT) { type = AST_PRIMARY; }
-    Ast_PrimaryExpression(char char_const) : char_const(char_const), type_value(AST_TYPE_CHAR) { type = AST_PRIMARY; }
     ~Ast_PrimaryExpression() {
-        switch (type_value) {
-        case AST_TYPE_NESTED:    delete nested; break;
-        case AST_TYPE_CAST:      delete cast;   break;
-        case AST_TYPE_CALL:      delete call;   break;
+        switch (prim_type) {
+        case AST_PRIM_NESTED:    delete nested; break;
+        case AST_PRIM_CAST:      delete cast;   break;
+        case AST_PRIM_CALL:      delete call;   break;
         default:                                break;
         }
     }
-    AstDataType type_value = AST_TYPE_NONE;
 
+    AstPrimaryType prim_type = AST_PRIM_NONE;
+    AstDataType type_value = AST_TYPE_NONE;
+    
     union {
         int         int_const;
         float       float_const;
@@ -150,7 +153,6 @@ struct Ast_PrimaryExpression : public Ast_Expression {
         const char* string;
         char        char_const;
         bool        boolean;
-        AstDataType input_type;
         
         Ast_FunctionCall* call;
         Ast_Expression*   nested;

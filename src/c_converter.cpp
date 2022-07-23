@@ -97,18 +97,24 @@ void Converter::convert_expression(Ast_Expression* expression) {
     switch (expression->type) {
     case AST_PRIMARY: {
         Ast_PrimaryExpression* primary = AST_CAST(Ast_PrimaryExpression, expression);
-        switch (primary->type_value) {
-        case AST_TYPE_INT:   fprintf(file, "%d", primary->int_const); break;
-        case AST_TYPE_FLOAT: fprintf(file, "%g.f", primary->float_const); break;
-        case AST_TYPE_NESTED: {
+        switch (primary->prim_type) {
+        case AST_PRIM_DATA: {
+            switch (primary->type_value) {
+            case AST_TYPE_INT:   fprintf(file, "%d", primary->int_const);     break;
+            case AST_TYPE_FLOAT: fprintf(file, "%g.f", primary->float_const); break;
+            case AST_TYPE_BOOLEAN: {
+                if (primary->boolean) write("true");
+                else                  write("false");
+                break;
+            }
+            default: break;
+            }
+            break;
+        }
+        case AST_PRIM_NESTED: {
             write("(");
             convert_expression(primary->nested);
             write(")");
-            break;
-        }
-        case AST_TYPE_BOOLEAN: {
-            if (primary->boolean) write("true");
-            else                  write("false");
             break;
         }
         default: break;

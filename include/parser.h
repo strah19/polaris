@@ -89,7 +89,6 @@ private:
     bool check_either(Ast_PrimaryExpression* left, Ast_PrimaryExpression* right, AstDataType type);
     bool ignore_type(Ast_PrimaryExpression* left, Ast_PrimaryExpression* right, AstDataType type);
     bool is_type(Ast_PrimaryExpression* prim, AstDataType type);
-    bool real_type(AstDataType type);
     AstDataType search_expression_for_type(Token* token, Ast_Expression* expression);
     AstDataType parse_type();
 private:

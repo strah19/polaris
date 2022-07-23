@@ -259,6 +259,7 @@ Ast_Expression* Parser::parse_primary_expression(AstDataType expected_type) {
 
     switch (peek(-1)->type) {
     case T_INT_CONST: {
+        primary->prim_type = AST_PRIM_DATA;
         primary->type_value = AST_TYPE_INT;
         primary->int_const = atoi(peek(-1)->start);
         if (check_expected_type && !is_type(primary, expected_type))
@@ -266,6 +267,7 @@ Ast_Expression* Parser::parse_primary_expression(AstDataType expected_type) {
         break;
     }
     case T_FLOAT_CONST: {
+        primary->prim_type = AST_PRIM_DATA;
         primary->type_value = AST_TYPE_FLOAT;
         primary->float_const = strtof(peek(-1)->start, NULL);
         if (check_expected_type && !is_type(primary, expected_type))
@@ -273,6 +275,7 @@ Ast_Expression* Parser::parse_primary_expression(AstDataType expected_type) {
         break;
     }
     case T_TRUE: {
+        primary->prim_type = AST_PRIM_DATA;
         primary->type_value = AST_TYPE_BOOLEAN;
         primary->boolean = true;
         if (check_expected_type && !is_type(primary, expected_type))
@@ -280,6 +283,7 @@ Ast_Expression* Parser::parse_primary_expression(AstDataType expected_type) {
         break;
     }
     case T_FALSE: {
+        primary->prim_type = AST_PRIM_DATA;
         primary->type_value = AST_TYPE_BOOLEAN;
         primary->boolean = false;
         if (check_expected_type && !is_type(primary, expected_type))
@@ -287,9 +291,14 @@ Ast_Expression* Parser::parse_primary_expression(AstDataType expected_type) {
         break;
     }
     case T_LPAR: {
-        primary->type_value = AST_TYPE_NESTED;
+        primary->prim_type = AST_PRIM_NESTED;
         primary->nested = parse_expression();
         consume(T_RPAR, "Expected ')' to close off nested expression");
+        break;
+    }
+    case T_IDENTIFIER: {
+        primary->prim_type = AST_PRIM_ID;
+
         break;
     }
     default: throw parser_error(peek(-1), "Expected a primary expression");
@@ -329,14 +338,16 @@ Ast_Expression* Parser::parse_binary_expression(Ast_Expression* left) {
 }
 
 void Parser::check_types(Ast_PrimaryExpression* left, Ast_PrimaryExpression* right) {
-    if (left->type_value == right->type_value)     return;
-    if (ignore_type(left, right, AST_TYPE_NESTED)) return; 
-    if (!check_either(left, right, AST_TYPE_INT))
-        throw parser_error(peek(-1), "Type does not match with integer");
-    else if (!check_either(left, right, AST_TYPE_BOOLEAN))
-        throw parser_error(peek(-1), "Type does not match with boolean");
-    else if (!check_either(left, right, AST_TYPE_FLOAT))
-        throw parser_error(peek(-1), "Type does not match with float");
+    if ((left->prim_type == AST_PRIM_DATA && right->prim_type == AST_PRIM_DATA) ||
+        (left->prim_type == AST_PRIM_ID   && right->prim_type == AST_PRIM_ID)) {
+        if (left->type_value == right->type_value) return;
+        if (!check_either(left, right, AST_TYPE_INT))
+            throw parser_error(peek(-1), "Type does not match with integer");
+        else if (!check_either(left, right, AST_TYPE_BOOLEAN))
+            throw parser_error(peek(-1), "Type does not match with boolean");
+        else if (!check_either(left, right, AST_TYPE_FLOAT))
+            throw parser_error(peek(-1), "Type does not match with float");
+    }
 }
 
 bool Parser::check_either(Ast_PrimaryExpression* left, Ast_PrimaryExpression* right, AstDataType type) {
@@ -372,24 +383,20 @@ AstDataType Parser::search_expression_for_type(Token* token, Ast_Expression* exp
     case AST_BINARY: {
         Ast_BinaryExpression* binary = AST_CAST(Ast_BinaryExpression, expression);
         AstDataType type = search_expression_for_type(token, binary->left);
-        if (!real_type(type)) {
+        if (type == AST_TYPE_NONE) {
             type = search_expression_for_type(token, binary->right);
-            if (!real_type(type))
+            if (type == AST_TYPE_NONE)
                 break;
         }
         return type;
     }
     case AST_PRIMARY: {
         Ast_PrimaryExpression* primary = AST_CAST(Ast_PrimaryExpression, expression);
-        return primary->type_value;
+        return (primary->prim_type == AST_PRIM_DATA || primary->prim_type == AST_PRIM_ID) ? primary->type_value : AST_TYPE_NONE;
     }
     default: break;
     }
     throw parser_error(token, "Unknown type found in expression");
-}
-
-bool Parser::real_type(AstDataType type) {
-    return (type == AST_TYPE_INT || type == AST_TYPE_FLOAT || type == AST_TYPE_BOOLEAN);
 }
 
 bool Parser::is_unary(Token* token) {
@@ -398,5 +405,5 @@ bool Parser::is_unary(Token* token) {
 
 bool Parser::is_primary(Token* token) {
     return (token->type == T_INT_CONST || token->type == T_FLOAT_CONST || token->type == T_LPAR || 
-            token->type == T_TRUE || token->type == T_FALSE);
+            token->type == T_TRUE || token->type == T_FALSE || token->type == T_IDENTIFIER);
 }
