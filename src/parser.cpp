@@ -48,25 +48,29 @@ Ast* Parser::default_ast(Ast* ast) {
     ast->line = peek()->line;
     ast->file = filepath;
 
-    PRECEDENCE[T_PLUS] =          PREC_TERM;
-    PRECEDENCE[T_MINUS] =         PREC_TERM;
-    PRECEDENCE[T_STAR] =          PREC_FACTOR;
-    PRECEDENCE[T_SLASH] =         PREC_FACTOR;
-    PRECEDENCE[T_PERCENT] =       PREC_FACTOR;
+    PRECEDENCE[T_PLUS]          = PREC_TERM;
+    PRECEDENCE[T_MINUS]         = PREC_TERM;
+    PRECEDENCE[T_STAR]          = PREC_FACTOR;
+    PRECEDENCE[T_SLASH]         = PREC_FACTOR;
+    PRECEDENCE[T_PERCENT]       = PREC_FACTOR;
     PRECEDENCE[T_COMPARE_EQUAL] = PREC_EQUAL;
-    PRECEDENCE[T_NOT_EQUAL] =     PREC_EQUAL;
-    PRECEDENCE[T_LARROW] =        PREC_COMPARE;
-    PRECEDENCE[T_RARROW] =        PREC_COMPARE;
-    PRECEDENCE[T_LTE] =           PREC_COMPARE;
-    PRECEDENCE[T_GTE] =           PREC_COMPARE;
-    PRECEDENCE[T_AND] =           PREC_AND;
-    PRECEDENCE[T_OR] =            PREC_OR;
-    PRECEDENCE[T_AMPERSAND] =     PREC_BITWISE_AND;
-    PRECEDENCE[T_LINE] =          PREC_BITWISE_OR;
-    PRECEDENCE[T_CARET] =         PREC_BITWISE_XOR;
-    PRECEDENCE[T_LSHIFT] =        PREC_BITWISE_SHIFT;
-    PRECEDENCE[T_RSHIFT] =        PREC_BITWISE_SHIFT;
-    PRECEDENCE[T_EQUAL] =         PREC_ASSIGNMENT;
+    PRECEDENCE[T_NOT_EQUAL]     = PREC_EQUAL;
+    PRECEDENCE[T_LARROW]        = PREC_COMPARE;
+    PRECEDENCE[T_RARROW]        = PREC_COMPARE;
+    PRECEDENCE[T_LTE]           = PREC_COMPARE;
+    PRECEDENCE[T_GTE]           = PREC_COMPARE;
+    PRECEDENCE[T_AND]           = PREC_AND;
+    PRECEDENCE[T_OR]            = PREC_OR;
+    PRECEDENCE[T_AMPERSAND]     = PREC_BITWISE_AND;
+    PRECEDENCE[T_LINE]          = PREC_BITWISE_OR;
+    PRECEDENCE[T_CARET]         = PREC_BITWISE_XOR;
+    PRECEDENCE[T_LSHIFT]        = PREC_BITWISE_SHIFT;
+    PRECEDENCE[T_RSHIFT]        = PREC_BITWISE_SHIFT;
+    PRECEDENCE[T_EQUAL]         = PREC_ASSIGNMENT;
+    PRECEDENCE[T_PLUS_EQUAL]    = PREC_ASSIGNMENT;
+    PRECEDENCE[T_MINUS_EQUAL]   = PREC_ASSIGNMENT;
+    PRECEDENCE[T_STAR_EQUAL]    = PREC_ASSIGNMENT;
+    PRECEDENCE[T_SLASH_EQUAL]   = PREC_ASSIGNMENT;
 
     return ast;
 }
@@ -196,8 +200,9 @@ Ast_Scope* Parser::parse_scope() {
 }
 
 Ast_ExpressionStatement* Parser::parse_expression_statement() {
-    parser_warning(peek(), "Expression result is unused");
     auto expression = parse_expression();
+    if (expression->type != AST_ASSIGNMENT)
+        parser_warning(peek(), "Expression result is unused");
     consume(T_SEMICOLON, "Expected ';' after expression statement");
     return AST_NEW(Ast_ExpressionStatement, expression);
 }
@@ -248,7 +253,7 @@ Ast_Expression* Parser::parse_expression(Precedence precedence, AstDataType expe
 
    while (peek()->type != T_EOF && precedence < PRECEDENCE[peek()->type]) {
         advance();
-        if (peek(-1)->type == T_EQUAL) expression = parse_assignment_expression(expression);
+        if (is_equal(peek(-1))) expression = parse_assignment_expression(expression, convert_to_equal(peek(-1)->type));
         else expression = parse_binary_expression(expression);
     }
     return expression;
@@ -266,11 +271,11 @@ Ast_Expression* Parser::parse_unary_expression() {
     }
 }
 
-Ast_Expression* Parser::parse_assignment_expression(Ast_Expression* expression) {
+Ast_Expression* Parser::parse_assignment_expression(Ast_Expression* expression, AstEqualType equal) {
     Ast_Expression* assign = parse_expression(PREC_ASSIGNMENT);
-    if (peek()->type == T_EQUAL && AST_CAST(Ast_PrimaryExpression, assign)->prim_type != AST_PRIM_ID)
-        throw parser_error(peek(-2), "Lvalue required as left operand of assignment"); 
-    return AST_NEW(Ast_Assignment, assign, expression, AST_EQUAL);
+    if (is_equal(peek()) && AST_CAST(Ast_PrimaryExpression, assign)->prim_type != AST_PRIM_ID)
+        throw parser_error(peek(-2), "Lvalue required as left operand of assignment");     
+    return AST_NEW(Ast_Assignment, assign, expression, equal);
 }
 
 Ast_Expression* Parser::parse_primary_expression(AstDataType expected_type) {
@@ -282,7 +287,7 @@ Ast_Expression* Parser::parse_primary_expression(AstDataType expected_type) {
         primary->prim_type = AST_PRIM_DATA;
         primary->type_value = AST_TYPE_INT;
         primary->int_const = atoi(peek(-1)->start);
-        if (check_expected_type && !is_type(primary, expected_type))
+        if (expected_type != AST_TYPE_INT && check_expected_type)
             throw parser_error(peek(-1), "Integer is not allowed in this expression");
         break;
     }
@@ -290,7 +295,7 @@ Ast_Expression* Parser::parse_primary_expression(AstDataType expected_type) {
         primary->prim_type = AST_PRIM_DATA;
         primary->type_value = AST_TYPE_FLOAT;
         primary->float_const = strtof(peek(-1)->start, NULL);
-        if (check_expected_type && !is_type(primary, expected_type))
+        if (expected_type != AST_TYPE_FLOAT && check_expected_type)
             throw parser_error(peek(-1), "Float is not allowed in this expression");
         break;
     }
@@ -434,4 +439,19 @@ bool Parser::is_unary(Token* token) {
 bool Parser::is_primary(Token* token) {
     return (token->type == T_INT_CONST || token->type == T_FLOAT_CONST || token->type == T_LPAR || 
             token->type == T_TRUE || token->type == T_FALSE || token->type == T_IDENTIFIER);
+}
+
+bool Parser::is_equal(Token* token) {
+    return (token->type == T_EQUAL || token->type == T_PLUS_EQUAL || token->type == T_MINUS_EQUAL || 
+            token->type == T_STAR_EQUAL || token->type == T_SLASH_EQUAL);
+}
+
+AstEqualType Parser::convert_to_equal(TokenType type) {
+    switch (type) {
+    case T_PLUS_EQUAL:  return AST_EQUAL_PLUS;
+    case T_MINUS_EQUAL: return AST_EQUAL_MINUS;
+    case T_STAR_EQUAL:  return AST_EQUAL_MULTIPLY;
+    case T_SLASH_EQUAL: return AST_EQUAL_DIVIDE;
+    default: return AST_EQUAL;
+    }
 }

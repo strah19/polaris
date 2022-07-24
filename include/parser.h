@@ -83,13 +83,15 @@ private:
     Ast_IfStatement*         parse_if();
     Ast_Expression*          parse_expression(Precedence precedence = PREC_NONE, AstDataType expected_type = AST_TYPE_NONE);
 
-    Ast_Expression* parse_assignment_expression(Ast_Expression* expression);
+    Ast_Expression* parse_assignment_expression(Ast_Expression* expression, AstEqualType equal);
     Ast_Expression* parse_binary_expression(Ast_Expression* left);
     Ast_Expression* parse_unary_expression();
     Ast_Expression* parse_primary_expression(AstDataType expected_type = AST_TYPE_NONE);
 
     bool is_unary(Token* token);
     bool is_primary(Token* token);
+    bool is_equal(Token* token);
+    AstEqualType convert_to_equal(TokenType type);
 
     void check_types(Ast_PrimaryExpression* left, Ast_PrimaryExpression* right);
     bool check_either(Ast_PrimaryExpression* left, Ast_PrimaryExpression* right, AstDataType type);

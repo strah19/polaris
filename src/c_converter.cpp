@@ -51,6 +51,7 @@ void Converter::convert_decleration(Ast_Decleration* decleration) {
     case AST_EXPRESSION_STATEMENT: convert_expression_statement(AST_CAST(Ast_ExpressionStatement, decleration)); break;
     case AST_VAR_DECLERATION:      convert_variable_decleration(AST_CAST(Ast_VarDecleration, decleration));      break;
     case AST_SCOPE:                convert_scope(AST_CAST(Ast_Scope, decleration));                              break;
+    case AST_IF:                   convert_if(AST_CAST(Ast_IfStatement, decleration));                           break;
     default: break;
     }
 }
@@ -82,6 +83,13 @@ void Converter::convert_variable_decleration(Ast_VarDecleration* variable_decler
         convert_expression(variable_decleration->expression);
     }
     semicolon();
+}
+
+void Converter::convert_if(Ast_IfStatement* if_statement) {
+    write("if(");
+    convert_expression(if_statement->condition);
+    write(")\n");
+    convert_scope(if_statement->scope);
 }
 
 void Converter::convert_type(AstDataType type) {
@@ -155,7 +163,14 @@ void Converter::convert_expression(Ast_Expression* expression) {
     case AST_ASSIGNMENT: {
         Ast_Assignment* assignment = AST_CAST(Ast_Assignment, expression);
         convert_expression(assignment->id);
-        write("=");
+        switch (assignment->equal_type) {
+        case AST_EQUAL_PLUS:     write("+="); break;
+        case AST_EQUAL_MINUS:    write("-="); break;
+        case AST_EQUAL_MULTIPLY: write("*="); break;
+        case AST_EQUAL_DIVIDE:   write("/="); break;
+        case AST_EQUAL:          write("=");  break;
+        default: break;
+        }
         convert_expression(assignment->expression);
         break;
     }

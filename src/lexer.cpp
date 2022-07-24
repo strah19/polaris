@@ -144,11 +144,11 @@ Token Lexer::single_character(char single_character_tokens) {
     case '{': return init_token(T_LCURLY  );
     case '}': return init_token(T_RCURLY  );
     case '=': return init_token((check('=')) ? T_COMPARE_EQUAL : T_EQUAL);
-    case '!': return init_token((check('=')) ? T_NOT_EQUAL : T_EXCLAMATION);
-    case '+': return init_token(T_PLUS    );
-    case '-': return init_token(T_MINUS   );
-    case '*': return init_token(T_STAR    );
-    case '/': return init_token(T_SLASH   );
+    case '!': return init_token((check('=')) ? T_NOT_EQUAL     : T_EXCLAMATION);
+    case '+': return init_token((check('=')) ? T_PLUS_EQUAL    : T_PLUS);
+    case '-': return init_token((check('=')) ? T_MINUS_EQUAL   : T_MINUS);
+    case '*': return init_token((check('=')) ? T_STAR_EQUAL    : T_STAR);
+    case '/': return init_token((check('=')) ? T_SLASH_EQUAL   : T_SLASH);
     case '|': return init_token(T_LINE    );
     case '&': return init_token(T_AMPERSAND);
     case '#': return init_token(T_POUND   );
@@ -166,7 +166,7 @@ Token Lexer::single_character(char single_character_tokens) {
     }
 }
 
-int Lexer::keywords() {
+TokenType Lexer::keywords() {
     switch (*start) {
     case 'i': return (match("f",      1) ? T_IF      : 
                      (match("nt",     2) ? T_INT     : T_IDENTIFIER));
@@ -212,7 +212,7 @@ Token Lexer::string() {
     return init_token(T_STRING_CONST);
 }
 
-Token Lexer::init_token(int token_type) {
+Token Lexer::init_token(TokenType token_type) {
     Token token;
 
     token.type = token_type;

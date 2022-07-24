@@ -15,6 +15,7 @@ enum TokenType {
 
     // Multi-character tokens
     T_NOT_EQUAL, T_LTE, T_GTE, T_COMPARE_EQUAL, T_LSHIFT, T_RSHIFT, T_COLON_EQUAL,
+    T_PLUS_EQUAL, T_MINUS_EQUAL, T_STAR_EQUAL, T_SLASH_EQUAL,
 
     // Keywords
     T_IF, T_ELIF, T_ELSE, T_FOR, T_WHILE, T_BREAK, T_RETURN, T_INT, T_BOOLEAN,
@@ -33,7 +34,7 @@ public:
     inline const int lines() const { return line; }
 private:
     Token scan();
-    Token init_token(int token_type);
+    Token init_token(TokenType token_type);
     Token error_token(const char* msg);
 
     char  advance();
@@ -48,7 +49,7 @@ private:
     bool  is_alpha(char c);
 
     Token single_character(char single_character_tokens);
-    int   keywords();
+    TokenType   keywords();
     Token skip_whitespaces();
 
     Token string();
@@ -62,7 +63,7 @@ private:
 };
 
 struct Token {
-    int type;
+    TokenType type;
 
     const char* start;
     int line;
