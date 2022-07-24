@@ -2,9 +2,10 @@
 #define LEXER_H
 
 #include <vector>
+#include "ast.h"
 
 struct Token;
-using Tokens = std::vector<Token>;
+using Tokens = Vector<Token>;
 
 enum TokenType {
     // Single character tokens

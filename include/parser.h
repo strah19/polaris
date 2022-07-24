@@ -4,8 +4,6 @@
 #include "lexer.h"
 #include "ast.h"
 #include <cinttypes>
-#include <map>
-#include <string>
 
 enum Precedence {
     PREC_NONE,
@@ -41,13 +39,13 @@ struct Symbol {
 
 struct Scope {
     Scope() = default;
-    std::map<std::string, Symbol> definitions;
+    Map<String, Symbol> definitions;
     Scope* previous = nullptr;
 
-    void add(const std::string& name, const Symbol& sym);
-    bool in_scope(const std::string& name);
-    bool in_any(const std::string& name);
-    Symbol get(const std::string& name); 
+    void add(const String& name, const Symbol& sym);
+    bool in_scope(const String& name);
+    bool in_any(const String& name);
+    Symbol get(const String& name); 
 };  
 
 class Parser {
@@ -92,12 +90,15 @@ private:
     bool is_primary(Token* token);
     bool is_equal(Token* token);
     AstEqualType convert_to_equal(TokenType type);
+    AstOperatorType convert_to_op(TokenType type);
 
-    bool is_type(Ast_PrimaryExpression* prim, AstDataType type);
+    void check_types(AstDataType left, AstDataType right, AstOperatorType op = AST_OPERATOR_NONE);
+    bool check_either(AstDataType left, AstDataType right, AstDataType type);
+    bool ignore_type(AstDataType left, AstDataType right, AstDataType type);
+    bool is_type(AstDataType prim, AstDataType type);
     AstDataType search_expression_for_type(Token* token, Ast_Expression* expression);
     AstDataType parse_type();
 private:
-    AstDataType expected_type;
     Token* tokens = nullptr;
     uint32_t current = 0;
     const char* filepath = nullptr;

@@ -4,6 +4,16 @@
 #include <cinttypes>
 #include <stdio.h>
 #include <vector>
+#include <map>
+#include <string>
+
+template<class T>
+using Vector = std::vector<T>;
+
+template <class Key, class Val>
+using Map = std::map<Key, Val>;
+
+using String = std::string;
 
 enum AstType {
     AST_EXPRESSION,
@@ -115,12 +125,12 @@ struct Ast_Expression : Ast {
 };
 
 struct Ast_FunctionCall {
-    Ast_FunctionCall(const char* ident, const std::vector<Ast_Expression*>& args) : ident(ident), args(args) { }
+    Ast_FunctionCall(const char* ident, const Vector<Ast_Expression*>& args) : ident(ident), args(args) { }
     ~Ast_FunctionCall() { 
         for (auto& arg : args) delete_expression(arg);
     }
     const char* ident;
-    std::vector<Ast_Expression*> args;
+    Vector<Ast_Expression*> args;
 };
 
 struct Ast_Cast {
@@ -217,7 +227,7 @@ struct Ast_Scope : public Ast_Statement {
         for (auto& dec : declerations) delete_ast(dec);
     }
 
-    std::vector<Ast_Decleration*> declerations;
+    Vector<Ast_Decleration*> declerations;
 };
 
 struct Ast_ExpressionStatement : public Ast_Statement {
@@ -229,18 +239,17 @@ struct Ast_ExpressionStatement : public Ast_Statement {
 };
 
 struct Ast_PrintStatement : public Ast_Statement {
-    Ast_PrintStatement(const std::vector<Ast_Expression*>& expressions) : expressions(expressions) { type = AST_PRINT; }
+    Ast_PrintStatement(const Vector<Ast_Expression*>& expressions) : expressions(expressions) { type = AST_PRINT; }
     ~Ast_PrintStatement() {
         for (auto& expr : expressions) delete_expression(expr);
     }
-    std::vector<Ast_Expression*> expressions;
+    Vector<Ast_Expression*> expressions;
 };
 
 struct Ast_ConditionalStatement : public Ast_Statement {
     Ast_ConditionalStatement() { type = AST_CONDITIONAL; }
     Ast_ConditionalStatement(Ast_Expression* condition, Ast_Scope* scope) : condition(condition), scope(scope) { type = AST_CONDITIONAL; }
     ~Ast_ConditionalStatement() {
-        printf("Conditional\n");
         delete_expression(condition);
         delete scope;
         delete next;
@@ -300,7 +309,7 @@ struct Ast_VarDecleration : public Ast_Decleration {
 
 struct Ast_Function : public Ast_Decleration {
     Ast_Function() { type = AST_FUNCTION; }
-    Ast_Function(const char* ident, AstDataType return_type, const std::vector<Ast_VarDecleration*> args, Ast_Scope* scope) : 
+    Ast_Function(const char* ident, AstDataType return_type, const Vector<Ast_VarDecleration*> args, Ast_Scope* scope) : 
         ident(ident), return_type(return_type), args(args), scope(scope) { type = AST_FUNCTION; }
     ~Ast_Function() {
         for (auto& arg : args) delete arg;
@@ -310,7 +319,7 @@ struct Ast_Function : public Ast_Decleration {
 
     const char* ident = nullptr;
     AstDataType return_type = AST_TYPE_VOID;
-    std::vector<Ast_VarDecleration*> args;
+    Vector<Ast_VarDecleration*> args;
     Ast_Scope* scope = nullptr;
 };
 
@@ -320,7 +329,7 @@ struct Ast_TranslationUnit : public Ast {
         for (auto& dec : declerations) delete_ast(dec);
     }
 
-    std::vector<Ast_Decleration*> declerations;
+    Vector<Ast_Decleration*> declerations;
 };
 
 void delete_ast(Ast_Decleration* ast) {
