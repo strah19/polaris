@@ -247,21 +247,21 @@ Ast_IfStatement* Parser::parse_if() {
 Ast_Expression* Parser::parse_expression(Precedence precedence, AstDataType expected_type) {
     Token* left = advance();
     Ast_Expression* expression;
-    if (is_unary(left)) expression = parse_unary_expression();
+    if (is_unary(left)) expression = parse_unary_expression(expected_type);
     else if (is_primary(left)) expression = parse_primary_expression(expected_type);
     else throw parser_error(left, "Expected unary or primary expression"); 
 
    while (peek()->type != T_EOF && precedence < PRECEDENCE[peek()->type]) {
         advance();
-        if (is_equal(peek(-1))) expression = parse_assignment_expression(expression, convert_to_equal(peek(-1)->type));
-        else expression = parse_binary_expression(expression);
+        if (is_equal(peek(-1))) expression = parse_assignment_expression(expression, convert_to_equal(peek(-1)->type), expected_type);
+        else expression = parse_binary_expression(expression, expected_type);
     }
     return expression;
 }
 
-Ast_Expression* Parser::parse_unary_expression() {
+Ast_Expression* Parser::parse_unary_expression(AstDataType expected_type) {
     int op = peek(-1)->type;
-    Ast_Expression* expression = parse_expression();
+    Ast_Expression* expression = parse_expression(PREC_NONE, expected_type);
 
     switch (op) {
     case T_MINUS:       return AST_NEW(Ast_UnaryExpression, expression, AST_UNARY_MINUS);
@@ -271,8 +271,8 @@ Ast_Expression* Parser::parse_unary_expression() {
     }
 }
 
-Ast_Expression* Parser::parse_assignment_expression(Ast_Expression* expression, AstEqualType equal) {
-    Ast_Expression* assign = parse_expression(PREC_ASSIGNMENT);
+Ast_Expression* Parser::parse_assignment_expression(Ast_Expression* expression, AstEqualType equal, AstDataType expected_type) {
+    Ast_Expression* assign = parse_expression(PREC_ASSIGNMENT, expected_type);
     if (is_equal(peek()) && AST_CAST(Ast_PrimaryExpression, assign)->prim_type != AST_PRIM_ID)
         throw parser_error(peek(-2), "Lvalue required as left operand of assignment");     
     return AST_NEW(Ast_Assignment, assign, expression, equal);
@@ -317,7 +317,7 @@ Ast_Expression* Parser::parse_primary_expression(AstDataType expected_type) {
     }
     case T_LPAR: {
         primary->prim_type = AST_PRIM_NESTED;
-        primary->nested = parse_expression();
+        primary->nested = parse_expression(PREC_NONE, expected_type);
         consume(T_RPAR, "Expected ')' to close off nested expression");
         break;
     }
@@ -340,12 +340,9 @@ Ast_Expression* Parser::parse_primary_expression(AstDataType expected_type) {
     return primary;
 }
 
-Ast_Expression* Parser::parse_binary_expression(Ast_Expression* left) {
+Ast_Expression* Parser::parse_binary_expression(Ast_Expression* left, AstDataType expected_type) {
     int op = peek(-1)->type;  
-    Ast_Expression* right = parse_expression(PRECEDENCE[op]);
-
-    if (right->type == AST_PRIMARY && left->type == AST_PRIMARY)
-        check_types(AST_CAST(Ast_PrimaryExpression, left), AST_CAST(Ast_PrimaryExpression, right));
+    Ast_Expression* right = parse_expression(PRECEDENCE[op], expected_type);
 
     switch (op) {
     case T_PLUS:          return AST_NEW(Ast_BinaryExpression, left, AST_OPERATOR_ADD, right);
@@ -368,27 +365,6 @@ Ast_Expression* Parser::parse_binary_expression(Ast_Expression* left) {
     case T_RSHIFT:        return AST_NEW(Ast_BinaryExpression, left, AST_OPERATOR_RSHIFT, right);
     default: throw parser_error(peek(-1), "Expected binary type operator");
     }
-}
-
-void Parser::check_types(Ast_PrimaryExpression* left, Ast_PrimaryExpression* right) {
-    if ((left->prim_type == AST_PRIM_DATA && right->prim_type == AST_PRIM_DATA) ||
-        (left->prim_type == AST_PRIM_ID   && right->prim_type == AST_PRIM_ID)) {
-        if (left->type_value == right->type_value) return;
-        if (!check_either(left, right, AST_TYPE_INT))
-            throw parser_error(peek(-1), "Type does not match with integer");
-        else if (!check_either(left, right, AST_TYPE_BOOLEAN))
-            throw parser_error(peek(-1), "Type does not match with boolean");
-        else if (!check_either(left, right, AST_TYPE_FLOAT))
-            throw parser_error(peek(-1), "Type does not match with float");
-    }
-}
-
-bool Parser::check_either(Ast_PrimaryExpression* left, Ast_PrimaryExpression* right, AstDataType type) {
-    return ((is_type(left, type) && is_type(right, type)) || (!is_type(left, type) && !is_type(right, type)));
-}
-
-bool Parser::ignore_type(Ast_PrimaryExpression* left, Ast_PrimaryExpression* right, AstDataType type) {
-    return (is_type(left, type) || is_type(right, type));
 }
 
 bool Parser::is_type(Ast_PrimaryExpression* prim, AstDataType type) {
