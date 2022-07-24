@@ -153,6 +153,7 @@ bool Parser::is_end() {
 }
 
 void Parser::synchronize() {
+    expected_type = AST_TYPE_NONE;
     advance();
     while (!is_end()) {
         if (peek(-1)->type == T_SEMICOLON) return;
@@ -222,11 +223,13 @@ Ast_VarDecleration* Parser::parse_variable_decleration() {
 
     if (match(T_COLON)) {
         AstDataType var_type = parse_type();
+        expected_type = var_type;
         Ast_Expression* expression = nullptr;
         if (match(T_EQUAL))
-            expression = parse_expression(PREC_NONE, var_type);
+            expression = parse_expression();
         consume(T_SEMICOLON, "Expected ';' in variable decleration");
         current_scope->add(id, { var_type });
+        expected_type = AST_TYPE_NONE;
         return AST_NEW(Ast_VarDecleration, id, expression, var_type, AST_SPECIFIER_NONE);
     }
     consume(T_COLON_EQUAL, "Expected ':' or ':=' in variable decleration");  
@@ -244,24 +247,24 @@ Ast_IfStatement* Parser::parse_if() {
     return AST_NEW(Ast_IfStatement, conditional, scope);
 }
 
-Ast_Expression* Parser::parse_expression(Precedence precedence, AstDataType expected_type) {
+Ast_Expression* Parser::parse_expression(Precedence precedence) {
     Token* left = advance();
     Ast_Expression* expression;
-    if (is_unary(left)) expression = parse_unary_expression(expected_type);
-    else if (is_primary(left)) expression = parse_primary_expression(expected_type);
+    if (is_unary(left)) expression = parse_unary_expression();
+    else if (is_primary(left)) expression = parse_primary_expression();
     else throw parser_error(left, "Expected unary or primary expression"); 
 
    while (peek()->type != T_EOF && precedence < PRECEDENCE[peek()->type]) {
         advance();
-        if (is_equal(peek(-1))) expression = parse_assignment_expression(expression, convert_to_equal(peek(-1)->type), expected_type);
-        else expression = parse_binary_expression(expression, expected_type);
+        if (is_equal(peek(-1))) expression = parse_assignment_expression(expression, convert_to_equal(peek(-1)->type));
+        else expression = parse_binary_expression(expression);
     }
     return expression;
 }
 
-Ast_Expression* Parser::parse_unary_expression(AstDataType expected_type) {
+Ast_Expression* Parser::parse_unary_expression() {
     int op = peek(-1)->type;
-    Ast_Expression* expression = parse_expression(PREC_NONE, expected_type);
+    Ast_Expression* expression = parse_expression();
 
     switch (op) {
     case T_MINUS:       return AST_NEW(Ast_UnaryExpression, expression, AST_UNARY_MINUS);
@@ -271,14 +274,14 @@ Ast_Expression* Parser::parse_unary_expression(AstDataType expected_type) {
     }
 }
 
-Ast_Expression* Parser::parse_assignment_expression(Ast_Expression* expression, AstEqualType equal, AstDataType expected_type) {
-    Ast_Expression* assign = parse_expression(PREC_ASSIGNMENT, expected_type);
+Ast_Expression* Parser::parse_assignment_expression(Ast_Expression* expression, AstEqualType equal) {
+    Ast_Expression* assign = parse_expression(PREC_ASSIGNMENT);
     if (is_equal(peek()) && AST_CAST(Ast_PrimaryExpression, assign)->prim_type != AST_PRIM_ID)
         throw parser_error(peek(-2), "Lvalue required as left operand of assignment");     
     return AST_NEW(Ast_Assignment, assign, expression, equal);
 }
 
-Ast_Expression* Parser::parse_primary_expression(AstDataType expected_type) {
+Ast_Expression* Parser::parse_primary_expression() {
     Ast_PrimaryExpression* primary = AST_NEW(Ast_PrimaryExpression);
     bool check_expected_type = (expected_type == AST_TYPE_NONE) ? false : true;
 
@@ -317,7 +320,7 @@ Ast_Expression* Parser::parse_primary_expression(AstDataType expected_type) {
     }
     case T_LPAR: {
         primary->prim_type = AST_PRIM_NESTED;
-        primary->nested = parse_expression(PREC_NONE, expected_type);
+        primary->nested = parse_expression();
         consume(T_RPAR, "Expected ')' to close off nested expression");
         break;
     }
@@ -337,12 +340,16 @@ Ast_Expression* Parser::parse_primary_expression(AstDataType expected_type) {
     default: throw parser_error(peek(-1), "Expected a primary expression");
     }
 
+    if (primary->prim_type == AST_PRIM_DATA || primary->prim_type == AST_PRIM_ID) 
+        if (expected_type == AST_TYPE_NONE) 
+            expected_type = primary->type_value;
+
     return primary;
 }
 
-Ast_Expression* Parser::parse_binary_expression(Ast_Expression* left, AstDataType expected_type) {
+Ast_Expression* Parser::parse_binary_expression(Ast_Expression* left) {
     int op = peek(-1)->type;  
-    Ast_Expression* right = parse_expression(PRECEDENCE[op], expected_type);
+    Ast_Expression* right = parse_expression(PRECEDENCE[op]);
 
     switch (op) {
     case T_PLUS:          return AST_NEW(Ast_BinaryExpression, left, AST_OPERATOR_ADD, right);
