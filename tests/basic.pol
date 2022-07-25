@@ -8,3 +8,5 @@ c : int = (2 < 2);
 if c < b {
 
 }
+
+d : int = cast<int>(false);

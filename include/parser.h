@@ -96,6 +96,7 @@ private:
     bool check_either(AstDataType left, AstDataType right, AstDataType type);
     bool ignore_type(AstDataType left, AstDataType right, AstDataType type);
     bool is_type(AstDataType prim, AstDataType type);
+    void check_cast(AstDataType casted_type, AstDataType expression_type);
     AstDataType search_expression_for_type(Token* token, Ast_Expression* expression);
     AstDataType parse_type();
 private:

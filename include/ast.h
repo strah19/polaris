@@ -147,7 +147,6 @@ struct Ast_PrimaryExpression : public Ast_Expression {
     ~Ast_PrimaryExpression() {
         switch (prim_type) {
         case AST_PRIM_NESTED:    delete nested; break;
-        case AST_PRIM_CAST:      delete cast;   break;
         case AST_PRIM_CALL:      delete call;   break;
         default:                                break;
         }
@@ -166,7 +165,7 @@ struct Ast_PrimaryExpression : public Ast_Expression {
         
         Ast_FunctionCall* call;
         Ast_Expression*   nested;
-        Ast_Cast*         cast;
+        Ast_Cast          cast;
     };
 };
 

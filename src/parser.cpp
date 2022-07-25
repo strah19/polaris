@@ -331,10 +331,24 @@ Ast_Expression* Parser::parse_primary_expression() {
         primary->ident = (const char*) id;
         break;
     }
+    case T_CAST: {
+        primary->prim_type = AST_PRIM_CAST;
+        consume(T_LARROW, "Expected '<' after 'cast' keyword");
+        primary->cast.cast_type = parse_type();
+        consume(T_RARROW, "Expected '>' after type in 'cast' expression");
+        consume(T_LPAR, "Expected '(' in 'cast' expression");
+        primary->cast.expression = parse_expression();
+        consume(T_RPAR, "Expected ')' in 'cast' expression");
+        break;
+    }
     default: throw parser_error(peek(-1), "Expected a primary expression");
     }
 
     return primary;
+}
+
+void Parser::check_cast(AstDataType casted_type, AstDataType expression_type) {
+
 }
 
 Ast_Expression* Parser::parse_binary_expression(Ast_Expression* left) {
@@ -445,6 +459,10 @@ AstDataType Parser::search_expression_for_type(Token* token, Ast_Expression* exp
         Ast_PrimaryExpression* primary = AST_CAST(Ast_PrimaryExpression, expression);
         if (primary->prim_type == AST_PRIM_NESTED)
             return search_expression_for_type(token, primary->nested);
+        else if (primary->prim_type == AST_PRIM_CAST) {
+            printf("GOOD\n");
+            return primary->cast.cast_type;
+        }
         return (primary->prim_type == AST_PRIM_DATA || primary->prim_type == AST_PRIM_ID) ? primary->type_value : AST_TYPE_NONE;
     }
     default: break;
@@ -458,7 +476,8 @@ bool Parser::is_unary(Token* token) {
 
 bool Parser::is_primary(Token* token) {
     return (token->type == T_INT_CONST || token->type == T_FLOAT_CONST || token->type == T_LPAR || 
-            token->type == T_TRUE || token->type == T_FALSE || token->type == T_IDENTIFIER);
+            token->type == T_TRUE || token->type == T_FALSE || token->type == T_IDENTIFIER ||
+            token->type == T_CAST);
 }
 
 bool Parser::is_equal(Token* token) {

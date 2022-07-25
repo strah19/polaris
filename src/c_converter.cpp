@@ -109,7 +109,7 @@ void Converter::convert_expression(Ast_Expression* expression) {
         case AST_PRIM_DATA: {
             switch (primary->type_value) {
             case AST_TYPE_INT:   fprintf(file, "%d", primary->int_const);     break;
-            case AST_TYPE_FLOAT: fprintf(file, "%g.f", primary->float_const); break;
+            case AST_TYPE_FLOAT: fprintf(file, "%ff", primary->float_const); break;
             case AST_TYPE_BOOLEAN: {
                 if (primary->boolean) write("true");
                 else                  write("false");
@@ -128,6 +128,13 @@ void Converter::convert_expression(Ast_Expression* expression) {
         case AST_PRIM_ID: {
             write(primary->ident);
             break;
+        }
+        case AST_PRIM_CAST: {
+            write("(");
+            convert_type(primary->cast.cast_type);
+            write(")(");
+            convert_expression(primary->cast.expression);
+            write(")");
         }
         default: break;
         }
