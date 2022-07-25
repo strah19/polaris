@@ -52,6 +52,7 @@ void Converter::convert_decleration(Ast_Decleration* decleration) {
     case AST_VAR_DECLERATION:      convert_variable_decleration(AST_CAST(Ast_VarDecleration, decleration));      break;
     case AST_SCOPE:                convert_scope(AST_CAST(Ast_Scope, decleration));                              break;
     case AST_IF:                   convert_if(AST_CAST(Ast_IfStatement, decleration));                           break;
+    case AST_WHILE:                convert_while(AST_CAST(Ast_WhileStatement, decleration));                     break;
     default: break;
     }
 }
@@ -90,6 +91,33 @@ void Converter::convert_if(Ast_IfStatement* if_statement) {
     convert_expression(if_statement->condition);
     write(")\n");
     convert_scope(if_statement->scope);
+    Ast_ConditionalStatement* current = if_statement->next;
+    while (current) {
+        if (current->type == AST_ELIF)
+            convert_elif(AST_CAST(Ast_ElifStatement, current));
+        else if (current->type == AST_ELSE)
+            convert_else(AST_CAST(Ast_ElseStatement, current));
+        current = current->next;
+    }
+}
+
+void Converter::convert_elif(Ast_ElifStatement* elif_statement) {
+    write("else if(");
+    convert_expression(elif_statement->condition);
+    write(")\n");
+    convert_scope(elif_statement->scope);
+}
+
+void Converter::convert_else(Ast_ElseStatement* else_statement) {
+    write("else");
+    convert_scope(else_statement->scope);
+}
+
+void Converter::convert_while(Ast_WhileStatement* while_statement) {
+    write("while(");
+    convert_expression(while_statement->condition);
+    write(")\n");
+    convert_scope(while_statement->scope);
 }
 
 void Converter::convert_type(AstDataType type) {

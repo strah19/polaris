@@ -6,7 +6,17 @@ b = 4;
 c : int = (2 < 2);
 
 if c < b {
+    
+}
+elif 2 == 2 {
+
+}
+else {
 
 }
 
-d : int = cast<int>(false);
+while true {
+
+}
+
+d : int = cast<int>(false) + c;

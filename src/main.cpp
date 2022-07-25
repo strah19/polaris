@@ -30,11 +30,16 @@
 void repl();
 void run_src_file(const char* filepath);
 
+bool log = false;
+
 int main(int argc, char* argv[]) {
+
+    if (argv[2] && strcmp(argv[2], "-log") == 0)
+        log = true;
 
     if (argc == 1) 
         repl();
-    else if (argc == 2)
+    else if (argc >= 2)
         run_src_file(argv[1]);
     else
         fatal_error("Unknown arguments passed into Polaris.\n");
@@ -64,6 +69,7 @@ void run_src_file(const char* filepath) {
 
     Lexer lexer(src);
     Tokens tokens = lexer.run();
+    if (log) lexer.log(tokens);
 
     Parser parser(&tokens[0], filepath);
     parser.parse();

@@ -79,6 +79,9 @@ private:
     Ast_ExpressionStatement* parse_expression_statement();
     Ast_Scope*               parse_scope();
     Ast_IfStatement*         parse_if();
+    Ast_ElifStatement*       parse_elif();
+    Ast_ElseStatement*       parse_else();
+    Ast_WhileStatement*      parse_while();
     Ast_Expression*          parse_expression(Precedence precedence = PREC_NONE);
 
     Ast_Expression* parse_assignment_expression(Ast_Expression* expression, AstEqualType equal);

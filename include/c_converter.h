@@ -37,6 +37,9 @@ private:
     void convert_variable_decleration(Ast_VarDecleration* variable_decleration);
     void convert_scope(Ast_Scope* scope);
     void convert_if(Ast_IfStatement* if_statement);
+    void convert_elif(Ast_ElifStatement* elif_statement);
+    void convert_else(Ast_ElseStatement* else_statement);
+    void convert_while(Ast_WhileStatement* while_statement);
 
     void convert_type(AstDataType type);
     void convert_expression(Ast_Expression* expression);

@@ -37,6 +37,7 @@ public:
 private:
     Token scan();
     Token init_token(TokenType token_type);
+    Token init_str();
     Token error_token(const char* msg);
 
     char  advance();

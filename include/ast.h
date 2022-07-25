@@ -249,7 +249,8 @@ struct Ast_ConditionalStatement : public Ast_Statement {
     Ast_ConditionalStatement() { type = AST_CONDITIONAL; }
     Ast_ConditionalStatement(Ast_Expression* condition, Ast_Scope* scope) : condition(condition), scope(scope) { type = AST_CONDITIONAL; }
     ~Ast_ConditionalStatement() {
-        delete_expression(condition);
+        if (condition)
+            delete_expression(condition);
         delete scope;
         delete next;
     }
@@ -277,10 +278,10 @@ struct Ast_ElseStatement : Ast_ConditionalStatement {
     ~Ast_ElseStatement() { }
 };
 
-struct Ast_WhileLoop : Ast_ConditionalStatement {
-    Ast_WhileLoop() { type = AST_WHILE; }
-    Ast_WhileLoop(Ast_Expression* condition, Ast_Scope* scope) : Ast_ConditionalStatement(condition, scope) { type = AST_WHILE; }
-    ~Ast_WhileLoop() { }
+struct Ast_WhileStatement : Ast_ConditionalStatement {
+    Ast_WhileStatement() { type = AST_WHILE; }
+    Ast_WhileStatement(Ast_Expression* condition, Ast_Scope* scope) : Ast_ConditionalStatement(condition, scope) { type = AST_WHILE; }
+    ~Ast_WhileStatement() { }
 };
 
 struct Ast_ReturnStatement : Ast_Statement {
@@ -341,7 +342,7 @@ void delete_ast(Ast_Decleration* ast) {
     case AST_IF:                   delete AST_CAST(Ast_IfStatement, ast);         break;
     case AST_ELIF:                 delete AST_CAST(Ast_ElifStatement, ast);       break;
     case AST_ELSE:                 delete AST_CAST(Ast_ElseStatement, ast);       break;
-    case AST_WHILE:                delete AST_CAST(Ast_WhileLoop, ast);           break;
+    case AST_WHILE:                delete AST_CAST(Ast_WhileStatement, ast);      break;
     case AST_RETURN:               delete AST_CAST(Ast_ReturnStatement, ast);     break;
     default:                       delete ast;                                    break;        
     }

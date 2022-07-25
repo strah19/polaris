@@ -176,8 +176,9 @@ Ast_Decleration* Parser::parse_decleration() {
 }
 
 Ast_Statement* Parser::parse_statement() {
-    if (match(T_LCURLY))  return parse_scope();
-    else if (match(T_IF)) return parse_if();
+    if (match(T_LCURLY))     return parse_scope();
+    else if (match(T_IF))    return parse_if(); 
+    else if (match(T_WHILE)) return parse_while();
     return parse_expression_statement();
 }
 
@@ -242,10 +243,42 @@ Ast_VarDecleration* Parser::parse_variable_decleration() {
 }
 
 Ast_IfStatement* Parser::parse_if() {
-    Ast_Expression* conditional = parse_expression();
+    Ast_Expression* condition = parse_expression();
     consume(T_LCURLY, "Expected '{' in if statement");
     Ast_Scope* scope = parse_scope();
-    return AST_NEW(Ast_IfStatement, conditional, scope);
+
+    Ast_IfStatement* if_statement = AST_NEW(Ast_IfStatement, condition, scope);
+
+    Ast_ConditionalStatement* current = if_statement;
+    while (match(T_ELIF)) {
+        current->next = parse_elif();
+        current = current->next;
+    }
+
+    if (match(T_ELSE))
+        current->next = parse_else();
+
+    return if_statement;
+}
+
+Ast_ElifStatement* Parser::parse_elif() {
+    Ast_Expression* condition = parse_expression();
+    consume(T_LCURLY, "Expected '{' in elif statement");
+    Ast_Scope* scope = parse_scope();
+    return AST_NEW(Ast_ElifStatement, condition, scope);
+}
+
+Ast_ElseStatement* Parser::parse_else() {
+    consume(T_LCURLY, "Expected '{' in else statement");
+    Ast_Scope* scope = parse_scope();
+    return AST_NEW(Ast_ElseStatement, scope);
+}
+
+Ast_WhileStatement* Parser::parse_while() {
+    Ast_Expression* condition = parse_expression();
+    consume(T_LCURLY, "Expected '{' in while statement");
+    Ast_Scope* scope = parse_scope();
+    return AST_NEW(Ast_WhileStatement, condition, scope);
 }
 
 Ast_Expression* Parser::parse_expression(Precedence precedence) {
@@ -459,10 +492,8 @@ AstDataType Parser::search_expression_for_type(Token* token, Ast_Expression* exp
         Ast_PrimaryExpression* primary = AST_CAST(Ast_PrimaryExpression, expression);
         if (primary->prim_type == AST_PRIM_NESTED)
             return search_expression_for_type(token, primary->nested);
-        else if (primary->prim_type == AST_PRIM_CAST) {
-            printf("GOOD\n");
+        else if (primary->prim_type == AST_PRIM_CAST)
             return primary->cast.cast_type;
-        }
         return (primary->prim_type == AST_PRIM_DATA || primary->prim_type == AST_PRIM_ID) ? primary->type_value : AST_TYPE_NONE;
     }
     default: break;

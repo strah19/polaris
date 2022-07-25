@@ -210,7 +210,18 @@ Token Lexer::string() {
     }
     if (is_eof()) return error_token("Unterminating string");
     advance();
-    return init_token(T_STRING_CONST);
+    return init_str();
+}
+
+Token Lexer::init_str() {
+    Token token;
+
+    token.type = T_STRING_CONST;
+    token.line = line;
+    token.start = start + 1;
+    token.size = (int) (current - start - 2);
+
+    return token;
 }
 
 Token Lexer::init_token(TokenType token_type) {
