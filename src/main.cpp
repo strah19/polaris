@@ -17,6 +17,7 @@
 #include "parser.h"
 #include "benchmark.h"
 #include <stdio.h>
+#include <string.h>
 #include <time.h>
 
 // For VM
@@ -75,6 +76,7 @@ void run_src_file(const char* filepath) {
     parser.parse();
 
     if (!parser.has_errors()) {
+        #ifndef USE_VM
         Converter converter;
         converter.filename = "basic";
         converter.objname = "basic";
@@ -84,6 +86,7 @@ void run_src_file(const char* filepath) {
 
         //This is the C compiler
         converter.compile();
+        #endif
         printf("Compilation complete.\n");
     } else fatal_error("Exiting with compiler error(s).\n");
 

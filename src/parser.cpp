@@ -163,7 +163,7 @@ void Parser::synchronize() {
 Ast_Decleration* Parser::parse_decleration() {
     try {
         if (peek()->type == T_IDENTIFIER && (peek(1)->type == T_COLON || peek(1)->type == T_COLON_EQUAL)) {
-            if (peek(2)->type == T_FUNC)
+            if (peek(2)->type == T_LPAR && peek(1)->type == T_COLON)
                 return parse_function();
             return parse_variable_decleration();
         }
@@ -364,6 +364,14 @@ Ast_Expression* Parser::parse_primary_expression() {
         primary->ident = (const char*) id;
         break;
     }
+    case T_STRING_CONST: {
+        char* str = (char*) peek(-1)->start;
+        str[peek(-1)->size] = '\0';       
+        primary->string = str; 
+        primary->prim_type = AST_PRIM_DATA;
+        primary->type_value = AST_TYPE_STRING;
+        break;
+    }
     case T_CAST: {
         primary->prim_type = AST_PRIM_CAST;
         consume(T_LARROW, "Expected '<' after 'cast' keyword");
@@ -415,6 +423,8 @@ Ast_Expression* Parser::parse_binary_expression(Ast_Expression* left) {
 
 void Parser::check_types(AstDataType left, AstDataType right, AstOperatorType op) {
     if (op == AST_OPERATOR_AND || op == AST_OPERATOR_OR) return;
+    if (is_type(left, AST_TYPE_STRING) || is_type(right, AST_TYPE_STRING))
+        throw parser_error(peek(-1), "No operation is supported for strings");
     if (left == right) return;
     if (!check_either(left, right, AST_TYPE_INT))
         throw parser_error(peek(-1), "Type does not match with integer");
@@ -426,10 +436,6 @@ void Parser::check_types(AstDataType left, AstDataType right, AstOperatorType op
 
 bool Parser::check_either(AstDataType left, AstDataType right, AstDataType type) {
     return ((is_type(left, type) && is_type(right, type)) || (!is_type(left, type) && !is_type(right, type)));
-}
-
-bool Parser::ignore_type(AstDataType left, AstDataType right, AstDataType type) {
-    return (is_type(left, type) || is_type(right, type));
 }
 
 bool Parser::is_type(AstDataType prim, AstDataType type) {
@@ -467,6 +473,7 @@ AstDataType Parser::parse_type() {
     case T_INT:     var_type = AST_TYPE_INT;     break;
     case T_FLOAT:   var_type = AST_TYPE_FLOAT;   break;
     case T_BOOLEAN: var_type = AST_TYPE_BOOLEAN; break;
+    case T_STRING:  var_type = AST_TYPE_STRING;  break;
     default: throw parser_error(peek(), "Unknown type");
     }
     match(peek()->type);
@@ -508,7 +515,7 @@ bool Parser::is_unary(Token* token) {
 bool Parser::is_primary(Token* token) {
     return (token->type == T_INT_CONST || token->type == T_FLOAT_CONST || token->type == T_LPAR || 
             token->type == T_TRUE || token->type == T_FALSE || token->type == T_IDENTIFIER ||
-            token->type == T_CAST);
+            token->type == T_CAST || token->type == T_STRING_CONST);
 }
 
 bool Parser::is_equal(Token* token) {

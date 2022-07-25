@@ -177,8 +177,7 @@ TokenType Lexer::keywords() {
                      (match("reak",   4) ? T_BREAK   : T_IDENTIFIER));
     case 'f': return (match("loat",   4) ? T_FLOAT   : 
                      (match("or",     2) ? T_FOR     : 
-                     (match("unc",    3) ? T_FUNC    :
-                     (match("alse",   4) ? T_FALSE   : T_IDENTIFIER))));
+                     (match("alse",   4) ? T_FALSE   : T_IDENTIFIER)));
     case 'w': return (match("hile",   4) ? T_WHILE   : T_IDENTIFIER);
     case 'r': return (match("eturn",  5) ? T_RETURN  : T_IDENTIFIER);
     case 'c' :return (match("har",    3) ? T_CHAR    : 

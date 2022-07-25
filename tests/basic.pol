@@ -1,22 +1,18 @@
-a : boolean = true / true;
-b : int = 2;
+a := 1;
+b := 2;
+c := 3;
 
-b = 4;
-
-c : int = (2 < 2);
-
-if c < b {
-    
-}
-elif 2 == 2 {
-
-}
-else {
+if a == 1 or a == 2 or a == 3 {
 
 }
 
-while true {
+</
+
+foo : (a: int) -> int {
 
 }
 
-d : int = cast<int>(false) + c;
+/>
+
+d := cast<boolean>(1.2);
+s : string = "hello world";

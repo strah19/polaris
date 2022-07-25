@@ -122,10 +122,11 @@ void Converter::convert_while(Ast_WhileStatement* while_statement) {
 
 void Converter::convert_type(AstDataType type) {
     switch (type) {
-    case AST_TYPE_INT:     write("int ");   break;
-    case AST_TYPE_FLOAT:   write("float "); break; 
-    case AST_TYPE_BOOLEAN: write("bool ");  break;
-    default:                                break;
+    case AST_TYPE_INT:     write("int ");          break;
+    case AST_TYPE_FLOAT:   write("float ");        break; 
+    case AST_TYPE_BOOLEAN: write("bool ");         break;
+    case AST_TYPE_STRING:  write("const char* ");  break;
+    default:                                       break;
     }
 }
 
@@ -143,6 +144,7 @@ void Converter::convert_expression(Ast_Expression* expression) {
                 else                  write("false");
                 break;
             }
+            case AST_TYPE_STRING: fprintf(file, "\"%s\"", primary->string); break;
             default: break;
             }
             break;
