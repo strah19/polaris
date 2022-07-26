@@ -102,6 +102,23 @@ void Parser::parse() {
         if (decleration)
             unit->declerations.push_back(decleration);
     }
+
+    //Here we need to organize the declerations and fix any dependency issues between functions and variables.
+    sort_declerations();
+}
+
+void Parser::sort_declerations() {
+    int i, j, min_idx;
+ 
+    for (i = 0; i < unit->declerations.size() - 1; i++) {
+         min_idx = i;
+        for (j = i + 1; j < unit->declerations.size(); j++)
+            if (unit->declerations[j]->type < unit->declerations[min_idx]->type)
+                min_idx = j;
+        Ast_Decleration* temp = unit->declerations[min_idx];
+        unit->declerations[min_idx] = unit->declerations[i];
+        unit->declerations[i] = temp; 
+    }
 }
 
 Token* Parser::peek(int index) {
@@ -156,6 +173,7 @@ void Parser::synchronize() {
     advance();
     while (!is_end()) {
         if (peek(-1)->type == T_SEMICOLON) return;
+        if (peek(-1)->type == T_RCURLY)    return;
         advance();
     }   
 }
@@ -209,14 +227,31 @@ Ast_ExpressionStatement* Parser::parse_expression_statement() {
 }
 
 Ast_Function* Parser::parse_function() {
-    return nullptr;
+    Ast_Function* function = AST_NEW(Ast_Function);
+    function->ident = parse_identifier("Expected identifier in function decleration");
+
+    consume(T_COLON, "Expected ':' in function decleration");  
+    consume(T_LPAR, "Expected '(' in function decleration");  
+    function->args = parse_function_arguments();
+    consume(T_RPAR, "Expected ')' after function arguments");  
+    consume(T_LCURLY, "Expected '{' before function body");  
+    function->scope = parse_scope();
+    return function;
 }
 
-Ast_VarDecleration* Parser::parse_variable_decleration() {
-    consume(T_IDENTIFIER, "Expected an identifier in variable decleration");
+Vector<Ast_VarDecleration*> Parser::parse_function_arguments() {
+    Vector<Ast_VarDecleration*> args;
+    while (!check(T_RPAR)) {
+        args.push_back(parse_variable_decleration(false));
+        if (!check(T_RPAR)) 
+            consume(T_COMMA, "Expected ',' between function arguments");
+    }
+    return args;
+}
+
+Ast_VarDecleration* Parser::parse_variable_decleration(bool semicolon) {
+    const char* id = parse_identifier("Expected identifier in variable decleration");
     Token* start_token = peek(-1);
-    char* id = (char*) start_token->start;
-    id[start_token->size] = '\0';
 
     if (current_scope->in_any(id))
         throw parser_error(peek(-1), "Redecleration of variable");
@@ -226,20 +261,31 @@ Ast_VarDecleration* Parser::parse_variable_decleration() {
         Ast_Expression* expression = nullptr;
         if (match(T_EQUAL)) {
             expression = parse_expression();
-            AstDataType found_type = search_expression_for_type(start_token, expression);
-            if (found_type != var_type) 
+            int found_type = search_expression_for_type(start_token, expression);
+
+            if (!check_multi_types(var_type, found_type)) 
                 throw parser_error(start_token, "Expression does not match type in decleration");
         }
-        consume(T_SEMICOLON, "Expected ';' in variable decleration");
+        if (semicolon) consume(T_SEMICOLON, "Expected ';' in variable decleration");
         current_scope->add(id, { var_type });
         return AST_NEW(Ast_VarDecleration, id, expression, var_type, AST_SPECIFIER_NONE);
     }
     consume(T_COLON_EQUAL, "Expected ':' or ':=' in variable decleration");  
     Ast_Expression* expression = parse_expression();
     consume(T_SEMICOLON, "Expected ';' in variable decleration");
-    AstDataType var_type = search_expression_for_type(start_token, expression);
-    current_scope->add(id, { var_type });
-    return AST_NEW(Ast_VarDecleration, id, expression, var_type, AST_SPECIFIER_NONE);
+    int var_type = search_expression_for_type(start_token, expression);
+    if (!((var_type & (var_type - 1)) == 0)) 
+        var_type = (var_type & ~(var_type-1));
+    current_scope->add(id, { (AstDataType) var_type });
+    return AST_NEW(Ast_VarDecleration, id, expression, (AstDataType) var_type, AST_SPECIFIER_NONE);
+}
+
+const char* Parser::parse_identifier(const char* error_msg) {
+    consume(T_IDENTIFIER, error_msg);
+    Token* start_token = peek(-1);
+    char* id = (char*) start_token->start;
+    id[start_token->size] = '\0';
+    return (const char*) id;
 }
 
 Ast_IfStatement* Parser::parse_if() {
@@ -312,7 +358,7 @@ Ast_Expression* Parser::parse_assignment_expression(Ast_Expression* expression, 
     Ast_Expression* assign = parse_expression(PREC_ASSIGNMENT);
     if (is_equal(peek()) && AST_CAST(Ast_PrimaryExpression, assign)->prim_type != AST_PRIM_ID)
         throw parser_error(peek(-2), "Lvalue required as left operand of assignment");     
-    check_types(search_expression_for_type(peek(-1), assign), search_expression_for_type(peek(-1), expression));
+    check_types((AstDataType) search_expression_for_type(peek(-1), assign), (AstDataType) search_expression_for_type(peek(-1), expression));
 
     return AST_NEW(Ast_Assignment, assign, expression, equal);
 }
@@ -396,7 +442,7 @@ Ast_Expression* Parser::parse_binary_expression(Ast_Expression* left) {
     TokenType op = peek(-1)->type;  
     Ast_Expression* right = parse_expression(PRECEDENCE[op]);
 
-    check_types(search_expression_for_type(peek(-1), left), search_expression_for_type(peek(-1), right), convert_to_op(op));
+    check_types((AstDataType) search_expression_for_type(peek(-1), left), (AstDataType) search_expression_for_type(peek(-1), right), convert_to_op(op));
 
     switch (op) {
     case T_PLUS:          return AST_NEW(Ast_BinaryExpression, left, AST_OPERATOR_ADD, right);
@@ -422,10 +468,11 @@ Ast_Expression* Parser::parse_binary_expression(Ast_Expression* left) {
 }
 
 void Parser::check_types(AstDataType left, AstDataType right, AstOperatorType op) {
-    if (op == AST_OPERATOR_AND || op == AST_OPERATOR_OR) return;
     if (is_type(left, AST_TYPE_STRING) || is_type(right, AST_TYPE_STRING))
         throw parser_error(peek(-1), "No operation is supported for strings");
+    if (op == AST_OPERATOR_AND || op == AST_OPERATOR_OR) return;
     if (left == right) return;
+    printf ("%d %d\n", left, right);
     if (!check_either(left, right, AST_TYPE_INT))
         throw parser_error(peek(-1), "Type does not match with integer");
     else if (!check_either(left, right, AST_TYPE_BOOLEAN))
@@ -480,19 +527,23 @@ AstDataType Parser::parse_type() {
     return var_type;
 }
 
-AstDataType Parser::search_expression_for_type(Token* token, Ast_Expression* expression) {
+int Parser::search_expression_for_type(Token* token, Ast_Expression* expression) {
     switch (expression->type) {
     case AST_UNARY: {
         return search_expression_for_type(token, AST_CAST(Ast_UnaryExpression, expression)->next);
     }
     case AST_BINARY: {
         Ast_BinaryExpression* binary = AST_CAST(Ast_BinaryExpression, expression);
-        AstDataType type = search_expression_for_type(token, binary->left);
+        int type = search_expression_for_type(token, binary->left);
         if (type == AST_TYPE_NONE) {
             type = search_expression_for_type(token, binary->right);
             if (type == AST_TYPE_NONE)
                 break;
         }
+        if (binary->op == AST_OPERATOR_COMPARITIVE_EQUAL || binary->op == AST_OPERATOR_COMPARITIVE_NOT_EQUAL ||
+            binary->op == AST_OPERATOR_LT || binary->op == AST_OPERATOR_GT || binary->op == AST_OPERATOR_LTE || binary->op == AST_OPERATOR_GTE) {
+                type |= AST_TYPE_BOOLEAN;
+            }
         return type;
     }
     case AST_PRIMARY: {
@@ -506,6 +557,10 @@ AstDataType Parser::search_expression_for_type(Token* token, Ast_Expression* exp
     default: break;
     }
     throw parser_error(token, "Unknown type found in expression");
+}
+
+bool Parser::check_multi_types(AstDataType type_to_check, int type) {
+    return ((type & type_to_check));
 }
 
 bool Parser::is_unary(Token* token) {

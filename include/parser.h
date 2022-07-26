@@ -72,17 +72,20 @@ private:
     void init(Token* tokens, const char* filepath);
     void synchronize();
 
-    Ast_Decleration*         parse_decleration();
-    Ast_Statement*           parse_statement();
-    Ast_Function*            parse_function();
-    Ast_VarDecleration*      parse_variable_decleration();
-    Ast_ExpressionStatement* parse_expression_statement();
-    Ast_Scope*               parse_scope();
-    Ast_IfStatement*         parse_if();
-    Ast_ElifStatement*       parse_elif();
-    Ast_ElseStatement*       parse_else();
-    Ast_WhileStatement*      parse_while();
-    Ast_Expression*          parse_expression(Precedence precedence = PREC_NONE);
+    Ast_Decleration*            parse_decleration();
+    Ast_Statement*              parse_statement();
+    Ast_Function*               parse_function();
+    Ast_VarDecleration*         parse_variable_decleration(bool semicolon = true);
+    Ast_ExpressionStatement*    parse_expression_statement();
+    Ast_Scope*                  parse_scope();
+    Ast_IfStatement*            parse_if();
+    Ast_ElifStatement*          parse_elif();
+    Ast_ElseStatement*          parse_else();
+    Ast_WhileStatement*         parse_while();
+    Ast_Expression*             parse_expression(Precedence precedence = PREC_NONE);
+    AstDataType                 parse_type();
+    const char*                 parse_identifier(const char* error_msg);
+    Vector<Ast_VarDecleration*> parse_function_arguments();
 
     Ast_Expression* parse_assignment_expression(Ast_Expression* expression, AstEqualType equal);
     Ast_Expression* parse_binary_expression(Ast_Expression* left);
@@ -92,15 +95,19 @@ private:
     bool is_unary(Token* token);
     bool is_primary(Token* token);
     bool is_equal(Token* token);
-    AstEqualType convert_to_equal(TokenType type);
+
+    void sort_declerations();
+
+    AstEqualType    convert_to_equal(TokenType type);
     AstOperatorType convert_to_op(TokenType type);
 
     void check_types(AstDataType left, AstDataType right, AstOperatorType op = AST_OPERATOR_NONE);
     bool check_either(AstDataType left, AstDataType right, AstDataType type);
     bool is_type(AstDataType prim, AstDataType type);
     void check_cast(AstDataType casted_type, AstDataType expression_type);
-    AstDataType search_expression_for_type(Token* token, Ast_Expression* expression);
-    AstDataType parse_type();
+
+    int search_expression_for_type(Token* token, Ast_Expression* expression);
+    bool check_multi_types(AstDataType type_to_check, int type);
 private:
     Token* tokens = nullptr;
     uint32_t current = 0;

@@ -16,6 +16,7 @@ using Map = std::map<Key, Val>;
 using String = std::string;
 
 enum AstType {
+    AST_FUNCTION,
     AST_EXPRESSION,
     AST_UNARY,
     AST_PRIMARY,
@@ -23,7 +24,6 @@ enum AstType {
     AST_ASSIGNMENT,
     AST_DECLERATION,
     AST_VAR_DECLERATION,
-    AST_FUNCTION,
     AST_STATEMENT,
     AST_PRINT,
     AST_EXPRESSION_STATEMENT,
@@ -86,13 +86,13 @@ enum AstPrimaryType {
 };
 
 enum AstDataType {
-    AST_TYPE_FLOAT,
-    AST_TYPE_INT,
-    AST_TYPE_BOOLEAN,
-    AST_TYPE_STRING,
-    AST_TYPE_CHAR,
-    AST_TYPE_VOID,
-    AST_TYPE_NONE
+    AST_TYPE_NONE = 0x00,
+    AST_TYPE_FLOAT = 0x01,
+    AST_TYPE_BOOLEAN = 0x02,
+    AST_TYPE_INT = 0x04,
+    AST_TYPE_STRING = 0x08,
+    AST_TYPE_CHAR = 0x10,
+    AST_TYPE_VOID = 0x20
 };
 
 enum AstSpecifierType {

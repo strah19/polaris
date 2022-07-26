@@ -161,6 +161,7 @@ Token Lexer::single_character(char single_character_tokens) {
     case '%': return init_token(T_PERCENT );
     case '^': return init_token(T_CARET   );
     case '~': return init_token(T_NOT     );
+    case ',': return init_token(T_COMMA   );
     case '"': return string();
     default:  return error_token("Unknown character's found in lexer");
     }

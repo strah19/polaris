@@ -21,9 +21,18 @@
 void Converter::run(Ast_TranslationUnit* unit) {
     open_file();
 
+    int index = 0;
+
     write(PREAMBLE_BOILERPLATE);
+    while (unit->declerations[index]->type == AST_FUNCTION) {
+        convert_function(AST_CAST(Ast_Function, unit->declerations[index]));
+        index++;
+    }
     write(MAIN_BOILERPLATE);
-    convert_translation_unit(unit);
+    while (index < unit->declerations.size()) {
+        convert_decleration(unit->declerations[index]);
+        index++;
+    }
     write(POSTAMBLE_BOILERPLATE);
 
     fclose(file);
@@ -41,9 +50,17 @@ void Converter::open_file() {
     if (!file) fatal_error("Unable to open '%s' file for conversion.\n", objname); 
 }
 
-void Converter::convert_translation_unit(Ast_TranslationUnit* unit) {
-    for (auto& dec : unit->declerations)
-        convert_decleration(dec);
+void Converter::convert_function(Ast_Function* function) {
+    write("void ");
+    write(function->ident);
+    write("(");
+    for (int i = 0; i < function->args.size(); i++) {
+        convert_variable_decleration(function->args[i], false);
+        if (i < function->args.size() - 1)
+            write(",");
+    }
+    write(")");
+    convert_scope(function->scope);
 }
 
 void Converter::convert_decleration(Ast_Decleration* decleration) {
@@ -59,8 +76,9 @@ void Converter::convert_decleration(Ast_Decleration* decleration) {
 
 void Converter::convert_scope(Ast_Scope* scope) {
     write("{\n");
-    for (auto& dec : scope->declerations) 
+    for (auto& dec : scope->declerations) {
         convert_decleration(dec);
+    }
     write("}\n");
 }
 
@@ -76,14 +94,14 @@ void Converter::convert_expression_statement(Ast_ExpressionStatement* expression
     semicolon();
 }
 
-void Converter::convert_variable_decleration(Ast_VarDecleration* variable_decleration) {
+void Converter::convert_variable_decleration(Ast_VarDecleration* variable_decleration, bool semi) {
     convert_type(variable_decleration->type_value);
     fprintf(file, "%s ", variable_decleration->ident);
     if (variable_decleration->expression) {
         write("= ");
         convert_expression(variable_decleration->expression);
     }
-    semicolon();
+    if (semi) semicolon();
 }
 
 void Converter::convert_if(Ast_IfStatement* if_statement) {

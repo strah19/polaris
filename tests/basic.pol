@@ -1,18 +1,13 @@
 a := 1;
 b := 2;
-c := 3;
+c := 3 * 7 / 4 * 44 < 3;
 
 if a == 1 or a == 2 or a == 3 {
 
 }
 
-</
 
-foo : (a: int) -> int {
-
+foo : (v: int, z: boolean) {
+    
 }
 
-/>
-
-d := cast<boolean>(1.2);
-s : string = "hello world";
