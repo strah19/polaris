@@ -30,14 +30,24 @@ struct ParserError {
 };
 
 enum DefinitionType {
-    DEF_VAR, DEF_FUN, DEF_CLS
+    DEF_VAR, DEF_FUN, DEF_CLS, DEF_NONE
+};
+
+struct VarSymbol {
+    AstDataType type;
+};
+
+struct FuncSymbol {
+    AstDataType return_type;
+    Vector<AstDataType> arg_types;
+    Vector<Ast_Expression*> default_values;
 };
 
 struct Symbol {
-    Symbol() = default;
-    Symbol(DefinitionType is) : is(is) { }
-    AstDataType type;
     DefinitionType is;
+
+    VarSymbol var;
+    FuncSymbol func;
 };
 
 struct Scope {
@@ -88,7 +98,7 @@ private:
     Ast_Expression*             parse_expression(Precedence precedence = PREC_NONE);
     AstDataType                 parse_type();
     const char*                 parse_identifier(const char* error_msg);
-    Vector<Ast_VarDecleration*> parse_function_arguments();
+    Vector<Ast_VarDecleration*> parse_function_arguments(Symbol* sym);
 
     Ast_Expression* parse_assignment_expression(Ast_Expression* expression, AstEqualType equal);
     Ast_Expression* parse_binary_expression(Ast_Expression* left);
@@ -110,6 +120,7 @@ private:
     void check_cast(AstDataType casted_type, AstDataType expression_type);
 
     int search_expression_for_type(Token* token, Ast_Expression* expression);
+    AstDataType get_type_from_expression(Token* token, Ast_Expression* expression);
     void check_expression_for_default_args(Token* token, Ast_Expression* expression);
     
     bool check_multi_types(AstDataType type_to_check, int type);

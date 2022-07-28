@@ -32,7 +32,9 @@ Symbol Scope::get(const String& name) {
         if (current->in_scope(name)) return current->definitions[name];
         current = current->previous;
     }
-    return Symbol();
+    Symbol sym;
+    sym.is = DEF_NONE;
+    return sym;
 }
 
 bool Scope::in_any(const String& name) {
@@ -230,9 +232,10 @@ Ast_Function* Parser::parse_function() {
     Ast_Function* function = AST_NEW(Ast_Function);
     function->ident = parse_identifier("Expected identifier in function decleration");
 
+    Symbol sym;
     consume(T_COLON, "Expected ':' in function decleration");  
     consume(T_LPAR, "Expected '(' in function decleration");  
-    function->args = parse_function_arguments();
+    function->args = parse_function_arguments(&sym);
     consume(T_RPAR, "Expected ')' after function arguments");  
     consume(T_LCURLY, "Expected '{' before function body");  
     function->scope = parse_scope();
@@ -240,25 +243,30 @@ Ast_Function* Parser::parse_function() {
     if (current_scope->in_any(function->ident))
         throw parser_error(peek(-1), "Redecleration of function");
 
-    Symbol sym(DEF_FUN);
+    sym.is = DEF_FUN;
     current_scope->add(function->ident, sym);
 
     return function;
 }
 
-Vector<Ast_VarDecleration*> Parser::parse_function_arguments() {
+Vector<Ast_VarDecleration*> Parser::parse_function_arguments(Symbol* sym) {
     Vector<Ast_VarDecleration*> args;
+    bool expect_default = false;
     while (!check(T_RPAR)) {
         const char* id = parse_identifier("Expected identifier in function argument");
         consume(T_COLON, "Expected ':' in function argument");  
         AstDataType var_type = parse_type();
+        sym->func.arg_types.push_back(var_type);
 
         Ast_Expression* expression = nullptr;
         if (match(T_EQUAL)) {
             Token* begin_of_expression = peek();
             expression = parse_expression();
+            expect_default = true;
             check_expression_for_default_args(begin_of_expression, expression);
         }
+        else if (expect_default) 
+            throw parser_error(peek(), "Default value for argument must be at end of function");
         
         args.push_back(AST_NEW(Ast_VarDecleration, id, expression, var_type, AST_SPECIFIER_NONE)); 
         if (!check(T_RPAR)) 
@@ -285,8 +293,9 @@ Ast_VarDecleration* Parser::parse_variable_decleration(bool semicolon) {
                 throw parser_error(start_token, "Expression does not match type in decleration");
         }
         if (semicolon) consume(T_SEMICOLON, "Expected ';' in variable decleration");
-        Symbol sym(DEF_VAR);
-        sym.type = var_type;
+        Symbol sym;
+        sym.is = DEF_VAR;
+        sym.var.type = var_type;
         current_scope->add(id, sym);
         return AST_NEW(Ast_VarDecleration, id, expression, var_type, AST_SPECIFIER_NONE);
     }
@@ -295,9 +304,10 @@ Ast_VarDecleration* Parser::parse_variable_decleration(bool semicolon) {
     consume(T_SEMICOLON, "Expected ';' in variable decleration");
     int var_type = search_expression_for_type(start_token, expression);
     if (!((var_type & (var_type - 1)) == 0)) 
-        var_type = (var_type & ~(var_type-1));
-    Symbol sym(DEF_VAR);
-    sym.type = (AstDataType) var_type;
+        var_type = (var_type & ~(var_type-1));  
+    Symbol sym;
+    sym.is = DEF_VAR;
+    sym.var.type = (AstDataType) var_type;
     current_scope->add(id, sym);
     return AST_NEW(Ast_VarDecleration, id, expression, (AstDataType) var_type, AST_SPECIFIER_NONE);
 }
@@ -380,7 +390,7 @@ Ast_Expression* Parser::parse_assignment_expression(Ast_Expression* expression, 
     Ast_Expression* assign = parse_expression(PREC_ASSIGNMENT);
     if (is_equal(peek()) && AST_CAST(Ast_PrimaryExpression, assign)->prim_type != AST_PRIM_ID)
         throw parser_error(peek(-2), "Lvalue required as left operand of assignment");     
-    check_types((AstDataType) search_expression_for_type(peek(-1), assign), (AstDataType) search_expression_for_type(peek(-1), expression));
+    check_types(get_type_from_expression(peek(-1), assign), get_type_from_expression(peek(-1), expression));
 
     return AST_NEW(Ast_Assignment, assign, expression, equal);
 }
@@ -420,15 +430,37 @@ Ast_Expression* Parser::parse_primary_expression() {
         break;
     }
     case T_IDENTIFIER: {
-        primary->prim_type = AST_PRIM_ID;
         char* id = (char*) peek(-1)->start;
         id[peek(-1)->size] = '\0';
         Symbol symbol = current_scope->get(std::string(id));
 
-        if (symbol.type == AST_TYPE_NONE) 
-            throw parser_error(peek(-1), "Undefined variable");
-
-        primary->type_value = symbol.type;
+        if (symbol.is == DEF_VAR) {
+            primary->prim_type = AST_PRIM_ID;
+            primary->type_value = symbol.var.type;
+        }
+        else if (symbol.is == DEF_FUN) {
+            primary->prim_type = AST_PRIM_CALL;
+            primary->call.ident = id;
+            consume(T_LPAR, "Expected '(' in function call");
+            Vector<Token*> error_spots;
+            while (!check(T_RPAR)) {
+                error_spots.push_back(peek());
+                primary->call.args.push_back(parse_expression());
+                if (!check(T_RPAR)) 
+                    consume(T_COMMA, "Expected ',' between function arguments");
+            }
+            if (primary->call.args.size() != symbol.func.arg_types.size())
+                throw parser_error(peek(), "Mismatched number of arguments in function call");
+            for (int i = 0; i < primary->call.args.size(); i++) {
+                AstDataType type = get_type_from_expression(error_spots[i], primary->call.args[i]);
+                if (!check_multi_types(type, symbol.func.arg_types[i]))
+                    throw parser_error(error_spots[i], "Type does not match in function call");
+            }
+            consume(T_RPAR, "Expected ')' in function call");
+        }
+        else {
+            throw parser_error(peek(-1), "Undefined symbol");
+        }
         primary->ident = (const char*) id;
         break;
     }
@@ -464,7 +496,7 @@ Ast_Expression* Parser::parse_binary_expression(Ast_Expression* left) {
     TokenType op = peek(-1)->type;  
     Ast_Expression* right = parse_expression(PRECEDENCE[op]);
 
-    check_types((AstDataType) search_expression_for_type(peek(-1), left), (AstDataType) search_expression_for_type(peek(-1), right), convert_to_op(op));
+    check_types(get_type_from_expression(peek(-1), left), get_type_from_expression(peek(-1), right), convert_to_op(op));
 
     switch (op) {
     case T_PLUS:          return AST_NEW(Ast_BinaryExpression, left, AST_OPERATOR_ADD, right);
@@ -508,7 +540,7 @@ bool Parser::check_either(AstDataType left, AstDataType right, AstDataType type)
 }
 
 bool Parser::is_type(AstDataType prim, AstDataType type) {
-    return (prim == type);
+    return (prim & type);
 }
 
 AstOperatorType Parser::convert_to_op(TokenType type) {
@@ -574,11 +606,21 @@ int Parser::search_expression_for_type(Token* token, Ast_Expression* expression)
             return search_expression_for_type(token, primary->nested);
         else if (primary->prim_type == AST_PRIM_CAST)
             return primary->cast.cast_type;
+        if (primary->prim_type == AST_PRIM_ID || primary->prim_type == AST_PRIM_DATA) {
+            if (primary->type_value == AST_TYPE_INT)
+                return (primary->type_value | AST_TYPE_BOOLEAN);
+            else if (primary->type_value == AST_TYPE_BOOLEAN)
+                return (primary->type_value | AST_TYPE_INT);
+        }
         return (primary->prim_type == AST_PRIM_DATA || primary->prim_type == AST_PRIM_ID) ? primary->type_value : AST_TYPE_NONE;
     }
     default: break;
     }
     throw parser_error(token, "Unknown type found in expression");
+}
+
+AstDataType Parser::get_type_from_expression(Token* token, Ast_Expression* expression) {    
+    return (AstDataType) search_expression_for_type(token, expression);
 }
 
 void Parser::check_expression_for_default_args(Token* token, Ast_Expression* expression) {

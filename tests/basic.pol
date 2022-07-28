@@ -14,3 +14,11 @@ foo : (v: int, z: boolean) {
     
 }
 
+test_func : () {
+
+}
+
+test_func();
+boo(1, 1);
+
+f : boolean = 1 + true;

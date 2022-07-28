@@ -183,6 +183,18 @@ void Converter::convert_expression(Ast_Expression* expression) {
             write(")(");
             convert_expression(primary->cast.expression);
             write(")");
+            break;
+        }
+        case AST_PRIM_CALL: {
+            write(primary->call.ident);
+            write("(");
+            for (int i = 0; i < primary->call.args.size(); i++) {
+                convert_expression(primary->call.args[i]);
+                if (i < primary->call.args.size() -1 )
+                    write(",");
+            }
+            write(")");
+            break;
         }
         default: break;
         }
