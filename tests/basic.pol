@@ -6,6 +6,9 @@ if a == 1 or a == 2 or a == 3 {
 
 }
 
+boo : (v: int, z: boolean) {
+    foo := 2; 
+}
 
 foo : (v: int, z: boolean) {
     

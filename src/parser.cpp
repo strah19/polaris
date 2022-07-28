@@ -32,7 +32,7 @@ Symbol Scope::get(const String& name) {
         if (current->in_scope(name)) return current->definitions[name];
         current = current->previous;
     }
-    return { AST_TYPE_NONE };
+    return Symbol();
 }
 
 bool Scope::in_any(const String& name) {
@@ -236,13 +236,31 @@ Ast_Function* Parser::parse_function() {
     consume(T_RPAR, "Expected ')' after function arguments");  
     consume(T_LCURLY, "Expected '{' before function body");  
     function->scope = parse_scope();
+
+    if (current_scope->in_any(function->ident))
+        throw parser_error(peek(-1), "Redecleration of function");
+
+    Symbol sym(DEF_FUN);
+    current_scope->add(function->ident, sym);
+
     return function;
 }
 
 Vector<Ast_VarDecleration*> Parser::parse_function_arguments() {
     Vector<Ast_VarDecleration*> args;
     while (!check(T_RPAR)) {
-        args.push_back(parse_variable_decleration(false));
+        const char* id = parse_identifier("Expected identifier in function argument");
+        consume(T_COLON, "Expected ':' in function argument");  
+        AstDataType var_type = parse_type();
+
+        Ast_Expression* expression = nullptr;
+        if (match(T_EQUAL)) {
+            Token* begin_of_expression = peek();
+            expression = parse_expression();
+            check_expression_for_default_args(begin_of_expression, expression);
+        }
+        
+        args.push_back(AST_NEW(Ast_VarDecleration, id, expression, var_type, AST_SPECIFIER_NONE)); 
         if (!check(T_RPAR)) 
             consume(T_COMMA, "Expected ',' between function arguments");
     }
@@ -267,7 +285,9 @@ Ast_VarDecleration* Parser::parse_variable_decleration(bool semicolon) {
                 throw parser_error(start_token, "Expression does not match type in decleration");
         }
         if (semicolon) consume(T_SEMICOLON, "Expected ';' in variable decleration");
-        current_scope->add(id, { var_type });
+        Symbol sym(DEF_VAR);
+        sym.type = var_type;
+        current_scope->add(id, sym);
         return AST_NEW(Ast_VarDecleration, id, expression, var_type, AST_SPECIFIER_NONE);
     }
     consume(T_COLON_EQUAL, "Expected ':' or ':=' in variable decleration");  
@@ -276,7 +296,9 @@ Ast_VarDecleration* Parser::parse_variable_decleration(bool semicolon) {
     int var_type = search_expression_for_type(start_token, expression);
     if (!((var_type & (var_type - 1)) == 0)) 
         var_type = (var_type & ~(var_type-1));
-    current_scope->add(id, { (AstDataType) var_type });
+    Symbol sym(DEF_VAR);
+    sym.type = (AstDataType) var_type;
+    current_scope->add(id, sym);
     return AST_NEW(Ast_VarDecleration, id, expression, (AstDataType) var_type, AST_SPECIFIER_NONE);
 }
 
@@ -557,6 +579,33 @@ int Parser::search_expression_for_type(Token* token, Ast_Expression* expression)
     default: break;
     }
     throw parser_error(token, "Unknown type found in expression");
+}
+
+void Parser::check_expression_for_default_args(Token* token, Ast_Expression* expression) {
+    switch (expression->type) {
+    case AST_UNARY: {
+        check_expression_for_default_args(token, AST_CAST(Ast_UnaryExpression, expression)->next);
+        break;
+    }
+    case AST_BINARY: {
+        Ast_BinaryExpression* binary = AST_CAST(Ast_BinaryExpression, expression);
+        check_expression_for_default_args(token, binary->left);
+        check_expression_for_default_args(token, binary->right);
+        break;
+    }
+    case AST_PRIMARY: {
+        Ast_PrimaryExpression* primary = AST_CAST(Ast_PrimaryExpression, expression);
+        if (primary->prim_type == AST_PRIM_NESTED)
+            return check_expression_for_default_args(token, primary->nested);
+        else if (primary->prim_type == AST_PRIM_CAST)
+            throw parser_error(token, "Cannot have 'cast' expression in default argument expression");
+        else if (primary->prim_type == AST_PRIM_ID)
+            throw parser_error(token, "Cannot have identifier in default argument expression");
+        break;
+    }
+    case AST_ASSIGNMENT: throw parser_error(token, "Cannot assign value in a default argument expression");
+    default: break;
+    }
 }
 
 bool Parser::check_multi_types(AstDataType type_to_check, int type) {

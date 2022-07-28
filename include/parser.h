@@ -34,7 +34,10 @@ enum DefinitionType {
 };
 
 struct Symbol {
+    Symbol() = default;
+    Symbol(DefinitionType is) : is(is) { }
     AstDataType type;
+    DefinitionType is;
 };
 
 struct Scope {
@@ -107,6 +110,8 @@ private:
     void check_cast(AstDataType casted_type, AstDataType expression_type);
 
     int search_expression_for_type(Token* token, Ast_Expression* expression);
+    void check_expression_for_default_args(Token* token, Ast_Expression* expression);
+    
     bool check_multi_types(AstDataType type_to_check, int type);
 private:
     Token* tokens = nullptr;

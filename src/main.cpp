@@ -31,12 +31,11 @@
 void repl();
 void run_src_file(const char* filepath);
 
-bool log = false;
+bool log_tokens = false;
 
 int main(int argc, char* argv[]) {
-
     if (argv[2] && strcmp(argv[2], "-log") == 0)
-        log = true;
+        log_tokens = true;
 
     if (argc == 1) 
         repl();
@@ -70,7 +69,7 @@ void run_src_file(const char* filepath) {
 
     Lexer lexer(src);
     Tokens tokens = lexer.run();
-    if (log) lexer.log(tokens);
+    if (log_tokens) lexer.log(tokens);
 
     Parser parser(&tokens[0], filepath);
     parser.parse();
