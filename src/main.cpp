@@ -82,7 +82,6 @@ void run_src_file(const char* filepath) {
         converter.flags = "-w";
         converter.run(parser.get_unit());
         compiler_benchmark.stop();
-
         //This is the C compiler
         converter.compile();
         #endif

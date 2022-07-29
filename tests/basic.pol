@@ -10,7 +10,7 @@ boo : (v: int, z: boolean) {
     foo := 2; 
 }
 
-foo : (v: int, z: boolean) {
+foo : (v: int = 2, z: boolean = true) {
     
 }
 
@@ -20,5 +20,7 @@ test_func : () {
 
 test_func();
 boo(1, 1);
+foo(4, false);
 
 f : boolean = 1 + true;
+test_func();

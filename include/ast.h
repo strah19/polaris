@@ -125,6 +125,7 @@ struct Ast_Expression : Ast {
 };
 
 struct Ast_FunctionCall {
+    Ast_FunctionCall() { }
     Ast_FunctionCall(const char* ident, const Vector<Ast_Expression*>& args) : ident(ident), args(args) { }
     ~Ast_FunctionCall() { 
         for (auto& arg : args) delete_expression(arg);
@@ -147,6 +148,7 @@ struct Ast_PrimaryExpression : public Ast_Expression {
     ~Ast_PrimaryExpression() {
         switch (prim_type) {
         case AST_PRIM_NESTED:    delete nested; break;
+        case AST_PRIM_CALL:      delete call;   break;
         default:                                break;
         }
     }
@@ -162,7 +164,7 @@ struct Ast_PrimaryExpression : public Ast_Expression {
         char        char_const;
         bool        boolean;
         
-        Ast_FunctionCall  call;
+        Ast_FunctionCall* call;
         Ast_Expression*   nested;
         Ast_Cast          cast;
     };

@@ -55,7 +55,8 @@ void Converter::convert_function(Ast_Function* function) {
     write(function->ident);
     write("(");
     for (int i = 0; i < function->args.size(); i++) {
-        convert_variable_decleration(function->args[i], false);
+        convert_type(function->args[i]->type_value);
+        fprintf(file, "%s ", function->args[i]->ident);
         if (i < function->args.size() - 1)
             write(",");
     }
@@ -94,14 +95,14 @@ void Converter::convert_expression_statement(Ast_ExpressionStatement* expression
     semicolon();
 }
 
-void Converter::convert_variable_decleration(Ast_VarDecleration* variable_decleration, bool semi) {
+void Converter::convert_variable_decleration(Ast_VarDecleration* variable_decleration) {
     convert_type(variable_decleration->type_value);
     fprintf(file, "%s ", variable_decleration->ident);
     if (variable_decleration->expression) {
         write("= ");
         convert_expression(variable_decleration->expression);
     }
-    if (semi) semicolon();
+    semicolon();
 }
 
 void Converter::convert_if(Ast_IfStatement* if_statement) {
@@ -186,11 +187,11 @@ void Converter::convert_expression(Ast_Expression* expression) {
             break;
         }
         case AST_PRIM_CALL: {
-            write(primary->call.ident);
+            write(primary->call->ident);
             write("(");
-            for (int i = 0; i < primary->call.args.size(); i++) {
-                convert_expression(primary->call.args[i]);
-                if (i < primary->call.args.size() -1 )
+            for (int i = 0; i < primary->call->args.size(); i++) {
+                convert_expression(primary->call->args[i]);
+                if (i < primary->call->args.size() -1 )
                     write(",");
             }
             write(")");

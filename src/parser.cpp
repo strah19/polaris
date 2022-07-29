@@ -222,8 +222,6 @@ Ast_Scope* Parser::parse_scope() {
 
 Ast_ExpressionStatement* Parser::parse_expression_statement() {
     auto expression = parse_expression();
-    if (expression->type != AST_ASSIGNMENT)
-        parser_warning(peek(), "Expression result is unused");
     consume(T_SEMICOLON, "Expected ';' after expression statement");
     return AST_NEW(Ast_ExpressionStatement, expression);
 }
@@ -268,6 +266,7 @@ Vector<Ast_VarDecleration*> Parser::parse_function_arguments(Symbol* sym) {
         else if (expect_default) 
             throw parser_error(peek(), "Default value for argument must be at end of function");
         
+        sym->func.default_values.push_back(expression);
         args.push_back(AST_NEW(Ast_VarDecleration, id, expression, var_type, AST_SPECIFIER_NONE)); 
         if (!check(T_RPAR)) 
             consume(T_COMMA, "Expected ',' between function arguments");
@@ -275,7 +274,7 @@ Vector<Ast_VarDecleration*> Parser::parse_function_arguments(Symbol* sym) {
     return args;
 }
 
-Ast_VarDecleration* Parser::parse_variable_decleration(bool semicolon) {
+Ast_VarDecleration* Parser::parse_variable_decleration() {
     const char* id = parse_identifier("Expected identifier in variable decleration");
     Token* start_token = peek(-1);
 
@@ -292,7 +291,7 @@ Ast_VarDecleration* Parser::parse_variable_decleration(bool semicolon) {
             if (!check_multi_types(var_type, found_type)) 
                 throw parser_error(start_token, "Expression does not match type in decleration");
         }
-        if (semicolon) consume(T_SEMICOLON, "Expected ';' in variable decleration");
+        consume(T_SEMICOLON, "Expected ';' in variable decleration");
         Symbol sym;
         sym.is = DEF_VAR;
         sym.var.type = var_type;
@@ -437,22 +436,40 @@ Ast_Expression* Parser::parse_primary_expression() {
         if (symbol.is == DEF_VAR) {
             primary->prim_type = AST_PRIM_ID;
             primary->type_value = symbol.var.type;
+            primary->ident = (const char*) id;
         }
         else if (symbol.is == DEF_FUN) {
             primary->prim_type = AST_PRIM_CALL;
-            primary->call.ident = id;
+            primary->call = new Ast_FunctionCall();
+            primary->call->ident = id;
             consume(T_LPAR, "Expected '(' in function call");
             Vector<Token*> error_spots;
+
             while (!check(T_RPAR)) {
                 error_spots.push_back(peek());
-                primary->call.args.push_back(parse_expression());
+                primary->call->args.push_back(parse_expression());
                 if (!check(T_RPAR)) 
                     consume(T_COMMA, "Expected ',' between function arguments");
             }
-            if (primary->call.args.size() != symbol.func.arg_types.size())
-                throw parser_error(peek(), "Mismatched number of arguments in function call");
-            for (int i = 0; i < primary->call.args.size(); i++) {
-                AstDataType type = get_type_from_expression(error_spots[i], primary->call.args[i]);
+
+            if (primary->call->args.size() != symbol.func.arg_types.size()) {
+                if (primary->call->args.size() > symbol.func.arg_types.size())
+                    throw parser_error(peek(), "Too many arguments in function call");
+                else {
+                   // if (primary->call->args.size() + symbol.func.default_values.size() < symbol.func.arg_types.size())
+                   //     throw parser_error(peek(), "Not enough arguments in function call");
+
+                    int i = primary->call->args.size();
+                    while (primary->call->args.size() < symbol.func.arg_types.size()) {
+                        if (symbol.func.default_values[i]) {
+                            primary->call->args.push_back(symbol.func.default_values[i]);
+                        }
+                        i++;
+                    }
+                }
+            }
+            for (int i = 0; i < primary->call->args.size(); i++) {
+                AstDataType type = get_type_from_expression(error_spots[i], primary->call->args[i]);
                 if (!check_multi_types(type, symbol.func.arg_types[i]))
                     throw parser_error(error_spots[i], "Type does not match in function call");
             }
@@ -461,7 +478,6 @@ Ast_Expression* Parser::parse_primary_expression() {
         else {
             throw parser_error(peek(-1), "Undefined symbol");
         }
-        primary->ident = (const char*) id;
         break;
     }
     case T_STRING_CONST: {

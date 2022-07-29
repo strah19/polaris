@@ -34,7 +34,7 @@ private:
     void convert_function(Ast_Function* function);
     void convert_decleration(Ast_Decleration* decleration);
     void convert_expression_statement(Ast_ExpressionStatement* expression_statment);
-    void convert_variable_decleration(Ast_VarDecleration* variable_decleration, bool semi = true);
+    void convert_variable_decleration(Ast_VarDecleration* variable_decleration);
     void convert_scope(Ast_Scope* scope);
     void convert_if(Ast_IfStatement* if_statement);
     void convert_elif(Ast_ElifStatement* elif_statement);

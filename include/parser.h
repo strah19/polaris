@@ -38,6 +38,10 @@ struct VarSymbol {
 };
 
 struct FuncSymbol {
+    ~FuncSymbol() {
+      //  for (auto& expr : default_values) delete expr;
+    }
+
     AstDataType return_type;
     Vector<AstDataType> arg_types;
     Vector<Ast_Expression*> default_values;
@@ -88,7 +92,7 @@ private:
     Ast_Decleration*            parse_decleration();
     Ast_Statement*              parse_statement();
     Ast_Function*               parse_function();
-    Ast_VarDecleration*         parse_variable_decleration(bool semicolon = true);
+    Ast_VarDecleration*         parse_variable_decleration();
     Ast_ExpressionStatement*    parse_expression_statement();
     Ast_Scope*                  parse_scope();
     Ast_IfStatement*            parse_if();
