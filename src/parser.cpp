@@ -443,10 +443,8 @@ Ast_Expression* Parser::parse_primary_expression() {
             primary->call = new Ast_FunctionCall();
             primary->call->ident = id;
             consume(T_LPAR, "Expected '(' in function call");
-            Vector<Token*> error_spots;
 
             while (!check(T_RPAR)) {
-                error_spots.push_back(peek());
                 primary->call->args.push_back(parse_expression());
                 if (!check(T_RPAR)) 
                     consume(T_COMMA, "Expected ',' between function arguments");
@@ -456,22 +454,24 @@ Ast_Expression* Parser::parse_primary_expression() {
                 if (primary->call->args.size() > symbol.func.arg_types.size())
                     throw parser_error(peek(), "Too many arguments in function call");
                 else {
-                   // if (primary->call->args.size() + symbol.func.default_values.size() < symbol.func.arg_types.size())
-                   //     throw parser_error(peek(), "Not enough arguments in function call");
-
                     int i = primary->call->args.size();
                     while (primary->call->args.size() < symbol.func.arg_types.size()) {
                         if (symbol.func.default_values[i]) {
                             primary->call->args.push_back(symbol.func.default_values[i]);
                         }
+                        else 
+                            throw parser_error(peek(), "Expected argument in function call");
                         i++;
                     }
+
+                    if (primary->call->args.size() != symbol.func.arg_types.size())
+                        throw parser_error(peek(), "Not enough arguments in function call");
                 }
             }
             for (int i = 0; i < primary->call->args.size(); i++) {
-                AstDataType type = get_type_from_expression(error_spots[i], primary->call->args[i]);
+                AstDataType type = get_type_from_expression(peek(), primary->call->args[i]);
                 if (!check_multi_types(type, symbol.func.arg_types[i]))
-                    throw parser_error(error_spots[i], "Type does not match in function call");
+                    throw parser_error(peek(), "Type does not match in function call");
             }
             consume(T_RPAR, "Expected ')' in function call");
         }

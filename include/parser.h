@@ -38,10 +38,6 @@ struct VarSymbol {
 };
 
 struct FuncSymbol {
-    ~FuncSymbol() {
-      //  for (auto& expr : default_values) delete expr;
-    }
-
     AstDataType return_type;
     Vector<AstDataType> arg_types;
     Vector<Ast_Expression*> default_values;
