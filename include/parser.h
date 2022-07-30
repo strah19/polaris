@@ -38,7 +38,7 @@ struct VarSymbol {
 };
 
 struct FuncSymbol {
-    AstDataType return_type;
+    AstDataType return_type = AST_TYPE_VOID;
     Vector<AstDataType> arg_types;
     Vector<Ast_Expression*> default_values;
 };
@@ -90,13 +90,14 @@ private:
     Ast_Function*               parse_function();
     Ast_VarDecleration*         parse_variable_decleration();
     Ast_ExpressionStatement*    parse_expression_statement();
-    Ast_Scope*                  parse_scope();
+    Ast_Scope*                  parse_scope(bool expected_return = false);
     Ast_IfStatement*            parse_if();
     Ast_ElifStatement*          parse_elif();
     Ast_ElseStatement*          parse_else();
     Ast_WhileStatement*         parse_while();
     Ast_Expression*             parse_expression(Precedence precedence = PREC_NONE);
     AstDataType                 parse_type();
+    Ast_ReturnStatement*        parse_return();
     const char*                 parse_identifier(const char* error_msg);
     Vector<Ast_VarDecleration*> parse_function_arguments(Symbol* sym);
 
@@ -117,7 +118,6 @@ private:
     void check_types(AstDataType left, AstDataType right, AstOperatorType op = AST_OPERATOR_NONE);
     bool check_either(AstDataType left, AstDataType right, AstDataType type);
     bool is_type(AstDataType prim, AstDataType type);
-    void check_cast(AstDataType casted_type, AstDataType expression_type);
 
     int search_expression_for_type(Token* token, Ast_Expression* expression);
     AstDataType get_type_from_expression(Token* token, Ast_Expression* expression);

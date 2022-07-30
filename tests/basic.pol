@@ -1,3 +1,12 @@
+</
+Todo:
+    - Returns in functions
+    - variable args
+    - foreign functions
+    - arrays
+    - more string functionality
+/>
+
 a := 1;
 b := 2;
 c := 3 * 7 / 4 * 44 < 3;
@@ -14,14 +23,14 @@ foo : (v: int = 4, z: boolean = false) {
     
 }
 
-test_func : () {
-
+test_func : () -> int {
+    return true;
 }
 
 test_func();
 boo(1, 1);
 foo();
-foo(2);
+test_func() + foo();
 foo(6, true);
 
 f : boolean = 1 + true;

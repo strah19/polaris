@@ -51,7 +51,7 @@ void Converter::open_file() {
 }
 
 void Converter::convert_function(Ast_Function* function) {
-    write("void ");
+    convert_type(function->return_type);
     write(function->ident);
     write("(");
     for (int i = 0; i < function->args.size(); i++) {
@@ -64,6 +64,12 @@ void Converter::convert_function(Ast_Function* function) {
     convert_scope(function->scope);
 }
 
+void Converter::convert_return(Ast_ReturnStatement* return_statement) {
+    write("return ");
+    convert_expression(return_statement->expression);
+    semicolon();
+}
+
 void Converter::convert_decleration(Ast_Decleration* decleration) {
     switch (decleration->type) {
     case AST_EXPRESSION_STATEMENT: convert_expression_statement(AST_CAST(Ast_ExpressionStatement, decleration)); break;
@@ -71,6 +77,7 @@ void Converter::convert_decleration(Ast_Decleration* decleration) {
     case AST_SCOPE:                convert_scope(AST_CAST(Ast_Scope, decleration));                              break;
     case AST_IF:                   convert_if(AST_CAST(Ast_IfStatement, decleration));                           break;
     case AST_WHILE:                convert_while(AST_CAST(Ast_WhileStatement, decleration));                     break;
+    case AST_RETURN:               convert_return(AST_CAST(Ast_ReturnStatement, decleration));                    break;
     default: break;
     }
 }
@@ -145,6 +152,7 @@ void Converter::convert_type(AstDataType type) {
     case AST_TYPE_FLOAT:   write("float ");        break; 
     case AST_TYPE_BOOLEAN: write("bool ");         break;
     case AST_TYPE_STRING:  write("const char* ");  break;
+    case AST_TYPE_VOID:    write("void ");         break;
     default:                                       break;
     }
 }

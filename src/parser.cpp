@@ -196,22 +196,32 @@ Ast_Decleration* Parser::parse_decleration() {
 }
 
 Ast_Statement* Parser::parse_statement() {
-    if (match(T_LCURLY))     return parse_scope();
-    else if (match(T_IF))    return parse_if(); 
-    else if (match(T_WHILE)) return parse_while();
+    if (match(T_LCURLY))      return parse_scope();
+    else if (match(T_IF))     return parse_if(); 
+    else if (match(T_WHILE))  return parse_while();
+    else if (match(T_RETURN)) return parse_return();
+    else if (match(T_ELIF))   throw parser_error(peek(), "Cannot have 'elif' without an if");
+    else if (match(T_ELSE))   throw parser_error(peek(), "Cannot have 'else' without an if");
     return parse_expression_statement();
 }
 
-Ast_Scope* Parser::parse_scope() {
+Ast_Scope* Parser::parse_scope(bool expected_return) {
     Ast_Scope* scope = AST_NEW(Ast_Scope);
 
     Scope* previous_scope = current_scope;
     current_scope = new Scope;
     current_scope->previous = previous_scope;
 
+    bool need_return = expected_return;
+
     while (!check(T_RCURLY) && !is_end()) {
         scope->declerations.push_back(parse_decleration());
+        if (scope->declerations.back()->type == AST_RETURN && expected_return)
+            need_return = false;
     }
+
+    if (need_return)
+        parser_warning(peek(), "Need return statement in function");
 
     delete current_scope;
     current_scope = previous_scope;
@@ -231,19 +241,25 @@ Ast_Function* Parser::parse_function() {
     function->ident = parse_identifier("Expected identifier in function decleration");
 
     Symbol sym;
+    if (current_scope->in_any(function->ident))
+        throw parser_error(peek(-1), "Redecleration of function");
+
     consume(T_COLON, "Expected ':' in function decleration");  
     consume(T_LPAR, "Expected '(' in function decleration");  
     function->args = parse_function_arguments(&sym);
-    consume(T_RPAR, "Expected ')' after function arguments");  
-    consume(T_LCURLY, "Expected '{' before function body");  
-    function->scope = parse_scope();
+    consume(T_RPAR, "Expected ')' after function arguments");
 
-    if (current_scope->in_any(function->ident))
-        throw parser_error(peek(-1), "Redecleration of function");
+    if (match(T_POINTER_ARROW)) {
+        function->return_type = parse_type();
+        sym.func.return_type = function->return_type;
+    }
 
     sym.is = DEF_FUN;
     current_scope->add(function->ident, sym);
 
+    consume(T_LCURLY, "Expected '{' before function body");  
+    function->scope = parse_scope((function->return_type != AST_TYPE_VOID) ? true : false);
+    
     return function;
 }
 
@@ -272,6 +288,23 @@ Vector<Ast_VarDecleration*> Parser::parse_function_arguments(Symbol* sym) {
             consume(T_COMMA, "Expected ',' between function arguments");
     }
     return args;
+}
+
+Ast_ReturnStatement* Parser::parse_return() {
+    Ast_Expression* expression = parse_expression();
+    consume(T_SEMICOLON, "Expected semicolon at end of return statement");
+
+    if (!current_scope->previous)
+        throw parser_error(peek(), "Return statement may only be in a function");
+    Symbol sym = (--current_scope->previous->definitions.end())->second;
+    if (sym.is == DEF_FUN) {
+        AstDataType type = get_type_from_expression(peek(), expression);
+        if (!check_multi_types(sym.func.return_type, type)) 
+            throw parser_error(peek(), "Type does not match function signature for return statement");
+    }
+    else throw parser_error(peek(), "Return statement may only be in a function");
+
+    return AST_NEW(Ast_ReturnStatement, expression);
 }
 
 Ast_VarDecleration* Parser::parse_variable_decleration() {
@@ -474,6 +507,8 @@ Ast_Expression* Parser::parse_primary_expression() {
                     throw parser_error(peek(), "Type does not match in function call");
             }
             consume(T_RPAR, "Expected ')' in function call");
+            primary->type_value = symbol.func.return_type;
+            printf("%d\n", primary->type_value);
         }
         else {
             throw parser_error(peek(-1), "Undefined symbol");
@@ -502,10 +537,6 @@ Ast_Expression* Parser::parse_primary_expression() {
     }
 
     return primary;
-}
-
-void Parser::check_cast(AstDataType casted_type, AstDataType expression_type) {
-
 }
 
 Ast_Expression* Parser::parse_binary_expression(Ast_Expression* left) {
@@ -538,7 +569,9 @@ Ast_Expression* Parser::parse_binary_expression(Ast_Expression* left) {
 }
 
 void Parser::check_types(AstDataType left, AstDataType right, AstOperatorType op) {
-    if (is_type(left, AST_TYPE_STRING) || is_type(right, AST_TYPE_STRING))
+    if (is_type(left, AST_TYPE_VOID) || is_type(right, AST_TYPE_VOID))
+        throw parser_error(peek(-1), "Cannot perform operation on type 'void'");
+    if (is_type(left, AST_TYPE_STRING) || is_type(right, AST_TYPE_STRING)) 
         throw parser_error(peek(-1), "No operation is supported for strings");
     if (op == AST_OPERATOR_AND || op == AST_OPERATOR_OR) return;
     if (left == right) return;
@@ -622,12 +655,14 @@ int Parser::search_expression_for_type(Token* token, Ast_Expression* expression)
             return search_expression_for_type(token, primary->nested);
         else if (primary->prim_type == AST_PRIM_CAST)
             return primary->cast.cast_type;
-        if (primary->prim_type == AST_PRIM_ID || primary->prim_type == AST_PRIM_DATA) {
+        else if (primary->prim_type == AST_PRIM_ID || primary->prim_type == AST_PRIM_DATA) {
             if (primary->type_value == AST_TYPE_INT)
                 return (primary->type_value | AST_TYPE_BOOLEAN);
             else if (primary->type_value == AST_TYPE_BOOLEAN)
                 return (primary->type_value | AST_TYPE_INT);
         }
+        else if (primary->prim_type == AST_PRIM_CALL)
+            return primary->type_value;
         return (primary->prim_type == AST_PRIM_DATA || primary->prim_type == AST_PRIM_ID) ? primary->type_value : AST_TYPE_NONE;
     }
     default: break;

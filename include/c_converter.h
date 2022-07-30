@@ -40,6 +40,7 @@ private:
     void convert_elif(Ast_ElifStatement* elif_statement);
     void convert_else(Ast_ElseStatement* else_statement);
     void convert_while(Ast_WhileStatement* while_statement);
+    void convert_return(Ast_ReturnStatement* return_statement);
 
     void convert_type(AstDataType type);
     void convert_expression(Ast_Expression* expression);
