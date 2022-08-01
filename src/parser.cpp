@@ -211,22 +211,51 @@ Ast_Statement* Parser::parse_statement() {
     return parse_expression_statement();
 }
 
-Ast_Scope* Parser::parse_scope(bool expected_return) {
+Ast_Scope* Parser::parse_scope() {
     Ast_Scope* scope = AST_NEW(Ast_Scope);
 
     Scope* previous_scope = current_scope;
     current_scope = new Scope;
     current_scope->previous = previous_scope;
 
-    bool need_return = expected_return;
+    while (!check(T_RCURLY) && !is_end()) 
+        scope->declerations.push_back(parse_decleration());
+
+    delete current_scope;
+    current_scope = previous_scope;
+
+    consume(T_RCURLY, "Expected '}' to end scope");
+    return scope;
+}
+
+Ast_Scope* Parser::parse_function_scope(bool return_needed, Vector<Ast_VarDecleration*> args) {
+    Ast_Scope* scope = AST_NEW(Ast_Scope);
+
+    Scope* previous_scope = current_scope;
+    current_scope = new Scope;
+    current_scope->previous = previous_scope;
+
+    for (int i = 0; i < args.size(); i++) {
+        if (current_scope->in_any(args[i]->ident))
+            throw parser_error(peek(), "Redefinition of variable in argument");
+        Symbol sym;
+        sym.is = DEF_VAR;
+        sym.var.type = args[i]->type_value;
+        current_scope->add(args[i]->ident, sym);
+    }
+
+    bool expected_return = true;
 
     while (!check(T_RCURLY) && !is_end()) {
         scope->declerations.push_back(parse_decleration());
-        if (scope->declerations.back()->type == AST_RETURN && expected_return)
-            need_return = false;
+        if (scope->declerations.back()->type == AST_RETURN) {
+            Ast_ReturnStatement* return_statement = AST_CAST(Ast_ReturnStatement, scope->declerations.back());
+            if (return_needed && expected_return)
+                expected_return = false;
+        }
     }
 
-    if (need_return)
+    if (expected_return && return_needed)
         parser_warning(peek(), "Need return statement in function");
 
     delete current_scope;
@@ -264,7 +293,7 @@ Ast_Function* Parser::parse_function() {
     current_scope->add(function->ident, sym);
 
     consume(T_LCURLY, "Expected '{' before function body");  
-    function->scope = parse_scope((function->return_type != AST_TYPE_VOID) ? true : false);
+    function->scope = parse_function_scope((function->return_type != AST_TYPE_VOID) ? true : false, function->args);
     
     return function;
 }
@@ -297,16 +326,20 @@ Vector<Ast_VarDecleration*> Parser::parse_function_arguments(Symbol* sym) {
 }
 
 Ast_ReturnStatement* Parser::parse_return() {
-    Ast_Expression* expression = parse_expression();
-    consume(T_SEMICOLON, "Expected semicolon at end of return statement");
+    Ast_Expression* expression = nullptr;
+    if (is_unary(peek()) || is_primary(peek()))
+        expression = parse_expression();
+    consume(T_SEMICOLON, "Expected semicolon at end of return statement");    
 
     if (!current_scope->previous)
         throw parser_error(peek(), "Return statement may only be in a function");
     Symbol sym = (--current_scope->previous->definitions.end())->second;
     if (sym.is == DEF_FUN) {
-        AstDataType type = (AstDataType) search_expression_for_type(peek(), expression);
-        if (!is_type(sym.func.return_type, type)) 
-            throw parser_error(peek(), "Type does not match function signature for return statement");
+        if (expression) {
+            AstDataType type = (AstDataType) search_expression_for_type(peek(), expression);
+            if (!is_type(sym.func.return_type, type)) 
+                throw parser_error(peek(), "Type does not match function signature for return statement");
+        }
     }
     else throw parser_error(peek(), "Return statement may only be in a function");
 

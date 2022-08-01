@@ -66,7 +66,8 @@ void Converter::convert_function(Ast_Function* function) {
 
 void Converter::convert_return(Ast_ReturnStatement* return_statement) {
     write("return ");
-    convert_expression(return_statement->expression);
+    if (return_statement->expression)
+        convert_expression(return_statement->expression);
     semicolon();
 }
 

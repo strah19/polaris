@@ -238,14 +238,6 @@ struct Ast_ExpressionStatement : public Ast_Statement {
     Ast_Expression* expression = nullptr;
 };
 
-struct Ast_PrintStatement : public Ast_Statement {
-    Ast_PrintStatement(const Vector<Ast_Expression*>& expressions) : expressions(expressions) { type = AST_PRINT; }
-    ~Ast_PrintStatement() {
-        for (auto& expr : expressions) delete_expression(expr);
-    }
-    Vector<Ast_Expression*> expressions;
-};
-
 struct Ast_ConditionalStatement : public Ast_Statement {
     Ast_ConditionalStatement() { type = AST_CONDITIONAL; }
     Ast_ConditionalStatement(Ast_Expression* condition, Ast_Scope* scope) : condition(condition), scope(scope) { type = AST_CONDITIONAL; }
@@ -336,7 +328,6 @@ void delete_ast(Ast_Decleration* ast) {
     switch (ast->type) {
     case AST_EXPRESSION_STATEMENT: delete AST_CAST(Ast_ExpressionStatement, ast); break;
     case AST_FUNCTION:             delete AST_CAST(Ast_Function, ast);            break;
-    case AST_PRINT:                delete AST_CAST(Ast_PrintStatement, ast);      break;
     case AST_SCOPE:                delete AST_CAST(Ast_Scope, ast);               break;
     case AST_VAR_DECLERATION:      delete AST_CAST(Ast_VarDecleration, ast);      break;
     case AST_IF:                   delete AST_CAST(Ast_IfStatement, ast);         break;

@@ -1,6 +1,6 @@
 </
 Todo:
-    - Returns in functions
+    - Returns in functions : DONE
     - variable args
     - foreign functions
     - arrays
@@ -20,7 +20,9 @@ boo : (v: int, z: boolean) {
 }
 
 foo : (v: int = 4, z: boolean = false) {
-    
+    boo(v, z);
+    return;
+    v = 3;
 }
 
 test_func : () -> int {
