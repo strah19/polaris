@@ -118,12 +118,10 @@ private:
     void check_types(AstDataType left, AstDataType right, AstOperatorType op = AST_OPERATOR_NONE);
     bool check_either(AstDataType left, AstDataType right, AstDataType type);
     bool is_type(AstDataType prim, AstDataType type);
+    int find_matching_types(AstDataType type);
 
     int search_expression_for_type(Token* token, Ast_Expression* expression);
-    AstDataType get_type_from_expression(Token* token, Ast_Expression* expression);
     void check_expression_for_default_args(Token* token, Ast_Expression* expression);
-    
-    bool check_multi_types(AstDataType type_to_check, int type);
 private:
     Token* tokens = nullptr;
     uint32_t current = 0;

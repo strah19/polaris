@@ -30,7 +30,7 @@ test_func : () -> int {
 test_func();
 boo(1, 1);
 foo();
-test_func() + foo();
+test_func() + 4;
 foo(6, true);
 
 f : boolean = 1 + true;

@@ -9,6 +9,12 @@
  * 
  */
 
+/*
+    To-Do:
+    - Get rid of expect return in scope funcion bool.
+
+*/
+
 #include "parser.h"
 #include "error.h"
 #include <stdlib.h>
@@ -298,8 +304,8 @@ Ast_ReturnStatement* Parser::parse_return() {
         throw parser_error(peek(), "Return statement may only be in a function");
     Symbol sym = (--current_scope->previous->definitions.end())->second;
     if (sym.is == DEF_FUN) {
-        AstDataType type = get_type_from_expression(peek(), expression);
-        if (!check_multi_types(sym.func.return_type, type)) 
+        AstDataType type = (AstDataType) search_expression_for_type(peek(), expression);
+        if (!is_type(sym.func.return_type, type)) 
             throw parser_error(peek(), "Type does not match function signature for return statement");
     }
     else throw parser_error(peek(), "Return statement may only be in a function");
@@ -319,9 +325,9 @@ Ast_VarDecleration* Parser::parse_variable_decleration() {
         Ast_Expression* expression = nullptr;
         if (match(T_EQUAL)) {
             expression = parse_expression();
-            int found_type = search_expression_for_type(start_token, expression);
+            AstDataType found_type = (AstDataType) search_expression_for_type(start_token, expression);
 
-            if (!check_multi_types(var_type, found_type)) 
+            if (!is_type(var_type, found_type)) 
                 throw parser_error(start_token, "Expression does not match type in decleration");
         }
         consume(T_SEMICOLON, "Expected ';' in variable decleration");
@@ -422,7 +428,7 @@ Ast_Expression* Parser::parse_assignment_expression(Ast_Expression* expression, 
     Ast_Expression* assign = parse_expression(PREC_ASSIGNMENT);
     if (is_equal(peek()) && AST_CAST(Ast_PrimaryExpression, assign)->prim_type != AST_PRIM_ID)
         throw parser_error(peek(-2), "Lvalue required as left operand of assignment");     
-    check_types(get_type_from_expression(peek(-1), assign), get_type_from_expression(peek(-1), expression));
+    check_types((AstDataType) search_expression_for_type(peek(-1), assign), (AstDataType) search_expression_for_type(peek(-1), expression));
 
     return AST_NEW(Ast_Assignment, assign, expression, equal);
 }
@@ -502,13 +508,12 @@ Ast_Expression* Parser::parse_primary_expression() {
                 }
             }
             for (int i = 0; i < primary->call->args.size(); i++) {
-                AstDataType type = get_type_from_expression(peek(), primary->call->args[i]);
-                if (!check_multi_types(type, symbol.func.arg_types[i]))
+                AstDataType type = (AstDataType) search_expression_for_type(peek(), primary->call->args[i]);
+                if (!is_type(symbol.func.arg_types[i], type))
                     throw parser_error(peek(), "Type does not match in function call");
             }
             consume(T_RPAR, "Expected ')' in function call");
             primary->type_value = symbol.func.return_type;
-            printf("%d\n", primary->type_value);
         }
         else {
             throw parser_error(peek(-1), "Undefined symbol");
@@ -543,7 +548,7 @@ Ast_Expression* Parser::parse_binary_expression(Ast_Expression* left) {
     TokenType op = peek(-1)->type;  
     Ast_Expression* right = parse_expression(PRECEDENCE[op]);
 
-    check_types(get_type_from_expression(peek(-1), left), get_type_from_expression(peek(-1), right), convert_to_op(op));
+    check_types((AstDataType) search_expression_for_type(peek(-1), left), (AstDataType) search_expression_for_type(peek(-1), right), convert_to_op(op));
 
     switch (op) {
     case T_PLUS:          return AST_NEW(Ast_BinaryExpression, left, AST_OPERATOR_ADD, right);
@@ -575,7 +580,7 @@ void Parser::check_types(AstDataType left, AstDataType right, AstOperatorType op
         throw parser_error(peek(-1), "No operation is supported for strings");
     if (op == AST_OPERATOR_AND || op == AST_OPERATOR_OR) return;
     if (left == right) return;
-    printf ("%d %d\n", left, right);
+
     if (!check_either(left, right, AST_TYPE_INT))
         throw parser_error(peek(-1), "Type does not match with integer");
     else if (!check_either(left, right, AST_TYPE_BOOLEAN))
@@ -589,7 +594,7 @@ bool Parser::check_either(AstDataType left, AstDataType right, AstDataType type)
 }
 
 bool Parser::is_type(AstDataType prim, AstDataType type) {
-    return (prim & type);
+    return ((prim & type));
 }
 
 AstOperatorType Parser::convert_to_op(TokenType type) {
@@ -655,23 +660,13 @@ int Parser::search_expression_for_type(Token* token, Ast_Expression* expression)
             return search_expression_for_type(token, primary->nested);
         else if (primary->prim_type == AST_PRIM_CAST)
             return primary->cast.cast_type;
-        else if (primary->prim_type == AST_PRIM_ID || primary->prim_type == AST_PRIM_DATA) {
-            if (primary->type_value == AST_TYPE_INT)
-                return (primary->type_value | AST_TYPE_BOOLEAN);
-            else if (primary->type_value == AST_TYPE_BOOLEAN)
-                return (primary->type_value | AST_TYPE_INT);
-        }
-        else if (primary->prim_type == AST_PRIM_CALL)
-            return primary->type_value;
-        return (primary->prim_type == AST_PRIM_DATA || primary->prim_type == AST_PRIM_ID) ? primary->type_value : AST_TYPE_NONE;
+        else if (primary->prim_type == AST_PRIM_ID || primary->prim_type == AST_PRIM_DATA || primary->prim_type == AST_PRIM_CALL)
+            return find_matching_types(primary->type_value);
+        throw parser_error(token, "Unknown type found in expression");
     }
     default: break;
     }
     throw parser_error(token, "Unknown type found in expression");
-}
-
-AstDataType Parser::get_type_from_expression(Token* token, Ast_Expression* expression) {    
-    return (AstDataType) search_expression_for_type(token, expression);
 }
 
 void Parser::check_expression_for_default_args(Token* token, Ast_Expression* expression) {
@@ -701,8 +696,15 @@ void Parser::check_expression_for_default_args(Token* token, Ast_Expression* exp
     }
 }
 
-bool Parser::check_multi_types(AstDataType type_to_check, int type) {
-    return ((type & type_to_check));
+int Parser::find_matching_types(AstDataType type) {
+    int all = type;
+
+    if (all == AST_TYPE_BOOLEAN)
+        all |= AST_TYPE_INT;
+    else if (all == AST_TYPE_INT)
+        all |= AST_TYPE_BOOLEAN;
+
+    return all;
 }
 
 bool Parser::is_unary(Token* token) {
