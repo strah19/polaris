@@ -304,6 +304,10 @@ Vector<Ast_VarDecleration*> Parser::parse_function_arguments(Symbol* sym) {
     while (!check(T_RPAR)) {
         const char* id = parse_identifier("Expected identifier in function argument");
         consume(T_COLON, "Expected ':' in function argument");  
+        if (match(T_ARGS)) {
+            args.push_back(AST_NEW(Ast_VarDecleration, id, nullptr, AST_TYPE_VAR_ARG, AST_SPECIFIER_NONE)); 
+            return args;
+        }
         AstDataType var_type = parse_type();
         sym->func.arg_types.push_back(var_type);
 

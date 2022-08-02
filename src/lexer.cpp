@@ -164,6 +164,9 @@ Token Lexer::single_character(char single_character_tokens) {
     case '~': return init_token(T_NOT     );
     case ',': return init_token(T_COMMA   );
     case '"': return string();
+    case '.': {
+        if (check('.') && check('.')) return init_token(T_ARGS);
+    }
     default:  return error_token("Unknown character's found in lexer");
     }
 }

@@ -25,7 +25,9 @@ foo : (v: int = 4, z: boolean = false) {
     v = 3;
 }
 
-test_func : () -> int {
+test_func : (args: ...) -> int {
+    
+
     return true;
 }
 
