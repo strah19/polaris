@@ -13,8 +13,8 @@
 #include "error.h"
 #include "lexer.h"
 #include "util.h"
-#include "c_converter.h"
 #include "parser.h"
+#include "code_generator.h"
 #include "benchmark.h"
 #include <stdio.h>
 #include <string.h>
@@ -44,7 +44,7 @@ int main(int argc, char* argv[]) {
 }
 
 void repl() {
-    printf("Polaris %d.%d\n", POLARIS_VERSION_MAJOR, POLARIS_VERSION_MINOR);
+    printf("Polaris %d.%d ", POLARIS_VERSION_MAJOR, POLARIS_VERSION_MINOR);
     time_t t = time(NULL);
     struct tm tm = *localtime(&t);
     printf("(%d-%02d-%02d %02d:%02d:%02d)\n", tm.tm_year + 1900, tm.tm_mon + 1, tm.tm_mday, tm.tm_hour, tm.tm_min, tm.tm_sec);
@@ -62,7 +62,7 @@ void repl() {
 void run_src_file(const char* filepath) {
     char* src = open_file(filepath);
 
-    Benchmark compiler_benchmark("Compiler");
+    Benchmark compiler_benchmark("Compiled in");
 
     Lexer lexer(src);
     Tokens tokens = lexer.run();
@@ -73,16 +73,12 @@ void run_src_file(const char* filepath) {
 
     if (!parser.has_errors()) {
         #ifndef USE_VM
-        Converter converter;
-        converter.filename = "basic";
-        converter.objname = "basic";
-        converter.flags = "-w";
-        converter.run(parser.get_unit());
-        compiler_benchmark.stop();
-        //This is the C compiler
-        converter.compile();
+        #error "VM is currently the only way to run Polaris..."
         #endif
-        printf("Compilation complete.\n");
+
+        CodeGenerator generator(&parser);
+        generator.generate_bytecode();
+
     } else fatal_error("Exiting with compiler error(s).\n");
 
     delete src;
