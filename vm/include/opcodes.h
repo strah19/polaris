@@ -1,7 +1,7 @@
 #ifndef OPCODES_H
 #define OPCODES_H
 
-enum Opcodes {
+typedef enum {
     OP_RETURN,        // 1 byte  : opcode
     OP_CONSTANT,      // 2 bytes : opcode, address
     OP_NEGATE,        // 1 byte  : opcode  
@@ -27,6 +27,6 @@ enum Opcodes {
     OP_RSHIFT,
     OP_PRINT,
     OP_POP,
-};
+} Opcodes;
 
 #endif // !OPCODES_H

@@ -1,6 +1,6 @@
 include_directories(include)
 
-file(GLOB SOURCES "src/*.cpp")
+file(GLOB SOURCES "src/*.c")
 add_library(VM ${SOURCES})
 
 target_include_directories(VM
