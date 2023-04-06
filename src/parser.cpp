@@ -24,6 +24,10 @@
 
 static Precedence PRECEDENCE [T_OK] = { PREC_PRIMARY };
 
+void log_token(Token* token) {
+    printf("token (%d) '%.*s' on line %d.\n", token->type, token->size, token->start, token->line);
+}
+
 void Scope::add(const String& name, const Symbol& sym) {
     definitions[name] = sym;
 }
@@ -304,10 +308,6 @@ Vector<Ast_VarDecleration*> Parser::parse_function_arguments(Symbol* sym) {
     while (!check(T_RPAR)) {
         const char* id = parse_identifier("Expected identifier in function argument");
         consume(T_COLON, "Expected ':' in function argument");  
-        if (match(T_ARGS)) {
-            args.push_back(AST_NEW(Ast_VarDecleration, id, nullptr, AST_TYPE_VAR_ARG, AST_SPECIFIER_NONE)); 
-            return args;
-        }
         AstDataType var_type = parse_type();
         sym->func.arg_types.push_back(var_type);
 
@@ -434,6 +434,7 @@ Ast_WhileStatement* Parser::parse_while() {
     return AST_NEW(Ast_WhileStatement, condition, scope);
 }
 
+//Pratt Parsing :)
 Ast_Expression* Parser::parse_expression(Precedence precedence) {
     Token* left = advance();
     Ast_Expression* expression;
@@ -462,10 +463,11 @@ Ast_Expression* Parser::parse_unary_expression() {
 }
 
 Ast_Expression* Parser::parse_assignment_expression(Ast_Expression* expression, AstEqualType equal) {
+    int reference = current;
     Ast_Expression* assign = parse_expression(PREC_ASSIGNMENT);
-    if (is_equal(peek()) && AST_CAST(Ast_PrimaryExpression, assign)->prim_type != AST_PRIM_ID)
-        throw parser_error(peek(-2), "Lvalue required as left operand of assignment");     
-    check_types((AstDataType) search_expression_for_type(peek(-1), assign), (AstDataType) search_expression_for_type(peek(-1), expression));
+    if (is_equal(&tokens[reference]) && AST_CAST(Ast_PrimaryExpression, assign)->prim_type != AST_PRIM_ID)
+        throw parser_error(&tokens[reference - 2], "Lvalue required as left operand of assignment");     
+//    check_types((AstDataType) search_expression_for_type(&tokens[reference - 1], assign), (AstDataType) search_expression_for_type(&tokens[reference - 1], expression));
 
     return AST_NEW(Ast_Assignment, assign, expression, equal);
 }
@@ -672,7 +674,7 @@ AstDataType Parser::parse_type() {
     return var_type;
 }
 
-int Parser::search_expression_for_type(Token* token, Ast_Expression* expression) {
+int Parser::search_expression_for_type(Token* token, Ast_Expression* expression) {    
     switch (expression->type) {
     case AST_UNARY: {
         return search_expression_for_type(token, AST_CAST(Ast_UnaryExpression, expression)->next);

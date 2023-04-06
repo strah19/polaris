@@ -10,6 +10,7 @@ Todo:
 a := 1;
 b := 2;
 c := 3 * 7 / 4 * 44 < 3;
+d : int;
 
 if a == 1 or a == 2 or a == 3 {
 
@@ -17,6 +18,8 @@ if a == 1 or a == 2 or a == 3 {
 
 boo : (v: int, z: boolean) {
     foo := 2; 
+    s := 1;
+    s = foo = 0;
 }
 
 foo : (v: int = 4, z: boolean = false) {
@@ -25,17 +28,8 @@ foo : (v: int = 4, z: boolean = false) {
     v = 3;
 }
 
-test_func : (args: ...) -> int {
-    
-
-    return true;
-}
-
-test_func();
 boo(1, 1);
 foo();
-test_func() + 4;
 foo(6, true);
 
 f : boolean = 1 + true;
-test_func();

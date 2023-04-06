@@ -7,6 +7,8 @@
 #include <map>
 #include <string>
 
+//These are temporary until custom data structures are made.
+
 template<class T>
 using Vector = std::vector<T>;
 
@@ -93,7 +95,6 @@ enum AstDataType {
     AST_TYPE_STRING = 0x08,
     AST_TYPE_CHAR = 0x10,
     AST_TYPE_VOID = 0x20,
-    AST_TYPE_VAR_ARG = 0x40
 };
 
 enum AstSpecifierType {

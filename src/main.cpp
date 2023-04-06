@@ -34,9 +34,6 @@ void run_src_file(const char* filepath);
 bool log_tokens = false;
 
 int main(int argc, char* argv[]) {
-    if (argv[2] && strcmp(argv[2], "-log") == 0)
-        log_tokens = true;
-
     if (argc == 1) 
         repl();
     else if (argc >= 2)

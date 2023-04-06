@@ -61,6 +61,8 @@ struct Scope {
     Symbol get(const String& name); 
 };  
 
+void log_token(Token* token);
+
 class Parser {
 public:
     Parser(Token* tokens);

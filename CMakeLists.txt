@@ -6,7 +6,7 @@ project(POLARIS VERSION 1.0)
 set(CMAKE_CXX_STANDARD 11)
 set(CMAKE_CXX_STANDARD_REQUIRED True)
 
-option(USE_VM "Use Polaris's implemented virtual machine" ON)
+option(USE_VM "Use Polaris's implemented virtual machine" OFF)
 
 configure_file(${PROJECT_SOURCE_DIR}/include/config.h.in ${PROJECT_SOURCE_DIR}/include/config.h)
 
