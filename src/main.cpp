@@ -16,6 +16,7 @@
 #include "parser.h"
 #include "code_generator.h"
 #include "benchmark.h"
+#include "c_converter.h"
 #include <stdio.h>
 #include <string.h>
 #include <time.h>
@@ -76,8 +77,14 @@ void run_src_file(const char* filepath) {
         #error "VM is currently the only way to run Polaris..."
         #endif
 
-        CodeGenerator generator(&parser);
-        generator.generate_bytecode();
+        Converter converter;
+        converter.filename = "basic";
+        converter.objname = "basic";
+        converter.flags = "-w";
+        converter.run(parser.get_unit());
+        compiler_benchmark.stop();
+        //This is the C compiler
+        converter.compile();
 
     } else fatal_error("Exiting with compiler error(s).\n");
 

@@ -7,9 +7,9 @@ Todo:
     - more string functionality
 />
 
-a := 1;
-b := 2;
-c := 3 * 7 / 4 * 44 < 3;
+a : int = 1;
+b : int = 2;
+c : int = 3 * 7 / 4 * 44 < 3;
 d : int;
 
 if a == 1 or a == 2 or a == 3 {
@@ -17,13 +17,13 @@ if a == 1 or a == 2 or a == 3 {
 }
 
 boo : (v: int, z: boolean) {
-    foo := 2; 
-    s := 1;
+    foo : int = 2; 
+    s : int = 1;
     s = foo = 0;
 }
 
 foo : (v: int = 4, z: boolean = false) {
-    boo(v, z);
+    boo(2, true);
     return;
     v = 3;
 }
@@ -32,4 +32,3 @@ boo(1, 1);
 foo();
 foo(6, true);
 
-f : boolean = 1 + true;

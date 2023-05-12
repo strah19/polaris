@@ -118,12 +118,8 @@ private:
     AstEqualType    convert_to_equal(TokenType type);
     AstOperatorType convert_to_op(TokenType type);
 
-    void check_types(AstDataType left, AstDataType right, AstOperatorType op = AST_OPERATOR_NONE);
-    bool check_either(AstDataType left, AstDataType right, AstDataType type);
     bool is_type(AstDataType prim, AstDataType type);
-    int find_matching_types(AstDataType type);
 
-    int search_expression_for_type(Token* token, Ast_Expression* expression);
     void check_expression_for_default_args(Token* token, Ast_Expression* expression);
 private:
     Token* tokens = nullptr;
@@ -133,7 +129,9 @@ private:
     bool errors = false;
     bool show_warnings = true;
 
-    Scope* current_scope;
+    AstDataType current_type = AST_TYPE_NONE;
+
+    Scope* current_scope = nullptr;
     Scope main_scope;
 };
 
