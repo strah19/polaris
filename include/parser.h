@@ -54,6 +54,7 @@ struct Scope {
     Scope() = default;
     Map<String, Symbol> definitions;
     Scope* previous = nullptr;
+    Symbol last;
 
     void add(const String& name, const Symbol& sym);
     bool in_scope(const String& name);
@@ -118,12 +119,7 @@ private:
     AstEqualType    convert_to_equal(TokenType type);
     AstOperatorType convert_to_op(TokenType type);
 
-    void check_types(AstDataType left, AstDataType right, AstOperatorType op = AST_OPERATOR_NONE);
-    bool check_either(AstDataType left, AstDataType right, AstDataType type);
     bool is_type(AstDataType prim, AstDataType type);
-    int find_matching_types(AstDataType type);
-
-    int search_expression_for_type(Token* token, Ast_Expression* expression);
     void check_expression_for_default_args(Token* token, Ast_Expression* expression);
 private:
     Token* tokens = nullptr;

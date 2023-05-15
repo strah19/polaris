@@ -1,35 +1,6 @@
-</
-Todo:
-    - Returns in functions : DONE
-    - variable args
-    - foreign functions
-    - arrays
-    - more string functionality
-/>
-
-a := 1;
-b := 2;
-c := 3 * 7 / 4 * 44 < 3;
-d : int;
-
-if a == 1 or a == 2 or a == 3 {
-
-}
-
-boo : (v: int, z: boolean) {
-    foo := 2; 
-    s := 1;
-    s = foo = 0;
-}
-
 foo : (v: int = 4, z: boolean = false) {
-    boo(v, z);
-    return;
-    v = 3;
+
 }
 
-boo(1, 1);
 foo();
-foo(6, true);
 
-f : boolean = 1 + true;

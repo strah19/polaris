@@ -109,12 +109,9 @@ struct Ast_Expression;
 struct Ast_Scope;
 struct Ast_Decleration;
 
-static void delete_ast(Ast_Decleration* ast);
-static void delete_expression(Ast_Expression* expr);
-
 struct Ast {
     Ast() { }
-    ~Ast() { }
+    virtual ~Ast() { }
 
 	AstType type = AST_NONE;
     uint32_t line = 0;
@@ -123,15 +120,13 @@ struct Ast {
 
 struct Ast_Expression : Ast {
     Ast_Expression() { type = AST_EXPRESSION; }
-    ~Ast_Expression() { }
+    virtual ~Ast_Expression() {    }
 };
 
 struct Ast_FunctionCall {
     Ast_FunctionCall() { }
     Ast_FunctionCall(const char* ident, const Vector<Ast_Expression*>& args) : ident(ident), args(args) { }
-    ~Ast_FunctionCall() { 
-        for (auto& arg : args) delete_expression(arg);
-    }
+    ~Ast_FunctionCall() { }
     const char* ident;
     Vector<Ast_Expression*> args;
 };
@@ -139,7 +134,7 @@ struct Ast_FunctionCall {
 struct Ast_Cast {
     Ast_Cast(Ast_Expression* expression, AstDataType cast_type) : cast_type(cast_type), expression(expression) { }
     ~Ast_Cast() {
-        delete_expression(expression);
+        delete expression;
     }
     Ast_Expression* expression = nullptr;
     AstDataType cast_type = AST_TYPE_NONE;
@@ -147,7 +142,7 @@ struct Ast_Cast {
 
 struct Ast_PrimaryExpression : public Ast_Expression {
     Ast_PrimaryExpression() { type = AST_PRIMARY; }
-    ~Ast_PrimaryExpression() {
+    ~Ast_PrimaryExpression() override {
         switch (prim_type) {
         case AST_PRIM_NESTED:    delete nested; break;
         case AST_PRIM_CALL:      delete call;   break;
@@ -176,9 +171,9 @@ struct Ast_BinaryExpression : public Ast_Expression {
     Ast_BinaryExpression() { type = AST_BINARY; }
     Ast_BinaryExpression(Ast_Expression* left, AstOperatorType op, Ast_Expression* right) 
         : left(left), op(op), right(right) { type = AST_BINARY; }
-    ~Ast_BinaryExpression() {
-        delete_expression(left);
-        delete_expression(right);
+    ~Ast_BinaryExpression() override {
+        delete left;
+        delete right;
     }
     AstOperatorType op = AST_OPERATOR_NONE;
 
@@ -195,8 +190,8 @@ struct Ast_BinaryExpression : public Ast_Expression {
 struct Ast_UnaryExpression : public Ast_Expression {
     Ast_UnaryExpression() { type = AST_UNARY; }
     Ast_UnaryExpression(Ast_Expression* next, AstUnaryType op) : op(op), next(next) { type = AST_UNARY; }
-    ~Ast_UnaryExpression() {
-        delete_expression(next);
+    ~Ast_UnaryExpression() override {
+        delete next;
     }
     Ast_Expression* next = nullptr;
     AstUnaryType op = AST_UNARY_NONE;
@@ -205,8 +200,9 @@ struct Ast_UnaryExpression : public Ast_Expression {
 struct Ast_Assignment : public Ast_Expression {
     Ast_Assignment() { type = AST_ASSIGNMENT; }
     Ast_Assignment(Ast_Expression* expression, Ast_Expression* id, AstEqualType equal_type = AST_EQUAL) : expression(expression), id(id), equal_type(equal_type) { type = AST_ASSIGNMENT; }
-    ~Ast_Assignment() {
-        delete_expression(expression);
+    ~Ast_Assignment() override {
+        delete expression;
+        delete id;
     }
     AstEqualType equal_type = AST_EQUAL;
     Ast_Expression* id = nullptr;
@@ -215,18 +211,18 @@ struct Ast_Assignment : public Ast_Expression {
 
 struct Ast_Decleration : public Ast {
     Ast_Decleration() { type = AST_DECLERATION; }
-    ~Ast_Decleration() { } 
+    virtual ~Ast_Decleration() { } 
 };
 
 struct Ast_Statement : public Ast_Decleration {
     Ast_Statement() { type = AST_STATEMENT; }
-    ~Ast_Statement() { }
+    virtual ~Ast_Statement() { }
 };
 
 struct Ast_Scope : public Ast_Statement {
     Ast_Scope() { type = AST_SCOPE; }
-    ~Ast_Scope() {
-        for (auto& dec : declerations) delete_ast(dec);
+    ~Ast_Scope() override {
+        for (auto& dec : declerations) delete dec;
     }
 
     Vector<Ast_Decleration*> declerations;
@@ -234,8 +230,8 @@ struct Ast_Scope : public Ast_Statement {
 
 struct Ast_ExpressionStatement : public Ast_Statement {
     Ast_ExpressionStatement(Ast_Expression* expression) : expression(expression) { type = AST_EXPRESSION_STATEMENT; }
-    ~Ast_ExpressionStatement() {
-        delete_expression(expression);
+    ~Ast_ExpressionStatement() override {
+        delete expression;
     }
     Ast_Expression* expression = nullptr;
 };
@@ -243,9 +239,8 @@ struct Ast_ExpressionStatement : public Ast_Statement {
 struct Ast_ConditionalStatement : public Ast_Statement {
     Ast_ConditionalStatement() { type = AST_CONDITIONAL; }
     Ast_ConditionalStatement(Ast_Expression* condition, Ast_Scope* scope) : condition(condition), scope(scope) { type = AST_CONDITIONAL; }
-    ~Ast_ConditionalStatement() {
-        if (condition)
-            delete_expression(condition);
+    ~Ast_ConditionalStatement() override {
+        delete condition;
         delete scope;
         delete next;
     }
@@ -280,19 +275,20 @@ struct Ast_WhileStatement : Ast_ConditionalStatement {
 };
 
 struct Ast_ReturnStatement : Ast_Statement {
-    Ast_ReturnStatement(Ast_Expression* expression) : expression(expression) { type = AST_RETURN; }
-    ~Ast_ReturnStatement() {
-        delete_expression(expression);
+    Ast_ReturnStatement(Ast_Expression* expression, AstDataType expected_return_type) : expression(expression), expected_return_type(expected_return_type) { type = AST_RETURN; }
+    ~Ast_ReturnStatement() override {
+        delete expression;
     }
     Ast_Expression* expression = nullptr;
+    AstDataType expected_return_type = AST_TYPE_NONE;
 };
 
 struct Ast_VarDecleration : public Ast_Decleration {
     Ast_VarDecleration() { type = AST_VAR_DECLERATION; }
     Ast_VarDecleration(const char* ident, Ast_Expression* expression, AstDataType type_value, AstSpecifierType specifiers) 
         : ident(ident), expression(expression), type_value(type_value), specifiers(specifiers) { type = AST_VAR_DECLERATION; }
-    ~Ast_VarDecleration() {
-        delete_expression(expression);
+    ~Ast_VarDecleration() override {
+        delete expression;
     }
 
     AstDataType type_value = AST_TYPE_NONE;
@@ -306,8 +302,10 @@ struct Ast_Function : public Ast_Decleration {
     Ast_Function() { type = AST_FUNCTION; }
     Ast_Function(const char* ident, AstDataType return_type, const Vector<Ast_VarDecleration*> args, Ast_Scope* scope) : 
         ident(ident), return_type(return_type), args(args), scope(scope) { type = AST_FUNCTION; }
-    ~Ast_Function() {
-        args.clear();
+    ~Ast_Function() override {
+        for (auto& arg : args) {
+            delete arg;
+        }
         delete scope;
     }
 
@@ -320,37 +318,10 @@ struct Ast_Function : public Ast_Decleration {
 struct Ast_TranslationUnit : public Ast {
     Ast_TranslationUnit() { type = AST_TRANSLATION_UNIT; }
     ~Ast_TranslationUnit() {
-        for (auto& dec : declerations) delete_ast(dec);
+        for (auto& dec : declerations) delete dec;
     }
 
     Vector<Ast_Decleration*> declerations;
 };
-
-void delete_ast(Ast_Decleration* ast) {
-    switch (ast->type) {
-    case AST_EXPRESSION_STATEMENT: delete AST_CAST(Ast_ExpressionStatement, ast); break;
-    case AST_FUNCTION:             delete AST_CAST(Ast_Function, ast);            break;
-    case AST_SCOPE:                delete AST_CAST(Ast_Scope, ast);               break;
-    case AST_VAR_DECLERATION:      delete AST_CAST(Ast_VarDecleration, ast);      break;
-    case AST_IF:                   delete AST_CAST(Ast_IfStatement, ast);         break;
-    case AST_ELIF:                 delete AST_CAST(Ast_ElifStatement, ast);       break;
-    case AST_ELSE:                 delete AST_CAST(Ast_ElseStatement, ast);       break;
-    case AST_WHILE:                delete AST_CAST(Ast_WhileStatement, ast);      break;
-    case AST_RETURN:               delete AST_CAST(Ast_ReturnStatement, ast);     break;
-    default:                       delete ast;                                    break;        
-    }
-}
-
-void delete_expression(Ast_Expression* expr) {
-    switch (expr->type) {
-    case AST_PRIMARY:    delete AST_CAST(Ast_PrimaryExpression, expr); break;
-    case AST_BINARY:     delete AST_CAST(Ast_BinaryExpression, expr);  break;
-    case AST_UNARY:      delete AST_CAST(Ast_UnaryExpression, expr);   break;
-    case AST_ASSIGNMENT: delete AST_CAST(Ast_Assignment, expr);        break;
-    default:             delete expr;                                  break;
-    }
-}
-
-
 
 #endif //!AST_H

@@ -16,6 +16,8 @@
 #include "c_converter.h"
 #include "parser.h"
 #include "benchmark.h"
+
+#include "semantic.h"
 #include <stdio.h>
 #include <string.h>
 #include <time.h>
@@ -44,10 +46,10 @@ int main(int argc, char* argv[]) {
 }
 
 void repl() {
-    printf("Polaris %d.%d\n", POLARIS_VERSION_MAJOR, POLARIS_VERSION_MINOR);
+    printf("Polaris %d.%d", POLARIS_VERSION_MAJOR, POLARIS_VERSION_MINOR);
     time_t t = time(NULL);
     struct tm tm = *localtime(&t);
-    printf("(%d-%02d-%02d %02d:%02d:%02d)\n", tm.tm_year + 1900, tm.tm_mon + 1, tm.tm_mday, tm.tm_hour, tm.tm_min, tm.tm_sec);
+    printf(" (%d-%02d-%02d %02d:%02d:%02d)\n", tm.tm_year + 1900, tm.tm_mon + 1, tm.tm_mday, tm.tm_hour, tm.tm_min, tm.tm_sec);
 
     while (true) {
         printf (">>> ");
@@ -71,7 +73,9 @@ void run_src_file(const char* filepath) {
     Parser parser(&tokens[0], filepath);
     parser.parse();
 
-    if (!parser.has_errors()) {
+    semantic_checker(parser.get_unit());
+
+    if (!parser.has_errors() && !semantic_error_count()) {
         #ifndef USE_VM
         Converter converter;
         converter.filename = "basic";

@@ -1,3 +1,53 @@
-a : int = 1;
-b : int = 2;
-a = b = 0;
+</
+    Math Library for Polaris.
+/>
+
+PI := 3.14159265;
+e := 2.71;
+
+pow : (base: float, power: float) -> float {
+    if power == 0 {
+        return 1;
+    }
+    elif power < 0 {
+        return 1 / (base * pow(base, -power));
+    }
+    else {
+        return base * pow(base, power - 1);
+    }
+}
+
+square : (base: float) -> float {
+    return pow(base, 2);
+}
+
+cube : (base: float) -> float {
+    return pow(base, 3);
+}
+
+factorial : (n: int) -> int {
+    if (n < 0) {   
+        return(-1);
+    }
+    if ( n == 0) {    
+        return 1;
+    }
+    else {    
+        return(n*factorial(n-1));        
+    }  
+} 
+
+deg_to_rad : (degree: float) -> float {
+    return (degree * (PI/180));
+}
+
+//Uses a maclaurin series
+sin : (x: float) -> float {
+    n := 0;
+    result := 0.0;
+    while n < 10 {
+        result += (pow(-1, n) * pow(x, (2 * n) + 1)) / (factorial((2 * n) + 1));
+        n += 1;
+    }
+    return result;
+}
