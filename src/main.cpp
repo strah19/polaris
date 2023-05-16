@@ -14,6 +14,7 @@
 #include "lexer.h"
 #include "util.h"
 #include "c_converter.h"
+#include "code_generator.h"
 #include "parser.h"
 #include "benchmark.h"
 
@@ -21,12 +22,6 @@
 #include <stdio.h>
 #include <string.h>
 #include <time.h>
-
-// For VM
-#ifdef USE_VM
-#include "vm.h"
-#include "opcodes.h"
-#endif //!USE_VM
 
 #define MAX_REPL_SIZE 256
 
@@ -76,16 +71,10 @@ void run_src_file(const char* filepath) {
     semantic_checker(parser.get_unit());
 
     if (!parser.has_errors() && !semantic_error_count()) {
-        #ifndef USE_VM
-        Converter converter;
-        converter.filename = "basic";
-        converter.objname = "basic";
-        converter.flags = "-w";
-        converter.run(parser.get_unit());
-        compiler_benchmark.stop();
-        //This is the C compiler
-        converter.compile();
-        #endif
+        CodeGenerator generator(parser.get_unit());
+        generator.run();
+
+       
         printf("Compilation complete.\n");
     } else fatal_error("Exiting with compiler error(s).\n");
 

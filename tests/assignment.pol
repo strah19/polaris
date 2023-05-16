@@ -51,3 +51,5 @@ sin : (x: float) -> float {
     }
     return result;
 }
+
+bin : int = 0b1111111;

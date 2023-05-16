@@ -4,15 +4,19 @@
     "type": "split",
     "children": [
       {
-        "id": "d223e5da4c8e4b79",
+        "id": "8075cfd1ed2463e6",
         "type": "tabs",
         "children": [
           {
-            "id": "a525b9367563dedf",
+            "id": "8386d468e276e7b3",
             "type": "leaf",
             "state": {
-              "type": "empty",
-              "state": {}
+              "type": "markdown",
+              "state": {
+                "file": "VM.md",
+                "mode": "source",
+                "source": false
+              }
             }
           }
         ]
@@ -81,6 +85,7 @@
             "state": {
               "type": "backlink",
               "state": {
+                "file": "VM.md",
                 "collapseAll": false,
                 "extraContext": false,
                 "sortOrder": "alphabetical",
@@ -97,6 +102,7 @@
             "state": {
               "type": "outgoing-link",
               "state": {
+                "file": "VM.md",
                 "linksCollapsed": false,
                 "unlinkedCollapsed": true
               }
@@ -118,7 +124,9 @@
             "type": "leaf",
             "state": {
               "type": "outline",
-              "state": {}
+              "state": {
+                "file": "VM.md"
+              }
             }
           }
         ]
@@ -138,9 +146,15 @@
       "command-palette:Open command palette": false
     }
   },
-  "active": "a525b9367563dedf",
+  "active": "8386d468e276e7b3",
   "lastOpenFiles": [
+    "Code Generator.md",
+    "VM.md",
     "Grammar.md",
+    "Bytecode.md",
+    "Polaris.md",
+    "6502Assembly.md",
+    "Untitled.canvas",
     "2023-05-14.md"
   ]
 }

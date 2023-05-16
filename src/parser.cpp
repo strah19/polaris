@@ -18,6 +18,7 @@
 #include "parser.h"
 #include "error.h"
 #include "semantic.h"
+#include <string>
 #include <stdlib.h>
 
 #define AST_NEW(type, ...) \
@@ -480,6 +481,12 @@ Ast_Expression* Parser::parse_primary_expression() {
         primary->float_const = strtof(peek(-1)->start, NULL);
         break;
     }
+    case T_BINARY_CONST: {
+        primary->prim_type = AST_PRIM_DATA;
+        primary->type_value = AST_TYPE_INT;
+        primary->int_const = std::stoi(peek(-1)->start + 2, 0, 2);
+        break;
+    }
     case T_TRUE: {
         primary->prim_type = AST_PRIM_DATA;
         primary->type_value = AST_TYPE_BOOLEAN;
@@ -673,7 +680,7 @@ bool Parser::is_unary(Token* token) {
 bool Parser::is_primary(Token* token) {
     return (token->type == T_INT_CONST || token->type == T_FLOAT_CONST || token->type == T_LPAR || 
             token->type == T_TRUE || token->type == T_FALSE || token->type == T_IDENTIFIER ||
-            token->type == T_CAST || token->type == T_STRING_CONST);
+            token->type == T_CAST || token->type == T_STRING_CONST || token->type == T_BINARY_CONST);
 }
 
 bool Parser::is_equal(Token* token) {
