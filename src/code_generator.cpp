@@ -19,8 +19,16 @@ void CodeGenerator::run() {
 }
 
 void CodeGenerator::generate_from_ast(Ast* ast) {
-    if (ast->type == AST_PRINT)
+    if (ast->type == AST_VAR_DECLERATION) 
+        generate_variable_decleration(AST_CAST(Ast_VarDecleration, ast));
+    else if (ast->type == AST_PRINT)
         generate_print_statement(AST_CAST(Ast_PrintStatement, ast));
+}
+
+void CodeGenerator::generate_variable_decleration(Ast_VarDecleration* decleration) {
+    generate_expression(decleration->expression);
+    globals[decleration->ident] = max_global_address++;
+    write(OP_DEF_GLOBAL, decleration);
 }
 
 void CodeGenerator::generate_print_statement(Ast_PrintStatement* print_statement) {
@@ -59,7 +67,7 @@ void CodeGenerator::generate_expression(Ast_Expression* expression) {
     }
     else if (expression->type == AST_PRIMARY) {
         auto prim = AST_CAST(Ast_PrimaryExpression, expression);
-        if (prim->prim_type == AST_PRIM_DATA || prim->prim_type == AST_PRIM_ID) {
+        if (prim->prim_type == AST_PRIM_DATA) {
             write(OP_CONST, prim);
             switch (prim->type_value) {
             case AST_TYPE_INT:     write_constant(INT_VALUE(prim->int_const), prim);     break;
@@ -71,9 +79,19 @@ void CodeGenerator::generate_expression(Ast_Expression* expression) {
         else if (prim->prim_type == AST_PRIM_NESTED) {
             generate_expression(prim->nested);
         }
+        else if (prim->prim_type == AST_PRIM_ID) {
+            write(OP_CONST, prim);
+            write_constant(INT_VALUE(globals[prim->ident]), prim); //writes the address of the global
+            write(OP_GET_GLOBAL, prim);
+        }
     }
     else if (expression->type == AST_ASSIGNMENT) {
-        
+        auto assign = AST_CAST(Ast_Assignment, expression);
+        generate_expression(assign->expression);
+        write(OP_CONST, assign);
+       // write_constant(INT_VALUE(globals[assign->id]), assign); //writes the address of the global
+
+        write(OP_SET_GLOBAL, assign);
     }
 }
 

@@ -10,6 +10,12 @@
 
 #define FREE(type, pointer) (type*) reallocate(pointer, 0)
 
+#define ALLOC(type) (type*) malloc(sizeof(type))
+
+#define ALLOC_ARRAY(type, size) (type*) malloc(sizeof(type) * size)
+
+#define ALLOC_STR(size) (char*) malloc(size)
+
 extern void* reallocate(void* pointer, size_t new_size);
 
 #endif // !MEM_H

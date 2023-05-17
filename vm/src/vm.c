@@ -2,6 +2,7 @@
 #include "opcodes.h"
 #include "value.h"
 #include <stdarg.h>
+#include <string.h>
 
 #define BINARY(op) \
     { Value b = vm_pop(); \
@@ -26,6 +27,7 @@ static VM vm;
 
 void vm_init() {
     vm.top = vm.stack;
+    value_init(&vm.globals);
 }
 
 bool vm_run(Bytecode* bytecode) {
@@ -50,7 +52,39 @@ bool vm_run(Bytecode* bytecode) {
                 value_print(vm_pop(), true);
                 break;
             }
-            case OP_ADD: BINARY(+); break;
+            case OP_ADD: {
+                Value a = vm_peek(0);
+                Value b = vm_peek(1);
+                if (IS_STRING(a) && IS_STRING(b)) {
+                    vm_pop();
+                    vm_pop();
+                    strcat(AS_STRING(b)->chars, AS_STRING(a)->chars);
+                    vm_push(b);
+                }
+                else
+                    BINARY(+);
+                break;
+            }
+            case OP_DEF_GLOBAL: {
+                Value val = vm_pop();
+                value_write(val, &vm.globals);
+                break;
+            }
+            case OP_SET_GLOBAL: {
+                int address = vm_pop().int_value;
+                Value val = vm_pop();
+                if (address > vm.globals.count)
+                    return vm_runtime_error("Virtual machine cannot address to %d.\n", address);
+                vm.globals.values[address] = val;
+                break;
+            }
+            case OP_GET_GLOBAL: {
+                int address = vm_pop().int_value;
+                if (address > vm.globals.count)
+                    return vm_runtime_error("Virtual machine cannot address to %d.\n", address);
+                vm_push(vm.globals.values[address]); //Expects an int value on the stack to be the address.
+                break;
+            }
             case OP_MIN: BINARY(-); break;
             case OP_MUL: BINARY(*); break;
             case OP_DIV: BINARY(/); break;
@@ -87,7 +121,7 @@ bool vm_run(Bytecode* bytecode) {
 }
 
 void vm_free() {
-
+    value_free(&vm.globals);
 }
 
 extern void vm_push(Value value) {

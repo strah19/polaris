@@ -96,7 +96,7 @@ void check_expression(Ast_Expression* expression, AstDataType* current_expr_type
         check_expression(bin->left, current_expr_type);
         AstDataType left = *current_expr_type;
         check_expression(bin->right, current_expr_type);
-        if (left == AST_TYPE_STRING || *current_expr_type == AST_TYPE_STRING) {
+        if ((left == AST_TYPE_STRING || *current_expr_type == AST_TYPE_STRING) && bin->op != AST_OPERATOR_ADD) {
             report_semantic_error(bin, "Binary operations cannot be conducted on strings");
         }
         break;

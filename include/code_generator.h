@@ -20,6 +20,7 @@ private:
     void write_constant(Value value, Ast* ast);
 
     void generate_from_ast(Ast* ast);
+    void generate_variable_decleration(Ast_VarDecleration* decleration);
     void generate_print_statement(Ast_PrintStatement* print_statement);
     void generate_expression(Ast_Expression* expression);
 
@@ -27,6 +28,9 @@ private:
 private:
     Ast_TranslationUnit* root = nullptr;
     Bytecode bytecode;
+
+    std::map<String, int> globals;
+    int max_global_address = 0;
 };
 
 #endif // !CODE_GENERATOR_H

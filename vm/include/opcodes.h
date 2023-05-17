@@ -22,6 +22,9 @@ enum Opcode {
     OP_LSF,
     OP_RSF,
     OP_PRINT,
+    OP_DEF_GLOBAL,
+    OP_SET_GLOBAL,
+    OP_GET_GLOBAL,
     OP_RETURN
 };
 
