@@ -5,6 +5,7 @@ void check_variable_decleration(Ast_VarDecleration* decleration);
 void check_function_decleration(Ast_Function* function);
 void check_return_statement(Ast_ReturnStatement* return_statement);
 void check_scope(Ast_Scope* scope);
+void check_ast(Ast* ast);
 
 void check_expression(Ast_Expression* expression, AstDataType* current_expr_type);
 void compare_current_type(Ast* ast, AstDataType type, AstDataType* current_expr_type);
@@ -14,17 +15,16 @@ void report_semantic_error(Ast* ast, const char* msg);
 void semantic_checker(Ast_TranslationUnit* root) {
     for (int i = 0; i < root->declerations.size(); i++) {
         Ast* ast = root->declerations[i];
-        if (ast->type == AST_VAR_DECLERATION)
-            check_variable_decleration(AST_CAST(Ast_VarDecleration, ast));
-        else if (ast->type == AST_FUNCTION)
-            check_function_decleration(AST_CAST(Ast_Function, ast));
+        check_ast(ast);
     }
 }
 
 void check_variable_decleration(Ast_VarDecleration* decleration) {
     if (decleration->expression) {
         AstDataType expr_type = get_expression_type(decleration->expression);
-        if (expr_type != decleration->type_value && decleration->expression) {
+        if (expr_type == AST_TYPE_INT && decleration->type_value == AST_TYPE_FLOAT) return;
+
+        if (expr_type != decleration->type_value) {
             report_semantic_error(decleration, "Type in expression does not match variable decleration type");
         }
     }
@@ -37,13 +37,21 @@ void check_function_decleration(Ast_Function* function) {
 void check_scope(Ast_Scope* scope) {
     for (int i = 0; i < scope->declerations.size(); i++) {
         Ast* ast = scope->declerations[i];
-        if (ast->type == AST_VAR_DECLERATION)
-            check_variable_decleration(AST_CAST(Ast_VarDecleration, ast));
-        else if (ast->type == AST_RETURN)
-            check_return_statement(AST_CAST(Ast_ReturnStatement, ast));
-        else if (ast->type == AST_EXPRESSION)
-            get_expression_type(AST_CAST(Ast_Expression, ast));
+        check_ast(ast);
     }
+}
+
+void check_ast(Ast* ast) {
+    if (ast->type == AST_VAR_DECLERATION)
+        check_variable_decleration(AST_CAST(Ast_VarDecleration, ast));
+    else if (ast->type == AST_RETURN)
+        check_return_statement(AST_CAST(Ast_ReturnStatement, ast));
+    else if (ast->type == AST_EXPRESSION)
+        get_expression_type(AST_CAST(Ast_Expression, ast));
+    else if (ast->type == AST_EXPRESSION_STATEMENT)
+        get_expression_type(AST_CAST(Ast_ExpressionStatement, ast)->expression);
+    else if (ast->type == AST_PRINT)
+        get_expression_type(AST_CAST(Ast_PrintStatement, ast)->expression);
 }
 
 void check_return_statement(Ast_ReturnStatement* return_statement) {
@@ -101,7 +109,10 @@ void check_expression(Ast_Expression* expression, AstDataType* current_expr_type
     case AST_ASSIGNMENT: {
         Ast_Assignment* assign = AST_CAST(Ast_Assignment, expression);
         check_expression(assign->id, current_expr_type);
+        AstDataType id_type = *current_expr_type;
         check_expression(assign->expression, current_expr_type);
+        if (id_type != *current_expr_type)
+            report_semantic_error(assign, "Type does not match in assignment");
         break;
     }
     case AST_PRIMARY: {

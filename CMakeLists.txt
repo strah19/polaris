@@ -9,7 +9,10 @@ file(GLOB SOURCES "src/*.cpp")
 
 add_executable(POLARIS ${SOURCES})
 
-target_link_libraries(POLARIS PUBLIC)
+add_subdirectory(VM)
+list(APPEND EXTRA_LIBS VM)
+
+target_link_libraries(POLARIS PUBLIC ${EXTRA_LIBS})
 
 target_include_directories(POLARIS PUBLIC "${PROJECT_BINARY_DIR}/include")
 

@@ -93,6 +93,7 @@ private:
     Ast_Function*               parse_function();
     Ast_VarDecleration*         parse_variable_decleration();
     Ast_ExpressionStatement*    parse_expression_statement();
+    Ast_PrintStatement*         parse_print_statement();
     Ast_Scope*                  parse_scope();
     Ast_Scope*                  parse_function_scope(bool return_needed, Vector<Ast_VarDecleration*> args);
     Ast_IfStatement*            parse_if();

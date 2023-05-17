@@ -213,6 +213,7 @@ Ast_Statement* Parser::parse_statement() {
     else if (match(T_IF))     return parse_if(); 
     else if (match(T_WHILE))  return parse_while();
     else if (match(T_RETURN)) return parse_return();
+    else if (match(T_PRINT))  return parse_print_statement();
     else if (match(T_ELIF))   throw parser_error(peek(), "Cannot have 'elif' without an if");
     else if (match(T_ELSE))   throw parser_error(peek(), "Cannot have 'else' without an if");
     return parse_expression_statement();
@@ -276,6 +277,12 @@ Ast_ExpressionStatement* Parser::parse_expression_statement() {
     auto expression = parse_expression();
     consume(T_SEMICOLON, "Expected ';' after expression statement");
     return AST_NEW(Ast_ExpressionStatement, expression);
+}
+
+Ast_PrintStatement* Parser::parse_print_statement() {
+    auto expression = parse_expression();
+    consume(T_SEMICOLON, "Expected ';' after expression statement");
+    return AST_NEW(Ast_PrintStatement, expression);
 }
 
 Ast_Function* Parser::parse_function() {

@@ -236,6 +236,15 @@ struct Ast_ExpressionStatement : public Ast_Statement {
     Ast_Expression* expression = nullptr;
 };
 
+struct Ast_PrintStatement : public Ast_Statement {
+    Ast_PrintStatement(Ast_Expression* expression) : expression(expression) { type = AST_PRINT; }
+    ~Ast_PrintStatement() override {
+        delete expression;
+    }
+
+    Ast_Expression* expression = nullptr;
+};
+
 struct Ast_ConditionalStatement : public Ast_Statement {
     Ast_ConditionalStatement() { type = AST_CONDITIONAL; }
     Ast_ConditionalStatement(Ast_Expression* condition, Ast_Scope* scope) : condition(condition), scope(scope) { type = AST_CONDITIONAL; }

@@ -18,6 +18,10 @@
 #include "parser.h"
 #include "benchmark.h"
 
+extern "C" {
+    #include "vm.h"
+}
+
 #include "semantic.h"
 #include <stdio.h>
 #include <string.h>
@@ -73,9 +77,15 @@ void run_src_file(const char* filepath) {
     if (!parser.has_errors() && !semantic_error_count()) {
         CodeGenerator generator(parser.get_unit());
         generator.run();
+        compiler_benchmark.stop();
 
-       
-        printf("Compilation complete.\n");
+        vm_init();
+
+        if (!vm_run(generator.get_bytecode()))
+            printf("Exiting with run time error(s).\n");
+
+        vm_reset_stack();
+        vm_free();
     } else fatal_error("Exiting with compiler error(s).\n");
 
     delete src;
