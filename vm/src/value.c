@@ -57,6 +57,12 @@ void value_print(Value value, bool newline) {
     case TYPE_FLOAT:   printf("%g", AS_FLOAT(value));   break;
     case TYPE_INT:     printf("%d", AS_INT(value));     break;
     case TYPE_BOOLEAN: printf("%d", AS_BOOLEAN(value)); break;
+    case TYPE_OBJ: {
+        switch (AS_OBJ(value)->type) {
+        case OBJ_STRING: printf("%s", AS_STRING(value)->chars); break;
+        }
+        break;
+    }
     default: printf("(null)"); break;
     }
     printf("%s", (newline) ? "\n" : "");

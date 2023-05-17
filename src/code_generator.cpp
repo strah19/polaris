@@ -1,4 +1,5 @@
 #include "code_generator.h"
+#include <string.h>
 
 CodeGenerator::CodeGenerator(Ast_TranslationUnit* root) : root(root) { }
 
@@ -64,6 +65,7 @@ void CodeGenerator::generate_expression(Ast_Expression* expression) {
             case AST_TYPE_INT:     write_constant(INT_VALUE(prim->int_const), prim);     break;
             case AST_TYPE_FLOAT:   write_constant(FLOAT_VALUE(prim->float_const), prim); break;
             case AST_TYPE_BOOLEAN: write_constant(BOOLEAN_VALUE(prim->boolean), prim);   break;
+            case AST_TYPE_STRING:  write_constant(OBJ_VALUE(allocate_string(prim->string)), prim); break;
             }
         }
         else if (prim->prim_type == AST_PRIM_NESTED) {
@@ -73,6 +75,14 @@ void CodeGenerator::generate_expression(Ast_Expression* expression) {
     else if (expression->type == AST_ASSIGNMENT) {
         
     }
+}
+
+ObjString* CodeGenerator::allocate_string(const char* str) {
+    ObjString* str_obj = ALLOCATE_OBJ(ObjString, OBJ_STRING);
+    str_obj->len = strlen(str);
+    str_obj->chars = (char*) malloc(str_obj->len + 1);
+    memcpy(str_obj->chars, str, str_obj->len + 1);
+    return str_obj;
 }
 
 void CodeGenerator::write(uint8_t opcode, Ast* ast) {

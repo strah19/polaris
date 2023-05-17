@@ -22,6 +22,8 @@ private:
     void generate_from_ast(Ast* ast);
     void generate_print_statement(Ast_PrintStatement* print_statement);
     void generate_expression(Ast_Expression* expression);
+
+    ObjString* allocate_string(const char* str);
 private:
     Ast_TranslationUnit* root = nullptr;
     Bytecode bytecode;
