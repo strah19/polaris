@@ -238,6 +238,7 @@ void Converter::convert_expression(Ast_Expression* expression) {
         break;
     }
     case AST_ASSIGNMENT: {
+        /*
         Ast_Assignment* assignment = AST_CAST(Ast_Assignment, expression);
         convert_expression(assignment->id);
         switch (assignment->equal_type) {
@@ -249,6 +250,7 @@ void Converter::convert_expression(Ast_Expression* expression) {
         default: break;
         }
         convert_expression(assignment->expression);
+        */
         break;
     }
     case AST_UNARY: {

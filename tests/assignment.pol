@@ -52,8 +52,6 @@ sin : (x: float) -> float {
 }
 />
 
-pi := 3.14159;
-radius := 4;
-print pi * (radius * radius);
-
-3 = radius;
+radius := 4.0;
+radius = 3.4;
+print radius;

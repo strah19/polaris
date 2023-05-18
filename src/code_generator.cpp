@@ -23,6 +23,8 @@ void CodeGenerator::generate_from_ast(Ast* ast) {
         generate_variable_decleration(AST_CAST(Ast_VarDecleration, ast));
     else if (ast->type == AST_PRINT)
         generate_print_statement(AST_CAST(Ast_PrintStatement, ast));
+    else if (ast->type == AST_EXPRESSION_STATEMENT)
+        generate_expression(AST_CAST(Ast_ExpressionStatement, ast)->expression);
 }
 
 void CodeGenerator::generate_variable_decleration(Ast_VarDecleration* decleration) {
@@ -89,7 +91,7 @@ void CodeGenerator::generate_expression(Ast_Expression* expression) {
         auto assign = AST_CAST(Ast_Assignment, expression);
         generate_expression(assign->expression);
         write(OP_CONST, assign);
-       // write_constant(INT_VALUE(globals[assign->id]), assign); //writes the address of the global
+        write_constant(INT_VALUE(globals[assign->id->ident]), assign); //writes the address of the global
 
         write(OP_SET_GLOBAL, assign);
     }

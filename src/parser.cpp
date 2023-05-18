@@ -119,7 +119,7 @@ void Parser::parse() {
     }
 
     //Here we need to organize the declerations and fix any dependency issues between functions and variables.
-    sort_declerations();
+   // sort_declerations();
 }
 
 void Parser::sort_declerations() {
@@ -466,10 +466,10 @@ Ast_Expression* Parser::parse_unary_expression() {
 Ast_Expression* Parser::parse_assignment_expression(Ast_Expression* expression, AstEqualType equal) {
     int reference = current;
     Ast_Expression* assign = parse_expression(PREC_ASSIGNMENT);
-    if (is_equal(&tokens[reference]) && AST_CAST(Ast_PrimaryExpression, assign)->prim_type != AST_PRIM_ID)
+    if ((expression->type != AST_PRIMARY) || (expression->type == AST_PRIMARY && AST_CAST(Ast_PrimaryExpression, expression)->prim_type != AST_PRIM_ID)) 
         throw parser_error(&tokens[reference - 2], "Lvalue required as left operand of assignment");     
 
-    return AST_NEW(Ast_Assignment, assign, expression, equal);
+    return AST_NEW(Ast_Assignment, assign, AST_CAST(Ast_PrimaryExpression, expression), equal);
 }
 
 Ast_Expression* Parser::parse_primary_expression() {
