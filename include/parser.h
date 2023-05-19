@@ -71,6 +71,7 @@ public:
     ~Parser();
     void parse();
     Ast_TranslationUnit* get_unit() { return unit; }
+    Vector<int>* get_functions() { return &function_indices; }
 
     Token* peek(int index = 0);
     Token* advance();
@@ -111,22 +112,22 @@ private:
     Ast_Expression* parse_unary_expression();
     Ast_Expression* parse_primary_expression();
 
+    void select_functions();
+
     bool is_unary(Token* token);
     bool is_primary(Token* token);
     bool is_equal(Token* token);
 
-    void sort_declerations();
-
     AstEqualType    convert_to_equal(TokenType type);
     AstOperatorType convert_to_op(TokenType type);
 
-    bool is_type(AstDataType prim, AstDataType type);
     void check_expression_for_default_args(Token* token, Ast_Expression* expression);
 private:
     Token* tokens = nullptr;
     uint32_t current = 0;
     const char* filepath = nullptr;
     Ast_TranslationUnit* unit = nullptr;
+    Vector<int> function_indices;
     bool errors = false;
     bool show_warnings = true;
 

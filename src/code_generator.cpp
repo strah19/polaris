@@ -1,7 +1,7 @@
 #include "code_generator.h"
 #include <string.h>
 
-CodeGenerator::CodeGenerator(Ast_TranslationUnit* root) : root(root) { }
+CodeGenerator::CodeGenerator(Ast_TranslationUnit* root, Vector<int>* function_indices) : root(root), function_indices(function_indices) { }
 
 CodeGenerator::~CodeGenerator() {
     bytecode_free(&bytecode);
@@ -9,6 +9,10 @@ CodeGenerator::~CodeGenerator() {
 
 void CodeGenerator::run() {
     bytecode_init(&bytecode);
+
+    for (auto& function : *function_indices) {
+        generate_function(AST_CAST(Ast_Function, root->declerations[function]));
+    }
 
     for (int i = 0; i < root->declerations.size(); i++) {
         Ast* ast = root->declerations[i];
@@ -25,6 +29,21 @@ void CodeGenerator::generate_from_ast(Ast* ast) {
         generate_print_statement(AST_CAST(Ast_PrintStatement, ast));
     else if (ast->type == AST_EXPRESSION_STATEMENT)
         generate_expression(AST_CAST(Ast_ExpressionStatement, ast)->expression);
+    else if (ast->type == AST_SCOPE)
+        generate_scope(AST_CAST(Ast_Scope, ast));
+    else if (ast->type == AST_RETURN) 
+        generate_return_statement(AST_CAST(Ast_ReturnStatement, ast));
+}
+
+void CodeGenerator::generate_function(Ast_Function* function) {
+    generate_scope(function->scope);
+}
+
+void CodeGenerator::generate_scope(Ast_Scope* scope) {
+    for (int i = 0; i < scope->declerations.size(); i++) {
+        Ast* ast = scope->declerations[i];
+        generate_from_ast(ast);
+    }
 }
 
 void CodeGenerator::generate_variable_decleration(Ast_VarDecleration* decleration) {
@@ -36,6 +55,10 @@ void CodeGenerator::generate_variable_decleration(Ast_VarDecleration* decleratio
 void CodeGenerator::generate_print_statement(Ast_PrintStatement* print_statement) {
     generate_expression(print_statement->expression);
     write(OP_PRINT, print_statement);
+}
+
+void CodeGenerator::generate_return_statement(Ast_ReturnStatement* return_statement) {
+    
 }
 
 void CodeGenerator::generate_expression(Ast_Expression* expression) {
@@ -89,11 +112,15 @@ void CodeGenerator::generate_expression(Ast_Expression* expression) {
     }
     else if (expression->type == AST_ASSIGNMENT) {
         auto assign = AST_CAST(Ast_Assignment, expression);
-        generate_expression(assign->expression);
-        write(OP_CONST, assign);
-        write_constant(INT_VALUE(globals[assign->id->ident]), assign); //writes the address of the global
 
+        generate_expression(assign->value);
+        write(OP_CONST, assign);
+    
+        write_constant(INT_VALUE(globals[AST_CAST(Ast_PrimaryExpression, assign->id)->ident]), assign); //writes the address of the global
         write(OP_SET_GLOBAL, assign);
+
+        if (assign->next)
+            generate_expression(assign->next);
     }
 }
 

@@ -52,6 +52,18 @@ sin : (x: float) -> float {
 }
 />
 
-radius := 4.0;
-radius = 3.4;
-print radius;
+a := 1;
+b := 2;
+c := 4;
+
+a = b = c = 2;
+
+d : float = 2;
+
+print a;
+print b;
+print c;
+
+foo : () {
+    
+}

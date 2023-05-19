@@ -7,6 +7,8 @@ void check_return_statement(Ast_ReturnStatement* return_statement);
 void check_scope(Ast_Scope* scope);
 void check_ast(Ast* ast);
 
+bool can_type_be_this(AstDataType type, AstDataType trying);
+
 void check_expression(Ast_Expression* expression, AstDataType* current_expr_type);
 void compare_current_type(Ast* ast, AstDataType type, AstDataType* current_expr_type);
 
@@ -22,9 +24,7 @@ void semantic_checker(Ast_TranslationUnit* root) {
 void check_variable_decleration(Ast_VarDecleration* decleration) {
     if (decleration->expression) {
         AstDataType expr_type = get_expression_type(decleration->expression);
-        if (expr_type == AST_TYPE_INT && decleration->type_value == AST_TYPE_FLOAT) return;
-
-        if (expr_type != decleration->type_value) {
+        if (!can_type_be_this(decleration->type_value, expr_type)) {
             report_semantic_error(decleration, "Type in expression does not match variable decleration type");
         }
     }
@@ -83,6 +83,12 @@ int semantic_error_count() {
     return error_count;
 }
 
+bool can_type_be_this(AstDataType type, AstDataType trying) {
+    if (type == trying) return true;
+    if (type == AST_TYPE_FLOAT && trying == AST_TYPE_INT) return true;
+    else return false;
+}
+
 AstDataType get_expression_type(Ast_Expression* expression) {
     AstDataType current_expr_type = AST_TYPE_NONE;
     check_expression(expression, &current_expr_type);
@@ -110,9 +116,14 @@ void check_expression(Ast_Expression* expression, AstDataType* current_expr_type
         Ast_Assignment* assign = AST_CAST(Ast_Assignment, expression);
         check_expression(assign->id, current_expr_type);
         AstDataType id_type = *current_expr_type;
-        check_expression(assign->expression, current_expr_type);
-        if (id_type != *current_expr_type)
+        AstDataType value_type = AST_TYPE_NONE;
+        check_expression(assign->value, &value_type);
+        if (!can_type_be_this(id_type, value_type))
             report_semantic_error(assign, "Type does not match in assignment");
+        if (assign->next) {
+            value_type = AST_TYPE_NONE;
+            check_expression(assign->next, &value_type);
+        }
         break;
     }
     case AST_PRIMARY: {
@@ -158,10 +169,7 @@ void compare_current_type(Ast* ast, AstDataType type, AstDataType* current_expr_
         *current_expr_type = type;
     }
     else {
-        if ((type == AST_TYPE_FLOAT && *current_expr_type == AST_TYPE_INT) || (type == AST_TYPE_INT && *current_expr_type == AST_TYPE_FLOAT)) {
-            *current_expr_type = AST_TYPE_FLOAT;
-        }
-        else if (*current_expr_type != type) {
+        if (*current_expr_type != type) {
             report_semantic_error(ast, "Mismatched type in expression");
         }
         else {

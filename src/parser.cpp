@@ -20,6 +20,7 @@
 #include "semantic.h"
 #include <string>
 #include <stdlib.h>
+#include <algorithm>
 
 #define AST_NEW(type, ...) \
     static_cast<type*>(default_ast(new type(__VA_ARGS__)))
@@ -118,22 +119,13 @@ void Parser::parse() {
             unit->declerations.push_back(decleration);
     }
 
-    //Here we need to organize the declerations and fix any dependency issues between functions and variables.
-   // sort_declerations();
+    select_functions();
 }
 
-void Parser::sort_declerations() {
-    int i, j, min_idx;
- 
-    for (i = 0; i < unit->declerations.size() - 1; i++) {
-         min_idx = i;
-        for (j = i + 1; j < unit->declerations.size(); j++)
-            if (unit->declerations[j]->type < unit->declerations[min_idx]->type)
-                min_idx = j;
-        Ast_Decleration* temp = unit->declerations[min_idx];
-        unit->declerations[min_idx] = unit->declerations[i];
-        unit->declerations[i] = temp; 
-    }
+void Parser::select_functions() {
+    for (int i = 0; i < unit->declerations.size(); i++) 
+        if (unit->declerations[i]->type == AST_FUNCTION)
+            function_indices.push_back(i);
 }
 
 Token* Parser::peek(int index) {
@@ -380,7 +372,6 @@ Ast_VarDecleration* Parser::parse_variable_decleration() {
     AstDataType expr_type = get_expression_type(expression);
 
     consume(T_SEMICOLON, "Expected ';' in variable decleration");
-
     Symbol sym;
     sym.is = DEF_VAR;
     sym.var.type = expr_type;
@@ -464,12 +455,25 @@ Ast_Expression* Parser::parse_unary_expression() {
 }
 
 Ast_Expression* Parser::parse_assignment_expression(Ast_Expression* expression, AstEqualType equal) {
-    int reference = current;
-    Ast_Expression* assign = parse_expression(PREC_ASSIGNMENT);
-    if ((expression->type != AST_PRIMARY) || (expression->type == AST_PRIMARY && AST_CAST(Ast_PrimaryExpression, expression)->prim_type != AST_PRIM_ID)) 
-        throw parser_error(&tokens[reference - 2], "Lvalue required as left operand of assignment");     
+    if (expression->type == AST_PRIMARY) {
+        auto id = AST_CAST(Ast_PrimaryExpression, expression);
+        if (id->prim_type != AST_PRIM_ID)
+            throw parser_error(peek(-1), "Expected Lvalue in assignment");
+        auto value = parse_expression(PREC_ASSIGNMENT);
+        return AST_NEW(Ast_Assignment, id, value, nullptr);
+    }
+    else if (expression->type == AST_ASSIGNMENT) {
+        auto past_assign = AST_CAST(Ast_Assignment, expression);
+        if (!IS_AST(past_assign->value, AST_PRIMARY) || AST_CAST(Ast_PrimaryExpression, past_assign->value)->prim_type != AST_PRIM_ID)
+            throw parser_error(peek(-1), "Expected an identifier in assignment expression");
+        auto id = AST_CAST(Ast_PrimaryExpression, past_assign->value);
+        auto value = parse_expression(PREC_ASSIGNMENT);
+        return AST_NEW(Ast_Assignment, id, value, past_assign);
+    }
+    else {
+        throw parser_error(peek(-1), "Expected an assignemnt expression");
+    }
 
-    return AST_NEW(Ast_Assignment, assign, AST_CAST(Ast_PrimaryExpression, expression), equal);
 }
 
 Ast_Expression* Parser::parse_primary_expression() {
@@ -609,10 +613,6 @@ Ast_Expression* Parser::parse_binary_expression(Ast_Expression* left) {
     case T_RSHIFT:        return AST_NEW(Ast_BinaryExpression, left, AST_OPERATOR_RSHIFT, right);
     default: throw parser_error(peek(-1), "Expected binary type operator");
     }
-}
-
-bool Parser::is_type(AstDataType prim, AstDataType type) {
-    return ((prim & type));
 }
 
 AstOperatorType Parser::convert_to_op(TokenType type) {

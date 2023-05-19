@@ -102,7 +102,9 @@ enum AstSpecifierType {
     AST_SPECIFIER_CONST = 0x01
 };
 
-#define AST_CAST(type, base) static_cast<type*>(base)
+#define AST_CAST(type, base) ((type*) base)
+
+#define IS_AST(base, type_to_check) (base->type == type_to_check)
 
 struct Ast;
 struct Ast_Expression;
@@ -199,14 +201,16 @@ struct Ast_UnaryExpression : public Ast_Expression {
 
 struct Ast_Assignment : public Ast_Expression {
     Ast_Assignment() { type = AST_ASSIGNMENT; }
-    Ast_Assignment(Ast_Expression* expression, Ast_PrimaryExpression* id, AstEqualType equal_type = AST_EQUAL) : expression(expression), id(id), equal_type(equal_type) { type = AST_ASSIGNMENT; }
+    Ast_Assignment(Ast_PrimaryExpression* id, Ast_Expression* value, Ast_Assignment* next, AstEqualType equal_type = AST_EQUAL) : id(id), value(value), next(next), equal_type(equal_type) { type = AST_ASSIGNMENT; }
     ~Ast_Assignment() override {
-        delete expression;
-        delete id;
+        delete next;
     }
+
     AstEqualType equal_type = AST_EQUAL;
+
     Ast_PrimaryExpression* id = nullptr;
-    Ast_Expression* expression = nullptr;
+    Ast_Expression* value = nullptr;
+    Ast_Assignment* next = nullptr;
 };
 
 struct Ast_Decleration : public Ast {

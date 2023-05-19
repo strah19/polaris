@@ -85,6 +85,18 @@ bool vm_run(Bytecode* bytecode) {
                 vm_push(vm.globals.values[address]); //Expects an int value on the stack to be the address.
                 break;
             }
+            case OP_JMP: {
+                int jump_address = vm_pop().int_value;
+                vm.ip = vm.bytecode->code + jump_address;
+                break;
+            }
+            case OP_RTS: {
+                Value return_value = vm_pop();
+                int jump_address = vm_pop().int_value;
+                vm.ip = vm.bytecode->code + jump_address;
+                vm_push(return_value);                
+                break;
+            }
             case OP_MIN: BINARY(-); break;
             case OP_MUL: BINARY(*); break;
             case OP_DIV: BINARY(/); break;
