@@ -27,6 +27,7 @@ enum Opcode {
     OP_GET_GLOBAL,
     OP_JMP,
     OP_RTS,
+    OP_CALL,
     OP_RETURN
 };
 

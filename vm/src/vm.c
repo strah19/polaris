@@ -1,5 +1,6 @@
 #include "vm.h"
 #include "opcodes.h"
+#include "debug.h"
 #include "value.h"
 #include <stdarg.h>
 #include <string.h>
@@ -35,9 +36,12 @@ bool vm_run(Bytecode* bytecode) {
     bool run = true;
 
     while (vm.bytecode) {
-        vm.ip = vm.bytecode->code;
+        vm.ip = &vm.bytecode->code[bytecode->start_address];
         while (run) {
             uint8_t instruction = *vm.ip;
+
+           // debug_disassemble_stack(vm.stack, vm.top);
+           // debug_disassemble_instruction(vm.bytecode, (int) (vm.ip - vm.bytecode->code));
 
             switch (instruction) {
             case OP_RETURN: {
@@ -95,6 +99,12 @@ bool vm_run(Bytecode* bytecode) {
                 int jump_address = vm_pop().int_value;
                 vm.ip = vm.bytecode->code + jump_address;
                 vm_push(return_value);                
+                break;
+            }
+            case OP_CALL: {
+                int jump_address = vm_pop().int_value;
+                vm_push(INT_VALUE(vm.ip - vm.bytecode->code));
+                vm.ip = vm.bytecode->code + jump_address - 1;
                 break;
             }
             case OP_MIN: BINARY(-); break;

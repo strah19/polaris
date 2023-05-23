@@ -13,6 +13,7 @@ struct Bytecode {
     int* line;
     Values constants;
     struct Bytecode* next;
+    int start_address;
 };
 
 typedef struct Bytecode Bytecode;

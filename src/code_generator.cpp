@@ -14,6 +14,7 @@ void CodeGenerator::run() {
         generate_function(AST_CAST(Ast_Function, root->declerations[function]));
     }
 
+    bytecode.start_address = bytecode.count;
     for (int i = 0; i < root->declerations.size(); i++) {
         Ast* ast = root->declerations[i];
         generate_from_ast(ast);
@@ -36,7 +37,9 @@ void CodeGenerator::generate_from_ast(Ast* ast) {
 }
 
 void CodeGenerator::generate_function(Ast_Function* function) {
+    function_pointers[function->ident] = bytecode.count;
     generate_scope(function->scope);
+    write(OP_JMP, function);
 }
 
 void CodeGenerator::generate_scope(Ast_Scope* scope) {
@@ -108,6 +111,11 @@ void CodeGenerator::generate_expression(Ast_Expression* expression) {
             write(OP_CONST, prim);
             write_constant(INT_VALUE(globals[prim->ident]), prim); //writes the address of the global
             write(OP_GET_GLOBAL, prim);
+        }
+        else if (prim->prim_type == AST_PRIM_CALL) {
+            write(OP_CONST, prim);
+            write_constant(INT_VALUE(function_pointers[prim->ident]), prim);
+            write(OP_CALL, prim);
         }
     }
     else if (expression->type == AST_ASSIGNMENT) {

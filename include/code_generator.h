@@ -34,6 +34,7 @@ private:
     Bytecode bytecode;
 
     std::map<String, int> globals;
+    std::map<String, int> function_pointers;
     int max_global_address = 0;
 };
 

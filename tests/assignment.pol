@@ -64,6 +64,17 @@ print a;
 print b;
 print c;
 
-foo : () {
-    
+{
+    f := 4;
+    print f;
 }
+
+foo : () {
+    print "foo!";
+    print a;
+    l := 1.2;
+    print l;
+}
+
+foo();
+foo();

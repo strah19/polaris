@@ -26,6 +26,7 @@ void bytecode_init(Bytecode* bytecode) {
     bytecode->line = NULL;
     bytecode->code = NULL;
     bytecode->next = NULL;
+    bytecode->start_address = 0;
     value_init(&bytecode->constants);
 }
 
