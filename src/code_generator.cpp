@@ -52,7 +52,9 @@ void CodeGenerator::generate_scope(Ast_Scope* scope) {
 void CodeGenerator::generate_variable_decleration(Ast_VarDecleration* decleration) {
     generate_expression(decleration->expression);
     globals[decleration->ident] = max_global_address++;
-    write(OP_DEF_GLOBAL, decleration);
+    write(OP_CONST, decleration);
+    write_constant(INT_VALUE(globals[decleration->ident]), decleration); //writes the address of the global
+    write(OP_SET, decleration);
 }
 
 void CodeGenerator::generate_print_statement(Ast_PrintStatement* print_statement) {
@@ -110,7 +112,7 @@ void CodeGenerator::generate_expression(Ast_Expression* expression) {
         else if (prim->prim_type == AST_PRIM_ID) {
             write(OP_CONST, prim);
             write_constant(INT_VALUE(globals[prim->ident]), prim); //writes the address of the global
-            write(OP_GET_GLOBAL, prim);
+            write(OP_GET, prim);
         }
         else if (prim->prim_type == AST_PRIM_CALL) {
             write(OP_CONST, prim);
@@ -122,10 +124,10 @@ void CodeGenerator::generate_expression(Ast_Expression* expression) {
         auto assign = AST_CAST(Ast_Assignment, expression);
 
         generate_expression(assign->value);
+
         write(OP_CONST, assign);
-    
         write_constant(INT_VALUE(globals[AST_CAST(Ast_PrimaryExpression, assign->id)->ident]), assign); //writes the address of the global
-        write(OP_SET_GLOBAL, assign);
+        write(OP_SET, assign);
 
         if (assign->next)
             generate_expression(assign->next);

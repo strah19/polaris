@@ -8,6 +8,8 @@ extern "C" {
     #include "bytecode.h"
 }
 
+using FunctionScope = Map<String, int>;
+
 class CodeGenerator {
 public:
     CodeGenerator(Ast_TranslationUnit* root, Vector<int>* function_indices);
@@ -33,8 +35,8 @@ private:
     Vector<int>* function_indices = nullptr;
     Bytecode bytecode;
 
-    std::map<String, int> globals;
-    std::map<String, int> function_pointers;
+    Map<String, int> globals;
+    Map<String, int> function_pointers;
     int max_global_address = 0;
 };
 

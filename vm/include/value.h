@@ -87,6 +87,8 @@ extern void value_write(Value value, Values* array);
 
 extern void value_free(Values* array);
 
+extern void value_allocate(Values* array, int capacity);
+
 extern void value_print(Value value, bool newline);
 
 #endif // !VALUE_H

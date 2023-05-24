@@ -38,7 +38,7 @@ int debug_disassemble_instruction(Bytecode* bytecode, int off) {
     uint8_t instruction = bytecode->code[off];
     switch (instruction) {
     case OP_RETURN:    return debug_simple_instruction("OP_RETURN",    off);
-    case OP_ADD:      return debug_simple_instruction("OP_PLUS",      off);
+    case OP_ADD:      return debug_simple_instruction("OP_ADD",      off);
     case OP_MIN:     return debug_simple_instruction("OP_MINUS",     off);
     case OP_MUL:  return debug_simple_instruction("OP_MULTIPLY",  off);
     case OP_DIV:    return debug_simple_instruction("OP_DIVDE",     off);
@@ -53,9 +53,8 @@ int debug_disassemble_instruction(Bytecode* bytecode, int off) {
     case OP_GTE:       return debug_simple_instruction("OP_GTE",       off);
 
     case OP_PRINT:     return debug_simple_instruction("OP_PRINT",     off);
-    case OP_GET_GLOBAL:       return debug_simple_instruction("OP_GET_GLOBAL",       off);
-    case OP_SET_GLOBAL:       return debug_simple_instruction("OP_SET_GLOBAL",       off);
-    case OP_DEF_GLOBAL:       return debug_simple_instruction("OP_DEF_GLOBAL",       off);
+    case OP_GET:       return debug_simple_instruction("OP_GET",       off);
+    case OP_SET:       return debug_simple_instruction("OP_SET",       off);
     case OP_CONST:  return debug_constant_instruction(bytecode,     off);
     case OP_RTS:       return debug_simple_instruction("OP_RTS",       off);
     case OP_JMP:       return debug_simple_instruction("OP_JMP",       off);

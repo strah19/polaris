@@ -43,6 +43,11 @@ void value_free(Values* array) {
     value_init(array);
 }
 
+void value_allocate(Values* array, int capacity) {
+    array->capacity = NEW_CAPACITY(array->capacity);
+    array->values = REALLOC(Value, array->values, array->capacity);
+}
+
 static char* int_to_bin(int a, char *buffer, int buf_size) {
     buffer += (buf_size - 1);
     for (int i = 31; i >= 0; i--) {

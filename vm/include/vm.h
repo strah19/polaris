@@ -4,12 +4,13 @@
 #include "bytecode.h"
 
 #define MAX_STACK 256
+#define INITIAL_REFERENCE_SIZE 512
 
 typedef struct {
     Bytecode* bytecode;
     uint8_t* ip;   
     Value stack[MAX_STACK];
-    Values globals;
+    Values references;
     Value* top;
 } VM;
 

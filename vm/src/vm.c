@@ -28,7 +28,8 @@ static VM vm;
 
 void vm_init() {
     vm.top = vm.stack;
-    value_init(&vm.globals);
+    value_init(&vm.references);
+    value_allocate(&vm.references, INITIAL_REFERENCE_SIZE);
 }
 
 bool vm_run(Bytecode* bytecode) {
@@ -40,8 +41,8 @@ bool vm_run(Bytecode* bytecode) {
         while (run) {
             uint8_t instruction = *vm.ip;
 
-           // debug_disassemble_stack(vm.stack, vm.top);
-           // debug_disassemble_instruction(vm.bytecode, (int) (vm.ip - vm.bytecode->code));
+            //debug_disassemble_stack(vm.stack, vm.top);
+            debug_disassemble_instruction(vm.bytecode, (int) (vm.ip - vm.bytecode->code));
 
             switch (instruction) {
             case OP_RETURN: {
@@ -69,24 +70,19 @@ bool vm_run(Bytecode* bytecode) {
                     BINARY(+);
                 break;
             }
-            case OP_DEF_GLOBAL: {
-                Value val = vm_pop();
-                value_write(val, &vm.globals);
-                break;
-            }
-            case OP_SET_GLOBAL: {
+            case OP_SET: {
                 int address = vm_pop().int_value;
                 Value val = vm_pop();
-                if (address > vm.globals.count)
+                if (address > vm.references.capacity)
                     return vm_runtime_error("Virtual machine cannot address to %d.\n", address);
-                vm.globals.values[address] = val;
+                vm.references.values[address] = val;
                 break;
             }
-            case OP_GET_GLOBAL: {
+            case OP_GET: {
                 int address = vm_pop().int_value;
-                if (address > vm.globals.count)
+                if (address > vm.references.capacity)
                     return vm_runtime_error("Virtual machine cannot address to %d.\n", address);
-                vm_push(vm.globals.values[address]); //Expects an int value on the stack to be the address.
+                vm_push(vm.references.values[address]); //Expects an int value on the stack to be the address.
                 break;
             }
             case OP_JMP: {
@@ -143,7 +139,7 @@ bool vm_run(Bytecode* bytecode) {
 }
 
 void vm_free() {
-    value_free(&vm.globals);
+    value_free(&vm.references);
 }
 
 extern void vm_push(Value value) {

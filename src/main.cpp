@@ -64,7 +64,7 @@ void run_src_file(const char* filepath) {
     char* src = open_file(filepath);
 
     Benchmark compiler_benchmark("Compiler");
-
+  
     Lexer lexer(src);
     Tokens tokens = lexer.run();
     if (log_tokens) lexer.log(tokens);
