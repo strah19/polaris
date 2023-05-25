@@ -11,6 +11,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include "error.h"
 
 char* open_file(const char* filepath) {
@@ -33,4 +34,10 @@ char* open_file(const char* filepath) {
 
     fclose(file);
     return buffer;
+}
+
+char* create_string(char* start, int size) {
+    char* str = (char*) malloc(size + 1);
+    memset(str, '\0', size + 1);
+    strncpy(str, start, size);
 }

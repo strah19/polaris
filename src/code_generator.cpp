@@ -38,6 +38,13 @@ void CodeGenerator::generate_from_ast(Ast* ast) {
 
 void CodeGenerator::generate_function(Ast_Function* function) {
     function_pointers[function->ident] = bytecode.count;
+    
+    //We need to keep track of the local variables used in a scope because that memory can be reused.
+    for (int i = function->args.size() - 1; i >= 0; i--) {
+        references[function->args[i]->ident] = max_references_address - i;
+        write(OP_SET, function);
+    }
+
     generate_scope(function->scope);
     write(OP_JMP, function);
 }
@@ -51,9 +58,9 @@ void CodeGenerator::generate_scope(Ast_Scope* scope) {
 
 void CodeGenerator::generate_variable_decleration(Ast_VarDecleration* decleration) {
     generate_expression(decleration->expression);
-    globals[decleration->ident] = max_global_address++;
+    references[decleration->ident] = max_references_address++;
     write(OP_CONST, decleration);
-    write_constant(INT_VALUE(globals[decleration->ident]), decleration); //writes the address of the global
+    write_constant(INT_VALUE(references[decleration->ident]), decleration); //writes the address of the references
     write(OP_SET, decleration);
 }
 
@@ -111,12 +118,20 @@ void CodeGenerator::generate_expression(Ast_Expression* expression) {
         }
         else if (prim->prim_type == AST_PRIM_ID) {
             write(OP_CONST, prim);
-            write_constant(INT_VALUE(globals[prim->ident]), prim); //writes the address of the global
+            write_constant(INT_VALUE(references[prim->ident]), prim); //writes the address of the references
             write(OP_GET, prim);
         }
         else if (prim->prim_type == AST_PRIM_CALL) {
+            //send arguments as constants followed by return address
+
+            for (int i = 0; i < prim->call->args.size(); i++) {
+                generate_expression(prim->call->args[i]);
+                write(OP_CONST, prim);
+                write_constant(INT_VALUE(max_references_address++), prim); //writes the address of the argument
+            }
+
             write(OP_CONST, prim);
-            write_constant(INT_VALUE(function_pointers[prim->ident]), prim);
+            write_constant(INT_VALUE(function_pointers[prim->call->ident]), prim);
             write(OP_CALL, prim);
         }
     }
@@ -126,7 +141,7 @@ void CodeGenerator::generate_expression(Ast_Expression* expression) {
         generate_expression(assign->value);
 
         write(OP_CONST, assign);
-        write_constant(INT_VALUE(globals[AST_CAST(Ast_PrimaryExpression, assign->id)->ident]), assign); //writes the address of the global
+        write_constant(INT_VALUE(references[AST_CAST(Ast_PrimaryExpression, assign->id)->ident]), assign); //writes the address of the references
         write(OP_SET, assign);
 
         if (assign->next)

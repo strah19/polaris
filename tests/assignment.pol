@@ -52,16 +52,11 @@ sin : (x: float) -> float {
 }
 />
 
-a := 3;
-
-foo : () {
-    print "foo!";
-    f := "f";
-    print f;
+foo : (a : int) {
+    print a;
 }
 
-b := 4;
-print b;
+foo(3);
 
-foo();
-foo();
+
+

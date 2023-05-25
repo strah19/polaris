@@ -35,9 +35,9 @@ private:
     Vector<int>* function_indices = nullptr;
     Bytecode bytecode;
 
-    Map<String, int> globals;
+    Map<String, int> references;
     Map<String, int> function_pointers;
-    int max_global_address = 0;
+    int max_references_address = 0;
 };
 
 #endif // !CODE_GENERATOR_H

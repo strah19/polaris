@@ -36,12 +36,14 @@ bool vm_run(Bytecode* bytecode) {
     vm.bytecode = bytecode;
     bool run = true;
 
+    debug_disassemble_bytecode(bytecode, "Assignment Program");
+
     while (vm.bytecode) {
         vm.ip = &vm.bytecode->code[bytecode->start_address];
         while (run) {
             uint8_t instruction = *vm.ip;
 
-            //debug_disassemble_stack(vm.stack, vm.top);
+            debug_disassemble_stack(vm.stack, vm.top);
             debug_disassemble_instruction(vm.bytecode, (int) (vm.ip - vm.bytecode->code));
 
             switch (instruction) {

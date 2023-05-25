@@ -17,6 +17,7 @@
 
 #include "parser.h"
 #include "error.h"
+#include "util.h"
 #include "semantic.h"
 #include <string>
 #include <stdlib.h>
@@ -517,8 +518,7 @@ Ast_Expression* Parser::parse_primary_expression() {
         break;
     }
     case T_IDENTIFIER: {
-        char* id = (char*) peek(-1)->start;
-        id[peek(-1)->size] = '\0';
+        char* id = create_string((char*) peek(-1)->start, peek(-1)->size);
         Symbol symbol = current_scope->get(std::string(id));
 
         if (symbol.is == DEF_VAR) {
@@ -529,7 +529,7 @@ Ast_Expression* Parser::parse_primary_expression() {
         else if (symbol.is == DEF_FUN) {
             primary->prim_type = AST_PRIM_CALL;
             primary->call = new Ast_FunctionCall();
-            primary->call->ident = id;
+            primary->call->ident = (const char*) id;
             consume(T_LPAR, "Expected '(' in function call");
 
             while (!check(T_RPAR)) {
