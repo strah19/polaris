@@ -60,6 +60,24 @@ void repl() {
     }
 }
 
+void print_scope(Scope* scope, int tabs = 1) {
+    for (int i = 0; i < tabs; i++) printf("\t");
+    printf("--------New Scope--------\n");
+
+    for (int i = 0; i < tabs; i++) printf("\t");
+
+    if (scope->definitions.size() != 0)
+        printf("Symbols in Scope\n");
+    for (auto& sym : scope->definitions) {
+        for (int i = 0; i < tabs; i++) printf("\t");
+        printf("Name: '%s', Type: %d.\n", sym.first.c_str(), sym.second.is);
+    }
+
+    for (auto& child : scope->children_scopes) {
+        print_scope(&child, tabs++);
+    }
+}
+
 void run_src_file(const char* filepath) {
     char* src = open_file(filepath);
 
@@ -72,13 +90,14 @@ void run_src_file(const char* filepath) {
     Parser parser(&tokens[0], filepath);
     parser.parse();
 
+    //print_scope(parser.get_scope());
+
     semantic_checker(parser.get_unit());
 
     if (!parser.has_errors() && !semantic_error_count()) {
-        CodeGenerator generator(parser.get_unit(), parser.get_functions());
+        CodeGenerator generator(parser.get_unit(), parser.get_functions(), parser.get_scope());
         generator.run();
         compiler_benchmark.stop();
-
         vm_init();
 
         if (!vm_run(generator.get_bytecode()))

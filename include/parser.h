@@ -35,6 +35,7 @@ enum DefinitionType {
 
 struct VarSymbol {
     AstDataType type;
+    uint32_t address; //for code generation
 };
 
 struct FuncSymbol {
@@ -54,6 +55,8 @@ struct Scope {
     Scope() = default;
     Map<String, Symbol> definitions;
     Scope* previous = nullptr;
+    Vector<Scope> children_scopes;
+
     Symbol last;
 
     void add(const String& name, const Symbol& sym);
@@ -72,6 +75,7 @@ public:
     void parse();
     Ast_TranslationUnit* get_unit() { return unit; }
     Vector<int>* get_functions() { return &function_indices; }
+    Scope* get_scope() { return &main_scope; }
 
     Token* peek(int index = 0);
     Token* advance();

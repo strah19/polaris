@@ -2,6 +2,7 @@
 #define CODE_GENERATOR_H
 
 #include "ast.h"
+#include "parser.h"
 
 extern "C" {
     #include "opcodes.h"
@@ -12,7 +13,7 @@ using FunctionScope = Map<String, int>;
 
 class CodeGenerator {
 public:
-    CodeGenerator(Ast_TranslationUnit* root, Vector<int>* function_indices);
+    CodeGenerator(Ast_TranslationUnit* root, Vector<int>* function_indices, Scope* scope);
     ~CodeGenerator();
     void run();
 
@@ -33,7 +34,10 @@ private:
 private:
     Ast_TranslationUnit* root = nullptr;
     Vector<int>* function_indices = nullptr;
+    Scope* scope = nullptr;
+    Bytecode* current;
     Bytecode bytecode;
+    Bytecode functions;
 
     Map<String, int> references;
     Map<String, int> function_pointers;

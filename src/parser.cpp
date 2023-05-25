@@ -120,7 +120,7 @@ void Parser::parse() {
             unit->declerations.push_back(decleration);
     }
 
-    select_functions();
+    //select_functions();
 }
 
 void Parser::select_functions() {
@@ -222,6 +222,7 @@ Ast_Scope* Parser::parse_scope() {
     while (!check(T_RCURLY) && !is_end()) 
         scope->declerations.push_back(parse_decleration());
 
+    previous_scope->children_scopes.push_back(*current_scope);
     delete current_scope;
     current_scope = previous_scope;
 
@@ -259,6 +260,7 @@ Ast_Scope* Parser::parse_function_scope(bool return_needed, Vector<Ast_VarDecler
     if (expected_return && return_needed)
         parser_warning(peek(), "Need return statement in function");
 
+    previous_scope->children_scopes.push_back(*current_scope);
     delete current_scope;
     current_scope = previous_scope;
 

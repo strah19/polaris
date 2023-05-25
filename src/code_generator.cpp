@@ -1,19 +1,19 @@
 #include "code_generator.h"
 #include <string.h>
 
-CodeGenerator::CodeGenerator(Ast_TranslationUnit* root, Vector<int>* function_indices) : root(root), function_indices(function_indices) { }
+CodeGenerator::CodeGenerator(Ast_TranslationUnit* root, Vector<int>* function_indices, Scope* scope) : root(root), function_indices(function_indices), scope(scope) { }
 
 CodeGenerator::~CodeGenerator() {
     bytecode_free(&bytecode);
+    bytecode_free(&functions);
+
+    current = &bytecode;
 }
 
 void CodeGenerator::run() {
     bytecode_init(&bytecode);
-
-    for (auto& function : *function_indices) {
-        generate_function(AST_CAST(Ast_Function, root->declerations[function]));
-    }
-
+    bytecode_init(&functions);
+    
     bytecode.start_address = bytecode.count;
     for (int i = 0; i < root->declerations.size(); i++) {
         Ast* ast = root->declerations[i];
@@ -26,6 +26,8 @@ void CodeGenerator::run() {
 void CodeGenerator::generate_from_ast(Ast* ast) {
     if (ast->type == AST_VAR_DECLERATION) 
         generate_variable_decleration(AST_CAST(Ast_VarDecleration, ast));
+    if (ast->type == AST_FUNCTION) 
+        generate_function(AST_CAST(Ast_Function, ast));
     else if (ast->type == AST_PRINT)
         generate_print_statement(AST_CAST(Ast_PrintStatement, ast));
     else if (ast->type == AST_EXPRESSION_STATEMENT)
@@ -37,16 +39,21 @@ void CodeGenerator::generate_from_ast(Ast* ast) {
 }
 
 void CodeGenerator::generate_function(Ast_Function* function) {
-    function_pointers[function->ident] = bytecode.count;
+    current = &functions;
+    function_pointers[function->ident] = current->count;
     
     //We need to keep track of the local variables used in a scope because that memory can be reused.
-    for (int i = function->args.size() - 1; i >= 0; i--) {
-        references[function->args[i]->ident] = max_references_address - i;
+    for (int i = 0; i < function->args.size(); i++) {
+        write(OP_CONST, function);
+        write_constant(INT_VALUE(max_references_address), function); //writes the address of the argument
+        printf("ARG REFERENCE %s, %d.\n", function->args[i]->ident, max_references_address);
+        references[function->args[i]->ident] = max_references_address++;
         write(OP_SET, function);
     }
 
     generate_scope(function->scope);
     write(OP_JMP, function);
+    current = &bytecode;
 }
 
 void CodeGenerator::generate_scope(Ast_Scope* scope) {
@@ -58,6 +65,7 @@ void CodeGenerator::generate_scope(Ast_Scope* scope) {
 
 void CodeGenerator::generate_variable_decleration(Ast_VarDecleration* decleration) {
     generate_expression(decleration->expression);
+    printf("REFERENCE %s, %d.\n", decleration->ident, max_references_address);
     references[decleration->ident] = max_references_address++;
     write(OP_CONST, decleration);
     write_constant(INT_VALUE(references[decleration->ident]), decleration); //writes the address of the references
@@ -124,10 +132,11 @@ void CodeGenerator::generate_expression(Ast_Expression* expression) {
         else if (prim->prim_type == AST_PRIM_CALL) {
             //send arguments as constants followed by return address
 
+            write(OP_CONST, prim);
+            write_constant(INT_VALUE(current->count + 3 + (2 * prim->call->args.size())), prim); //writes the address of the argument
+
             for (int i = 0; i < prim->call->args.size(); i++) {
                 generate_expression(prim->call->args[i]);
-                write(OP_CONST, prim);
-                write_constant(INT_VALUE(max_references_address++), prim); //writes the address of the argument
             }
 
             write(OP_CONST, prim);
@@ -158,9 +167,9 @@ ObjString* CodeGenerator::allocate_string(const char* str) {
 }
 
 void CodeGenerator::write(uint8_t opcode, Ast* ast) {
-    bytecode_write(opcode, ast->line, &bytecode);
+    bytecode_write(opcode, ast->line, current);
 }
 
 void CodeGenerator::write_constant(Value value, Ast* ast) {
-    write(bytecode_add_constant(value, &bytecode), ast);
+    write(bytecode_add_constant(value, current), ast);
 }

@@ -101,7 +101,6 @@ bool vm_run(Bytecode* bytecode) {
             }
             case OP_CALL: {
                 int jump_address = vm_pop().int_value;
-                vm_push(INT_VALUE(vm.ip - vm.bytecode->code));
                 vm.ip = vm.bytecode->code + jump_address - 1;
                 break;
             }
