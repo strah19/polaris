@@ -100,8 +100,10 @@ void run_src_file(const char* filepath) {
         compiler_benchmark.stop();
         vm_init();
 
+        Benchmark vm_benchmark("Virtual Machine");
         if (!vm_run(generator.get_bytecode()))
             printf("Exiting with run time error(s).\n");
+        vm_benchmark.stop();
 
         vm_reset_stack();
         vm_free();

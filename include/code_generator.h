@@ -30,6 +30,7 @@ private:
     void generate_function(Ast_Function* function);
     void generate_return_statement(Ast_ReturnStatement* return_statement);
     void generate_if_statement(Ast_IfStatement* if_statement);
+    int generate_conditional_statement(Ast_ConditionalStatement* conditional);
 
     ObjString* allocate_string(const char* str);
 private:

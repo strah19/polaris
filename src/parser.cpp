@@ -116,8 +116,9 @@ void Parser::parse() {
     while (!is_end()) {
         auto decleration = parse_decleration();
 
-        if (decleration)
+        if (decleration) {
             unit->declerations.push_back(decleration);
+        }
     }
 
     //select_functions();
@@ -203,7 +204,7 @@ Ast_Decleration* Parser::parse_decleration() {
 
 Ast_Statement* Parser::parse_statement() {
     if (match(T_LCURLY))      return parse_scope();
-    else if (match(T_IF))     return parse_if(); 
+    else if (match(T_IF))     return parse_if();
     else if (match(T_WHILE))  return parse_while();
     else if (match(T_RETURN)) return parse_return();
     else if (match(T_PRINT))  return parse_print_statement();
@@ -403,7 +404,7 @@ Ast_IfStatement* Parser::parse_if() {
         current = current->next;
     }
 
-    if (match(T_ELSE))
+    if (match(T_ELSE)) 
         current->next = parse_else();
 
     return if_statement;

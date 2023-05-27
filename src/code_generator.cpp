@@ -54,7 +54,63 @@ void CodeGenerator::generate_function(Ast_Function* function) {
 }
 
 void CodeGenerator::generate_if_statement(Ast_IfStatement* if_statement) {
-    
+    /*
+    generate_expression(if_statement->condition);
+    write(OP_BNQ, if_statement);
+
+    int bytecode_location = bytecode.count;
+    write(0xFF, if_statement); //lower
+    write(0xFF, if_statement); //higher
+
+    generate_scope(if_statement->scope);
+
+    int skip_address = bytecode.count;
+    bytecode.code[bytecode_location] = (skip_address & 0x00FF);
+    bytecode.code[bytecode_location + 1] = (skip_address >> 8); 
+    */
+    generate_conditional_statement(if_statement);
+}
+
+int CodeGenerator::generate_conditional_statement(Ast_ConditionalStatement* conditional) {
+    int start_address = bytecode.count;
+    if (conditional->condition) {
+        generate_expression(conditional->condition);
+    }
+
+    int skip_condition_location = -1;
+    if (conditional->type == AST_IF || conditional->type == AST_ELIF) {
+        write(OP_BNQ, conditional);
+        skip_condition_location = bytecode.count;
+        write(0xFF, conditional); //lower
+        write(0xFF, conditional); //higher
+    }
+
+    generate_scope(conditional->scope);
+    int go_to_end_location = -1;
+    if (conditional->type == AST_IF || conditional->type == AST_ELIF) {
+        write(OP_JMP, conditional);
+        go_to_end_location = bytecode.count;
+        write(0xFF, conditional); //lower
+        write(0xFF, conditional); //higher
+    }   
+
+    if (conditional->next) {
+        int skip_condition_address = generate_conditional_statement(conditional->next);
+        bytecode.code[skip_condition_location] = (skip_condition_address & 0x00FF);
+        bytecode.code[skip_condition_location + 1] = (skip_condition_address >> 8); 
+    }
+    else if (conditional->type == AST_IF || conditional->type == AST_ELIF) {
+        int skip_address = bytecode.count;
+        bytecode.code[skip_condition_location] = (skip_address & 0x00FF);
+        bytecode.code[skip_condition_location + 1] = (skip_address >> 8);      
+    }
+
+    if (go_to_end_location != -1) {
+        int skip_address = bytecode.count;
+        bytecode.code[go_to_end_location] = (skip_address & 0x00FF);
+        bytecode.code[go_to_end_location + 1] = (skip_address >> 8); 
+    }
+    return start_address;
 }
 
 void CodeGenerator::generate_scope(Ast_Scope* scope) {
@@ -83,7 +139,10 @@ void CodeGenerator::generate_return_statement(Ast_ReturnStatement* return_statem
 }
 
 void CodeGenerator::generate_expression(Ast_Expression* expression) {
-    if (expression->type == AST_BINARY) {
+    if (expression->type == AST_UNARY) {
+        auto unary = AST_CAST(Ast_UnaryExpression, expression);
+    }
+    else if (expression->type == AST_BINARY) {
         auto bin = AST_CAST(Ast_BinaryExpression, expression);
         generate_expression(bin->left);
         generate_expression(bin->right);

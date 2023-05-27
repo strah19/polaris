@@ -20,6 +20,9 @@
 
 static int debug_simple_instruction(const char* name, int off);
 static int debug_constant_instruction(Bytecode* bytecode, int off);
+static int debug_call_instruction(Bytecode* bytecode, int off);
+static int debug_if_instruction(Bytecode* bytecode, int off);
+static int debug_jmp_instruction(Bytecode* bytecode, int off);
 
 void debug_disassemble_bytecode(Bytecode* bytecode, const char* name) {
     printf("----- %s -----\n", name);
@@ -51,14 +54,14 @@ int debug_disassemble_instruction(Bytecode* bytecode, int off) {
     case OP_GT:        return debug_simple_instruction("OP_GT",        off);
     case OP_LTE:       return debug_simple_instruction("OP_LTE",       off);
     case OP_GTE:       return debug_simple_instruction("OP_GTE",       off);
-
+    case OP_BNQ:       return debug_if_instruction(bytecode, off);
     case OP_PRINT:     return debug_simple_instruction("OP_PRINT",     off);
     case OP_GET:       return debug_simple_instruction("OP_GET",       off);
     case OP_SET:       return debug_simple_instruction("OP_SET",       off);
     case OP_CONST:  return debug_constant_instruction(bytecode,     off);
     case OP_RTS:       return debug_simple_instruction("OP_RTS",       off);
-    case OP_JMP:       return debug_simple_instruction("OP_JMP",       off);
-    case OP_CALL:       return debug_simple_instruction("OP_CALL",       off);
+    case OP_JMP:       return debug_jmp_instruction(bytecode,       off);
+    case OP_CALL:       return debug_call_instruction(bytecode,       off);
     case OP_FUNC_START:       return debug_simple_instruction("OP_FUNC_START",       off);
     case OP_FUNC_END:       return debug_simple_instruction("OP_FUNC_END",       off);
     default:
@@ -79,6 +82,36 @@ int debug_constant_instruction(Bytecode* bytecode, int off) {
     value_print(bytecode->constants.values[constant_address], false);
     printf("'\n");
     return off + 2;
+}
+
+int debug_call_instruction(Bytecode* bytecode, int off) {
+    uint8_t fn_low = bytecode->code[off + 1];
+    uint8_t fn_high = bytecode->code[off + 2];
+
+    printf("OP_CALL ");
+    printf("%04d '", ((fn_high >> 8) | fn_low));
+    printf("'\n");
+    return off + 3;
+}
+
+int debug_jmp_instruction(Bytecode* bytecode, int off) {
+    uint8_t fn_low = bytecode->code[off + 1];
+    uint8_t fn_high = bytecode->code[off + 2];
+
+    printf("OP_JMP ");
+    printf("%04d '", ((fn_high >> 8) | fn_low));
+    printf("'\n");
+    return off + 3;
+}
+
+int debug_if_instruction(Bytecode* bytecode, int off) {
+    uint8_t fn_low = bytecode->code[off + 1];
+    uint8_t fn_high = bytecode->code[off + 2];
+
+    printf("OP_BNQ ");
+    printf("%04d '", ((fn_high >> 8) | fn_low));
+    printf("'\n");
+    return off + 3;
 }
 
 void debug_disassemble_stack(Value* stack, Value* top) {

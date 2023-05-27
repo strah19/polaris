@@ -16,6 +16,13 @@
     else return vm_runtime_error("Operands must be numbers in '%s' operation and must match.\n", #op); \
     }\
 
+bool IS_TRUE(Value a) {
+    if (IS_FLOAT(a) && AS_FLOAT(a)) return true;
+    else if (IS_INT(a) && AS_INT(a)) return true;
+    else if (IS_BOOLEAN(a) && AS_BOOLEAN(a)) return true;
+    else return false;
+}
+
 #define INT_BINARY(op) \
     { Value b = vm_pop(); \
     Value a = vm_pop(); \
@@ -38,7 +45,8 @@ bool vm_run(Bytecode* bytecode) {
     bool skip = false;
     bool ret = false;
 
-    //debug_disassemble_bytecode(bytecode, "Assignment Program");
+    debug_disassemble_bytecode(bytecode, "Assignment Program");
+    printf("\n\n");
 
     while (vm.bytecode) {
         vm.ip = &vm.bytecode->code[bytecode->start_address];
@@ -58,8 +66,8 @@ bool vm_run(Bytecode* bytecode) {
                 continue;     
             }
 
-            //debug_disassemble_stack(vm.stack, vm.top);
-            //debug_disassemble_instruction(vm.bytecode, (int) (vm.ip - vm.bytecode->code));
+           // debug_disassemble_stack(vm.stack, vm.top);
+           // debug_disassemble_instruction(vm.bytecode, (int) (vm.ip - vm.bytecode->code));
 
             switch (instruction) {
             case OP_RETURN: {
@@ -103,8 +111,10 @@ bool vm_run(Bytecode* bytecode) {
                 break;
             }
             case OP_JMP: {
-                int jump_address = vm_pop().int_value;
-                vm.ip = vm.bytecode->code + jump_address;
+                uint8_t skip_low = *(++vm.ip);
+                uint8_t skip_high = *(++vm.ip);
+                uint16_t skip = (skip_high << 8) | skip_low;
+                vm.ip = vm.bytecode->code + skip - 1;
                 break;
             }
             case OP_RTS: {
@@ -122,8 +132,8 @@ bool vm_run(Bytecode* bytecode) {
                 break;              
             }
             case OP_CALL: {
-                int jump_address = vm_pop().int_value;
-                vm.ip = vm.bytecode->code + jump_address - 1;
+                int fun_address = vm_pop().int_value;
+                vm.ip = vm.bytecode->code + fun_address - 1;
                 break;
             }
             case OP_FUNC_START: {
@@ -132,6 +142,18 @@ bool vm_run(Bytecode* bytecode) {
             }
             case OP_FUNC_END: {
                 skip = false;
+                break;
+            }
+            case OP_BNQ: {
+                Value condition = vm_pop();
+
+                uint8_t skip_low = *(++vm.ip);
+                uint8_t skip_high = *(++vm.ip);
+                uint16_t skip = (skip_high << 8) | skip_low;
+
+                if (!IS_TRUE(condition)) {
+                    vm.ip = vm.bytecode->code + skip - 1;
+                }
                 break;
             }
             case OP_MIN: BINARY(-); break;
