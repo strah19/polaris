@@ -26,6 +26,9 @@ enum Opcode {
     OP_GET,
     OP_JMP,
     OP_RTS,
+    OP_RTS_VALUE,
+    OP_FUNC_START,
+    OP_FUNC_END,
     OP_CALL,
     OP_RETURN
 };

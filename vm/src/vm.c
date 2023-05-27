@@ -35,16 +35,31 @@ void vm_init() {
 bool vm_run(Bytecode* bytecode) {
     vm.bytecode = bytecode;
     bool run = true;
+    bool skip = false;
+    bool ret = false;
 
-    debug_disassemble_bytecode(bytecode, "Assignment Program");
+    //debug_disassemble_bytecode(bytecode, "Assignment Program");
 
     while (vm.bytecode) {
         vm.ip = &vm.bytecode->code[bytecode->start_address];
         while (run) {
             uint8_t instruction = *vm.ip;
 
-            debug_disassemble_stack(vm.stack, vm.top);
-            debug_disassemble_instruction(vm.bytecode, (int) (vm.ip - vm.bytecode->code));
+            if (skip) {
+                if (instruction == OP_FUNC_END)
+                    skip = false;
+                vm.ip++;
+                continue;
+            }
+            if (ret) {
+                if (instruction == OP_CALL)
+                    ret = false;
+                vm.ip++;
+                continue;     
+            }
+
+            //debug_disassemble_stack(vm.stack, vm.top);
+            //debug_disassemble_instruction(vm.bytecode, (int) (vm.ip - vm.bytecode->code));
 
             switch (instruction) {
             case OP_RETURN: {
@@ -93,15 +108,30 @@ bool vm_run(Bytecode* bytecode) {
                 break;
             }
             case OP_RTS: {
+                int jump_address = vm_pop().int_value;
+                vm.ip = vm.bytecode->code + jump_address;
+                ret = true;         
+                break;
+            }
+            case OP_RTS_VALUE: {
                 Value return_value = vm_pop();
                 int jump_address = vm_pop().int_value;
                 vm.ip = vm.bytecode->code + jump_address;
-                vm_push(return_value);                
-                break;
+                vm_push(return_value);       
+                ret = true;         
+                break;              
             }
             case OP_CALL: {
                 int jump_address = vm_pop().int_value;
                 vm.ip = vm.bytecode->code + jump_address - 1;
+                break;
+            }
+            case OP_FUNC_START: {
+                skip = true;
+                break;
+            }
+            case OP_FUNC_END: {
+                skip = false;
                 break;
             }
             case OP_MIN: BINARY(-); break;

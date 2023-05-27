@@ -5,14 +5,10 @@ CodeGenerator::CodeGenerator(Ast_TranslationUnit* root, Vector<int>* function_in
 
 CodeGenerator::~CodeGenerator() {
     bytecode_free(&bytecode);
-    bytecode_free(&functions);
-
-    current = &bytecode;
 }
 
 void CodeGenerator::run() {
     bytecode_init(&bytecode);
-    bytecode_init(&functions);
     
     bytecode.start_address = bytecode.count;
     for (int i = 0; i < root->declerations.size(); i++) {
@@ -36,24 +32,29 @@ void CodeGenerator::generate_from_ast(Ast* ast) {
         generate_scope(AST_CAST(Ast_Scope, ast));
     else if (ast->type == AST_RETURN) 
         generate_return_statement(AST_CAST(Ast_ReturnStatement, ast));
+    else if (ast->type == AST_IF) 
+        generate_if_statement(AST_CAST(Ast_IfStatement, ast));
 }
 
 void CodeGenerator::generate_function(Ast_Function* function) {
-    current = &functions;
-    function_pointers[function->ident] = current->count;
+    function_pointers[function->ident] = bytecode.count;
+    write(OP_FUNC_START, function);
     
     //We need to keep track of the local variables used in a scope because that memory can be reused.
     for (int i = 0; i < function->args.size(); i++) {
         write(OP_CONST, function);
         write_constant(INT_VALUE(max_references_address), function); //writes the address of the argument
-        printf("ARG REFERENCE %s, %d.\n", function->args[i]->ident, max_references_address);
         references[function->args[i]->ident] = max_references_address++;
         write(OP_SET, function);
     }
 
     generate_scope(function->scope);
-    write(OP_JMP, function);
-    current = &bytecode;
+    write(OP_RTS, function);
+    write(OP_FUNC_END, function);
+}
+
+void CodeGenerator::generate_if_statement(Ast_IfStatement* if_statement) {
+    
 }
 
 void CodeGenerator::generate_scope(Ast_Scope* scope) {
@@ -65,7 +66,6 @@ void CodeGenerator::generate_scope(Ast_Scope* scope) {
 
 void CodeGenerator::generate_variable_decleration(Ast_VarDecleration* decleration) {
     generate_expression(decleration->expression);
-    printf("REFERENCE %s, %d.\n", decleration->ident, max_references_address);
     references[decleration->ident] = max_references_address++;
     write(OP_CONST, decleration);
     write_constant(INT_VALUE(references[decleration->ident]), decleration); //writes the address of the references
@@ -78,7 +78,8 @@ void CodeGenerator::generate_print_statement(Ast_PrintStatement* print_statement
 }
 
 void CodeGenerator::generate_return_statement(Ast_ReturnStatement* return_statement) {
-    
+    generate_expression(return_statement->expression);
+    write(OP_RTS_VALUE, return_statement);
 }
 
 void CodeGenerator::generate_expression(Ast_Expression* expression) {
@@ -133,14 +134,14 @@ void CodeGenerator::generate_expression(Ast_Expression* expression) {
             //send arguments as constants followed by return address
 
             write(OP_CONST, prim);
-            write_constant(INT_VALUE(current->count + 3 + (2 * prim->call->args.size())), prim); //writes the address of the argument
+            write_constant(INT_VALUE(bytecode.count), prim); //writes the address of the argument
 
-            for (int i = 0; i < prim->call->args.size(); i++) {
+            for (int i = prim->call->args.size() - 1; i >= 0 ; i--) {
                 generate_expression(prim->call->args[i]);
             }
 
             write(OP_CONST, prim);
-            write_constant(INT_VALUE(function_pointers[prim->call->ident]), prim);
+            write_constant(INT_VALUE(function_pointers[prim->call->ident] + 1), prim);
             write(OP_CALL, prim);
         }
     }
@@ -167,9 +168,9 @@ ObjString* CodeGenerator::allocate_string(const char* str) {
 }
 
 void CodeGenerator::write(uint8_t opcode, Ast* ast) {
-    bytecode_write(opcode, ast->line, current);
+    bytecode_write(opcode, ast->line, &bytecode);
 }
 
 void CodeGenerator::write_constant(Value value, Ast* ast) {
-    write(bytecode_add_constant(value, current), ast);
+    write(bytecode_add_constant(value, &bytecode), ast);
 }

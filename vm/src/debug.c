@@ -59,6 +59,8 @@ int debug_disassemble_instruction(Bytecode* bytecode, int off) {
     case OP_RTS:       return debug_simple_instruction("OP_RTS",       off);
     case OP_JMP:       return debug_simple_instruction("OP_JMP",       off);
     case OP_CALL:       return debug_simple_instruction("OP_CALL",       off);
+    case OP_FUNC_START:       return debug_simple_instruction("OP_FUNC_START",       off);
+    case OP_FUNC_END:       return debug_simple_instruction("OP_FUNC_END",       off);
     default:
         printf("Unknown opcode %d\n", instruction);
         return off + 1;

@@ -29,15 +29,14 @@ private:
     void generate_expression(Ast_Expression* expression);
     void generate_function(Ast_Function* function);
     void generate_return_statement(Ast_ReturnStatement* return_statement);
+    void generate_if_statement(Ast_IfStatement* if_statement);
 
     ObjString* allocate_string(const char* str);
 private:
     Ast_TranslationUnit* root = nullptr;
     Vector<int>* function_indices = nullptr;
     Scope* scope = nullptr;
-    Bytecode* current;
     Bytecode bytecode;
-    Bytecode functions;
 
     Map<String, int> references;
     Map<String, int> function_pointers;

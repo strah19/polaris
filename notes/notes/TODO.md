@@ -1,0 +1,2 @@
+- Clean up Debugger for VM
+	- Make a logger option to save bytecode and stack states to files for analysis.

@@ -52,19 +52,8 @@ sin : (x: float) -> float {
 }
 />
 
-add : (a: int, b: int) {
-    print a + b;
-}
-
 PI := 3.14;
 
-deg_to_rad : (degree: float) {
-    print (degree * (PI/180));
+pow : (base: float, power: float) -> float {
+    
 }
-
-add(4, 5);
-add(4, 10);
-
-deg_to_rad(180);
-
-
