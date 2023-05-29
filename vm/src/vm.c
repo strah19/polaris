@@ -53,7 +53,9 @@ bool vm_run(Bytecode* bytecode) {
         while (run) {
             uint8_t instruction = *vm.ip;
 
+            
             if (skip) {
+                printf("skipping %04d\n", (vm.ip - bytecode->code));
                 if (instruction == OP_FUNC_END)
                     skip = false;
                 vm.ip++;
@@ -66,8 +68,8 @@ bool vm_run(Bytecode* bytecode) {
                 continue;     
             }
 
-           // debug_disassemble_stack(vm.stack, vm.top);
-           // debug_disassemble_instruction(vm.bytecode, (int) (vm.ip - vm.bytecode->code));
+            debug_disassemble_stack(vm.stack, vm.top);
+            debug_disassemble_instruction(vm.bytecode, (int) (vm.ip - vm.bytecode->code));
 
             switch (instruction) {
             case OP_RETURN: {
@@ -93,6 +95,15 @@ bool vm_run(Bytecode* bytecode) {
                 }
                 else
                     BINARY(+);
+                break;
+            }
+            case OP_NEGATE: {
+                Value a = vm_pop();
+                if (IS_FLOAT(a)) a.float_value = -a.float_value;
+                if (IS_INT(a)) a.int_value = -a.int_value;
+                if (IS_BOOLEAN(a)) a.bool_value = -a.bool_value;
+
+                vm_push(a);
                 break;
             }
             case OP_SET: {

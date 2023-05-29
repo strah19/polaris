@@ -21,6 +21,7 @@ enum Opcode {
     OP_BAN,
     OP_LSF,
     OP_RSF,
+    OP_NEGATE,
     OP_PRINT,
     OP_SET,
     OP_GET,

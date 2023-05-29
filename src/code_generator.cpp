@@ -141,6 +141,10 @@ void CodeGenerator::generate_return_statement(Ast_ReturnStatement* return_statem
 void CodeGenerator::generate_expression(Ast_Expression* expression) {
     if (expression->type == AST_UNARY) {
         auto unary = AST_CAST(Ast_UnaryExpression, expression);
+        generate_expression(unary->next);
+        switch (unary->op) {
+        case AST_UNARY_MINUS: write(OP_NEGATE, unary); break;
+        }
     }
     else if (expression->type == AST_BINARY) {
         auto bin = AST_CAST(Ast_BinaryExpression, expression);

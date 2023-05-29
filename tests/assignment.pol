@@ -52,24 +52,9 @@ sin : (x: float) -> float {
 }
 />
 
-pow : (base: float, power: float) -> float {
-    if power == 0 {
-        return 1;
-    }
-    elif power < 0 {
-        return 1 / (base * pow(base, -power));
-    }
-    else {
-        return base * pow(base, power - 1);
-    }
+pow : (base: float, power: float) {
+    print base;
+    print power;
 }
 
-square : (base: float) -> float {
-    return pow(base, 2);
-}
-
-cube : (base: float) -> float {
-    return pow(base, 3);
-}
-
-print pow(2, 1/2);
+pow(3, 2);
