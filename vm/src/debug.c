@@ -56,6 +56,12 @@ int debug_disassemble_instruction(Bytecode* bytecode, int off) {
     case OP_GTE:       return debug_simple_instruction("OP_GTE",       off);
     case OP_NEGATE:       return debug_simple_instruction("OP_NEGATE",       off);
     case OP_PRINT:     return debug_simple_instruction("OP_PRINT",     off);
+    case OP_GLOAD:     return debug_simple_instruction("OP_GLOAD",     off);
+    case OP_GSTORE:     return debug_simple_instruction("OP_GSTORE",     off);
+    case OP_LOAD:     return debug_simple_instruction("OP_LOAD",     off + 1);
+    case OP_STORE:     return debug_simple_instruction("OP_STORE",     off + 1);
+    case OP_CALL:     return debug_simple_instruction("OP_CALL",     off + 2);
+    case OP_RET:     return debug_simple_instruction("OP_RET",     off);
     case OP_CONST:  return debug_constant_instruction(bytecode,     off);
     default:
         printf("Unknown opcode %d\n", instruction);

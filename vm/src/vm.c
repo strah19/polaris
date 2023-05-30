@@ -35,6 +35,7 @@ static VM vm;
 
 void vm_init() {
     vm.top = vm.stack;
+    vm.fp = 0;
     value_init(&vm.data);
     value_allocate(&vm.data, INITIAL_REFERENCE_SIZE);
 }
@@ -53,8 +54,8 @@ bool vm_run(Bytecode* bytecode) {
         while (run) {
             uint32_t instruction = bytecode->code[vm.ip];
 
-            //debug_disassemble_stack(vm.stack, vm.top);
-            //debug_disassemble_instruction(vm.bytecode, vm.ip);
+            debug_disassemble_stack(vm.stack, vm.top);
+            debug_disassemble_instruction(vm.bytecode, vm.ip);
 
             switch (instruction) {
             case OP_CONST: {
@@ -70,7 +71,8 @@ bool vm_run(Bytecode* bytecode) {
                 break;
             }
             case OP_STORE: {
- 
+                int32_t offset = vm.bytecode->code[++vm.ip];
+                vm.stack[(vm.fp - 1) + offset] = vm_pop();
                 break;
             }
             case OP_GSTORE: {
@@ -82,7 +84,9 @@ bool vm_run(Bytecode* bytecode) {
                 break;
             }
             case OP_LOAD: {
-
+                int32_t offset = vm.bytecode->code[++vm.ip];
+                printf("%d\n", (vm.fp - 1) + offset);
+                vm_push(vm.stack[(vm.fp - 1) + offset]);
                 break;
             }
             case OP_GLOAD: {
@@ -92,7 +96,55 @@ bool vm_run(Bytecode* bytecode) {
                 vm_push(vm.data.values[address]); //Expects an int value on the stack to be the address.
                 break;
             }
+            case OP_CALL: {
+                int address;
+                int num_args;
 
+                vm.ip++;
+                address = vm.bytecode->code[vm.ip];
+                vm.ip++;
+                num_args = vm.bytecode->code[vm.ip];
+
+                vm_push(INT_VALUE(num_args));
+
+                vm_push(INT_VALUE(vm.fp));
+                vm_push(INT_VALUE(vm.ip));
+
+                vm.fp = vm.top - vm.stack;
+                vm.ip = address;
+                continue;
+                break;
+            }
+            case OP_RET: {
+                Value ret = vm_pop();
+
+                vm.top = vm.stack + vm.fp;
+                vm.ip = vm_pop().int_value;
+                vm.fp = vm_pop().int_value;
+                int32_t args = vm_pop().int_value;
+                vm.top -= args;
+                vm_push(ret);
+                printf("TOP OF STACK %d.\n", vm.top - vm.stack);
+                printf("IP %d.\n", vm.ip);
+                printf("FP %d.\n", vm.fp);
+
+                break;
+            }
+            case OP_JMP: {
+                vm.ip = vm.bytecode->code[vm.ip + 1];
+                break;
+            }
+            case OP_JMPT: {
+                Value value = vm_pop();
+                if (IS_TRUE(value)) vm.ip = vm.bytecode->code[vm.ip + 1];
+                else vm.ip += 2;
+                break;
+            }
+            case OP_JMPN: {
+                Value value = vm_pop();
+                if (!IS_TRUE(value)) vm.ip = vm.bytecode->code[vm.ip + 1];
+                else vm.ip += 2;
+            }
             case OP_ADD: BINARY(+); break;
             case OP_MIN: BINARY(-); break;
             case OP_MUL: BINARY(*); break;

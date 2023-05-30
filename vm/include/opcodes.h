@@ -27,6 +27,11 @@ enum Opcode {
     OP_GSTORE,
     OP_LOAD,
     OP_GLOAD,
+    OP_JMP,
+    OP_JMPT,
+    OP_JMPN,
+    OP_RET,
+    OP_CALL,
     OP_HALT
 };
 
