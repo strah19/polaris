@@ -8,9 +8,10 @@
 
 typedef struct {
     Bytecode* bytecode;
-    uint8_t* ip;   
+    uint32_t ip;
+    int32_t fp;
     Value stack[MAX_STACK];
-    Values references;
+    Values data;
     Value* top;
 } VM;
 

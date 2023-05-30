@@ -23,16 +23,11 @@ enum Opcode {
     OP_RSF,
     OP_NEGATE,
     OP_PRINT,
-    OP_SET,
-    OP_GET,
-    OP_JMP,
-    OP_RTS,
-    OP_RTS_VALUE,
-    OP_FUNC_START,
-    OP_FUNC_END,
-    OP_BNQ,
-    OP_CALL,
-    OP_RETURN
+    OP_STORE,
+    OP_GSTORE,
+    OP_LOAD,
+    OP_GLOAD,
+    OP_HALT
 };
 
 #endif //!OPCODES_H

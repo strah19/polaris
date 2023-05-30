@@ -40,7 +40,7 @@ int debug_disassemble_instruction(Bytecode* bytecode, int off) {
 
     uint8_t instruction = bytecode->code[off];
     switch (instruction) {
-    case OP_RETURN:    return debug_simple_instruction("OP_RETURN",    off);
+    case OP_HALT:    return debug_simple_instruction("OP_HALT",    off);
     case OP_ADD:      return debug_simple_instruction("OP_ADD",      off);
     case OP_MIN:     return debug_simple_instruction("OP_MINUS",     off);
     case OP_MUL:  return debug_simple_instruction("OP_MULTIPLY",  off);
@@ -55,17 +55,8 @@ int debug_disassemble_instruction(Bytecode* bytecode, int off) {
     case OP_LTE:       return debug_simple_instruction("OP_LTE",       off);
     case OP_GTE:       return debug_simple_instruction("OP_GTE",       off);
     case OP_NEGATE:       return debug_simple_instruction("OP_NEGATE",       off);
-    case OP_BNQ:       return debug_if_instruction(bytecode, off);
     case OP_PRINT:     return debug_simple_instruction("OP_PRINT",     off);
-    case OP_GET:       return debug_simple_instruction("OP_GET",       off);
-    case OP_SET:       return debug_simple_instruction("OP_SET",       off);
     case OP_CONST:  return debug_constant_instruction(bytecode,     off);
-    case OP_RTS:       return debug_simple_instruction("OP_RTS",       off);
-    case OP_RTS_VALUE:       return debug_simple_instruction("OP_RTS_VALUE",       off);
-    case OP_JMP:       return debug_jmp_instruction(bytecode,       off);
-    case OP_CALL:       return debug_call_instruction(bytecode,       off);
-    case OP_FUNC_START:       return debug_simple_instruction("OP_FUNC_START",       off);
-    case OP_FUNC_END:       return debug_simple_instruction("OP_FUNC_END",       off);
     default:
         printf("Unknown opcode %d\n", instruction);
         return off + 1;

@@ -9,7 +9,7 @@
 struct Bytecode {
     int capacity;
     int count;
-    uint8_t* code;
+    uint32_t* code;
     int* line;
     Values constants;
     struct Bytecode* next;
@@ -20,7 +20,7 @@ typedef struct Bytecode Bytecode;
 
 extern void bytecode_init(Bytecode* bytecode);
 
-extern void bytecode_write(uint8_t code, int line, Bytecode* bytecode);
+extern void bytecode_write(uint32_t code, int line, Bytecode* bytecode);
 
 extern void bytecode_pop(Bytecode* bytecode);
 

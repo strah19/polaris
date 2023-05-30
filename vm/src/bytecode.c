@@ -30,10 +30,10 @@ void bytecode_init(Bytecode* bytecode) {
     value_init(&bytecode->constants);
 }
 
-void bytecode_write(uint8_t code, int line, Bytecode* bytecode) {
+void bytecode_write(uint32_t code, int line, Bytecode* bytecode) {
     if (bytecode->capacity < bytecode->count + 1) {
         bytecode->capacity = NEW_CAPACITY(bytecode->capacity);
-        bytecode->code = REALLOC(uint8_t,  bytecode->code, bytecode->capacity);
+        bytecode->code = REALLOC(uint32_t,  bytecode->code, bytecode->capacity);
         bytecode->line = REALLOC(int, bytecode->line, bytecode->capacity);
     }
 
