@@ -154,6 +154,9 @@ struct Ast_PrimaryExpression : public Ast_Expression {
 
     AstPrimaryType prim_type = AST_PRIM_NONE;
     AstDataType type_value = AST_TYPE_NONE;
+
+    bool local = false;
+    int local_index = 0;
     
     union {
         int         int_const;

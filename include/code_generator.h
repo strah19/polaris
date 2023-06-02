@@ -19,7 +19,7 @@ public:
 
     Bytecode* get_bytecode() { return &bytecode; }
 private:
-    void write(uint8_t opcode, Ast* ast);
+    void write(uint32_t opcode, Ast* ast);
     void write_constant(Value value, Ast* ast);
 
     void generate_from_ast(Ast* ast);

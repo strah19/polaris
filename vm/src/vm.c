@@ -85,7 +85,6 @@ bool vm_run(Bytecode* bytecode) {
             }
             case OP_LOAD: {
                 int32_t offset = vm.bytecode->code[++vm.ip];
-                printf("%d\n", (vm.fp - 1) + offset);
                 vm_push(vm.stack[(vm.fp - 1) + offset]);
                 break;
             }
@@ -123,15 +122,15 @@ bool vm_run(Bytecode* bytecode) {
                 vm.fp = vm_pop().int_value;
                 int32_t args = vm_pop().int_value;
                 vm.top -= args;
-                vm_push(ret);
-                printf("TOP OF STACK %d.\n", vm.top - vm.stack);
-                printf("IP %d.\n", vm.ip);
-                printf("FP %d.\n", vm.fp);
+                //vm_push(ret);
 
                 break;
             }
             case OP_JMP: {
-                vm.ip = vm.bytecode->code[vm.ip + 1];
+                uint8_t skip_low = vm.bytecode->code[++vm.ip];
+                uint8_t skip_high = vm.bytecode->code[++vm.ip];
+                uint16_t skip = (skip_high << 8) | skip_low;
+                vm.ip = skip - 1;
                 break;
             }
             case OP_JMPT: {
@@ -141,9 +140,16 @@ bool vm_run(Bytecode* bytecode) {
                 break;
             }
             case OP_JMPN: {
-                Value value = vm_pop();
-                if (!IS_TRUE(value)) vm.ip = vm.bytecode->code[vm.ip + 1];
-                else vm.ip += 2;
+                Value condition = vm_pop();
+
+                uint8_t skip_low = vm.bytecode->code[++vm.ip];
+                uint8_t skip_high = vm.bytecode->code[++vm.ip];
+                uint16_t skip = (skip_high << 8) | skip_low;
+
+                if (!IS_TRUE(condition)) {
+                    vm.ip = skip - 1;
+                }
+                break;
             }
             case OP_ADD: BINARY(+); break;
             case OP_MIN: BINARY(-); break;

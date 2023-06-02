@@ -132,6 +132,7 @@ private:
     const char* filepath = nullptr;
     Ast_TranslationUnit* unit = nullptr;
     Vector<int> function_indices;
+    Vector<String> locals;
     bool errors = false;
     bool show_warnings = true;
 

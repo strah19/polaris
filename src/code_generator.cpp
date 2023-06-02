@@ -10,11 +10,17 @@ CodeGenerator::~CodeGenerator() {
 void CodeGenerator::run() {
     bytecode_init(&bytecode);
     
+    for (auto& function : *function_indices) {
+        generate_function(AST_CAST(Ast_Function, root->declerations[function]));
+    }
+
     bytecode.start_address = bytecode.count;
     for (int i = 0; i < root->declerations.size(); i++) {
         Ast* ast = root->declerations[i];
-        generate_from_ast(ast);
+        if (ast->type != AST_FUNCTION)
+            generate_from_ast(ast);
     }   
+
 
     bytecode_write(OP_HALT, 0, &bytecode);
 }
@@ -22,8 +28,6 @@ void CodeGenerator::run() {
 void CodeGenerator::generate_from_ast(Ast* ast) {
     if (ast->type == AST_VAR_DECLERATION) 
         generate_variable_decleration(AST_CAST(Ast_VarDecleration, ast));
-    if (ast->type == AST_FUNCTION) 
-        generate_function(AST_CAST(Ast_Function, ast));
     else if (ast->type == AST_PRINT)
         generate_print_statement(AST_CAST(Ast_PrintStatement, ast));
     else if (ast->type == AST_EXPRESSION_STATEMENT)
@@ -37,16 +41,55 @@ void CodeGenerator::generate_from_ast(Ast* ast) {
 }
 
 void CodeGenerator::generate_function(Ast_Function* function) {
-    
+    function_pointers[function->ident] = bytecode.count;  
+
+    generate_scope(function->scope);
+    write(OP_RET, function);
 }
 
 void CodeGenerator::generate_if_statement(Ast_IfStatement* if_statement) {
-    
+    generate_conditional_statement(if_statement);
 }
 
 int CodeGenerator::generate_conditional_statement(Ast_ConditionalStatement* conditional) {
     int start_address = bytecode.count;
- 
+    if (conditional->condition) {
+        generate_expression(conditional->condition);
+    }
+
+    int skip_condition_location = -1;
+    if (conditional->type == AST_IF || conditional->type == AST_ELIF) {
+        write(OP_JMPN, conditional);
+        skip_condition_location = bytecode.count;
+        write(0xFF, conditional); //lower
+        write(0xFF, conditional); //higher
+    }
+
+    generate_scope(conditional->scope);
+    int go_to_end_location = -1;
+    if (conditional->type == AST_IF || conditional->type == AST_ELIF) {
+        write(OP_JMP, conditional);
+        go_to_end_location = bytecode.count;
+        write(0xFF, conditional); //lower
+        write(0xFF, conditional); //higher
+    }   
+
+    if (conditional->next) {
+        int skip_condition_address = generate_conditional_statement(conditional->next);
+        bytecode.code[skip_condition_location] = (skip_condition_address & 0x00FF);
+        bytecode.code[skip_condition_location + 1] = (skip_condition_address >> 8); 
+    }
+    else if (conditional->type == AST_IF || conditional->type == AST_ELIF) {
+        int skip_address = bytecode.count;
+        bytecode.code[skip_condition_location] = (skip_address & 0x00FF);
+        bytecode.code[skip_condition_location + 1] = (skip_address >> 8);      
+    }
+
+    if (go_to_end_location != -1) {
+        int skip_address = bytecode.count;
+        bytecode.code[go_to_end_location] = (skip_address & 0x00FF);
+        bytecode.code[go_to_end_location + 1] = (skip_address >> 8); 
+    }
     return start_address;
 }
 
@@ -125,21 +168,41 @@ void CodeGenerator::generate_expression(Ast_Expression* expression) {
             generate_expression(prim->nested);
         }
         else if (prim->prim_type == AST_PRIM_ID) {
-            write(OP_CONST, prim);
-            write_constant(INT_VALUE(references[prim->ident]), prim); //writes the address of the references
-            write(OP_GLOAD, prim);
+            if (prim->local) {
+                write(OP_LOAD, prim);
+                write(-3 - prim->local_index, prim);
+            }
+            else {
+                write(OP_CONST, prim);
+                write_constant(INT_VALUE(references[prim->ident]), prim); //writes the address of the references
+                write(OP_GLOAD, prim);
+            }
+
         }
         else if (prim->prim_type == AST_PRIM_CALL) {
-            
+            for (int i = prim->call->args.size() - 1; i >= 0 ; i--) {
+                generate_expression(prim->call->args[i]);
+            }
+
+            write(OP_CALL, prim);
+            write(function_pointers[prim->call->ident], prim);
+            write((uint32_t) prim->call->args.size(), prim);
         }
     }
     else if (expression->type == AST_ASSIGNMENT) {
         auto assign = AST_CAST(Ast_Assignment, expression);
         generate_expression(assign->value);
 
-        write(OP_CONST, assign);
-        write_constant(INT_VALUE(references[AST_CAST(Ast_PrimaryExpression, assign->id)->ident]), assign); //writes the address of the references
-        write(OP_GSTORE, assign);
+        auto assign_id = AST_CAST(Ast_PrimaryExpression, assign->id);
+        if (assign_id->local) {
+            write(OP_STORE, assign);
+            write(-3 - assign_id->local_index, assign);
+        }
+        else {
+            write(OP_CONST, assign);
+            write_constant(INT_VALUE(references[AST_CAST(Ast_PrimaryExpression, assign->id)->ident]), assign); //writes the address of the references
+            write(OP_GSTORE, assign);
+        }
 
         if (assign->next)
             generate_expression(assign->next);
@@ -154,7 +217,7 @@ ObjString* CodeGenerator::allocate_string(const char* str) {
     return str_obj;
 }
 
-void CodeGenerator::write(uint8_t opcode, Ast* ast) {
+void CodeGenerator::write(uint32_t opcode, Ast* ast) {
     bytecode_write(opcode, ast->line, &bytecode);
 }
 

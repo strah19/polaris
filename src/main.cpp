@@ -78,14 +78,6 @@ void print_scope(Scope* scope, int tabs = 1) {
     }
 }
 
-void write(uint32_t opcode, Bytecode* code) {
-    bytecode_write(opcode, 0, code);
-}
-
-void write_constant(Value value, Bytecode* code) {
-    write(bytecode_add_constant(value, code), code);
-}
-
 void run_src_file(const char* filepath) {
     char* src = open_file(filepath);
 
@@ -108,41 +100,8 @@ void run_src_file(const char* filepath) {
         compiler_benchmark.stop();
         vm_init();
 
-        Bytecode code;
-        bytecode_init(&code);
-        write(OP_CONST, &code);
-        write_constant(INT_VALUE(10), &code);
-        write(OP_CONST, &code);
-        write_constant(INT_VALUE(20), &code);
-        write(OP_CALL, &code);
-        write(8, &code);
-        write(2, &code);
-        write(OP_HALT, &code);
-        write(OP_LOAD, &code);
-        write(-3, &code);
-        write(OP_LOAD, &code);
-        write(-4, &code);
-        write(OP_ADD, &code);
-        write(OP_PRINT, &code);
-        write(OP_RET, &code);
-
-/*
-    ICONST, 10,
-    ICONST, 20,
-    CALL, 8, 2,
-    HALT,
-
-    LOAD, -3,
-    LOAD, -4,
-    IADD, 
-    SYS_WRITE,
-    RET,
-*/
-
-
-
         Benchmark vm_benchmark("Virtual Machine");
-        if (!vm_run(&code))
+        if (!vm_run(generator.get_bytecode()))
             printf("Exiting with run time error(s).\n");
         vm_benchmark.stop();
 

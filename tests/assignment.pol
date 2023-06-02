@@ -52,11 +52,8 @@ sin : (x: float) -> float {
 }
 />
 
-a := 3;
-print a;
-
-{
-    r := 4;
-    print r;
-    print a;
+print_int : (integer: int) {
+    print integer;
 }
+
+print_int(4);

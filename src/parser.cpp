@@ -20,6 +20,7 @@
 #include "util.h"
 #include "semantic.h"
 #include <string>
+#include <string.h>
 #include <stdlib.h>
 #include <algorithm>
 
@@ -121,7 +122,7 @@ void Parser::parse() {
         }
     }
 
-    //select_functions();
+    select_functions();
 }
 
 void Parser::select_functions() {
@@ -311,8 +312,10 @@ Ast_Function* Parser::parse_function() {
 Vector<Ast_VarDecleration*> Parser::parse_function_arguments(Symbol* sym) {
     Vector<Ast_VarDecleration*> args;
     bool expect_default = false;
+    locals.clear();
     while (!check(T_RPAR)) {
         const char* id = parse_identifier("Expected identifier in function argument");
+        locals.push_back(id);
         consume(T_COLON, "Expected ':' in function argument");  
         AstDataType var_type = parse_type();
         sym->func.arg_types.push_back(var_type);
@@ -528,6 +531,13 @@ Ast_Expression* Parser::parse_primary_expression() {
             primary->prim_type = AST_PRIM_ID;
             primary->type_value = symbol.var.type;
             primary->ident = (const char*) id;
+            //Marks the use of a variable if it is local to the function it is in.
+            for (int i = 0; i < locals.size(); i++) {
+                if (strcmp(locals[i].c_str(), id) == 0) {
+                    primary->local = true;
+                    primary->local_index = i;
+                }
+            }
         }
         else if (symbol.is == DEF_FUN) {
             primary->prim_type = AST_PRIM_CALL;

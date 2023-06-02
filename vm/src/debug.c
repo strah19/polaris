@@ -63,6 +63,8 @@ int debug_disassemble_instruction(Bytecode* bytecode, int off) {
     case OP_CALL:     return debug_simple_instruction("OP_CALL",     off + 2);
     case OP_RET:     return debug_simple_instruction("OP_RET",     off);
     case OP_CONST:  return debug_constant_instruction(bytecode,     off);
+    case OP_JMP: return debug_jmp_instruction(bytecode, off);
+    case OP_JMPN: return debug_if_instruction(bytecode, off);
     default:
         printf("Unknown opcode %d\n", instruction);
         return off + 1;
@@ -107,7 +109,7 @@ int debug_if_instruction(Bytecode* bytecode, int off) {
     uint8_t fn_low = bytecode->code[off + 1];
     uint8_t fn_high = bytecode->code[off + 2];
 
-    printf("OP_BNQ ");
+    printf("OP_JMPN ");
     printf("%04d '", ((fn_high >> 8) | fn_low));
     printf("'\n");
     return off + 3;
