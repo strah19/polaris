@@ -21,11 +21,12 @@
 static int debug_simple_instruction(const char* name, int off);
 static int debug_constant_instruction(Bytecode* bytecode, int off);
 static int debug_call_instruction(Bytecode* bytecode, int off);
-static int debug_if_instruction(Bytecode* bytecode, int off);
-static int debug_jmp_instruction(Bytecode* bytecode, int off);
+
+static int debug_address_opcode(Bytecode* bytecode, const char* name, int off);
 
 void debug_disassemble_bytecode(Bytecode* bytecode, const char* name) {
     printf("----- %s -----\n", name);
+    printf("IP: %04d.\n", bytecode->start_address);
     for (int i = 0; i < bytecode->count;) 
         i = debug_disassemble_instruction(bytecode, i);
 }
@@ -56,15 +57,16 @@ int debug_disassemble_instruction(Bytecode* bytecode, int off) {
     case OP_GTE:       return debug_simple_instruction("OP_GTE",       off);
     case OP_NEGATE:       return debug_simple_instruction("OP_NEGATE",       off);
     case OP_PRINT:     return debug_simple_instruction("OP_PRINT",     off);
-    case OP_GLOAD:     return debug_simple_instruction("OP_GLOAD",     off);
-    case OP_GSTORE:     return debug_simple_instruction("OP_GSTORE",     off);
+    case OP_GLOAD:     return debug_address_opcode(bytecode, "OP_GLOAD", off);
+    case OP_GSTORE:     return debug_address_opcode(bytecode, "OP_GSTORE", off);
     case OP_LOAD:     return debug_simple_instruction("OP_LOAD",     off + 1);
     case OP_STORE:     return debug_simple_instruction("OP_STORE",     off + 1);
-    case OP_CALL:     return debug_simple_instruction("OP_CALL",     off + 2);
+    case OP_CALL:     return debug_call_instruction(bytecode,     off);
     case OP_RET:     return debug_simple_instruction("OP_RET",     off);
+    case OP_RETV:     return debug_simple_instruction("OP_RETV",     off);
     case OP_CONST:  return debug_constant_instruction(bytecode,     off);
-    case OP_JMP: return debug_jmp_instruction(bytecode, off);
-    case OP_JMPN: return debug_if_instruction(bytecode, off);
+    case OP_JMP: return debug_address_opcode(bytecode, "OP_JMP", off);
+    case OP_JMPN: return debug_address_opcode(bytecode, "OP_JMPN", off);
     default:
         printf("Unknown opcode %d\n", instruction);
         return off + 1;
@@ -74,6 +76,13 @@ int debug_disassemble_instruction(Bytecode* bytecode, int off) {
 int debug_simple_instruction(const char* name, int off) {
     printf("%s\n", name);
     return off + 1;
+}
+
+int debug_address_opcode(Bytecode* bytecode, const char* name, int off) {
+    uint8_t address = bytecode->code[off + 1];
+    printf("%s ", name);
+    printf("%04d\n", address);
+    return off + 2;
 }
 
 int debug_constant_instruction(Bytecode* bytecode, int off) {
@@ -86,32 +95,11 @@ int debug_constant_instruction(Bytecode* bytecode, int off) {
 }
 
 int debug_call_instruction(Bytecode* bytecode, int off) {
-    uint8_t fn_low = bytecode->code[off + 1];
-    uint8_t fn_high = bytecode->code[off + 2];
+    uint32_t address = bytecode->code[off + 1];
+    uint32_t args = bytecode->code[off + 2];
 
     printf("OP_CALL ");
-    printf("%04d '", ((fn_high >> 8) | fn_low));
-    printf("'\n");
-    return off + 3;
-}
-
-int debug_jmp_instruction(Bytecode* bytecode, int off) {
-    uint8_t fn_low = bytecode->code[off + 1];
-    uint8_t fn_high = bytecode->code[off + 2];
-
-    printf("OP_JMP ");
-    printf("%04d '", ((fn_high >> 8) | fn_low));
-    printf("'\n");
-    return off + 3;
-}
-
-int debug_if_instruction(Bytecode* bytecode, int off) {
-    uint8_t fn_low = bytecode->code[off + 1];
-    uint8_t fn_high = bytecode->code[off + 2];
-
-    printf("OP_JMPN ");
-    printf("%04d '", ((fn_high >> 8) | fn_low));
-    printf("'\n");
+    printf("%04d %04d\n", address, args);
     return off + 3;
 }
 

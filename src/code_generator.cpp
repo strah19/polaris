@@ -21,7 +21,6 @@ void CodeGenerator::run() {
             generate_from_ast(ast);
     }   
 
-
     bytecode_write(OP_HALT, 0, &bytecode);
 }
 
@@ -38,13 +37,16 @@ void CodeGenerator::generate_from_ast(Ast* ast) {
         generate_return_statement(AST_CAST(Ast_ReturnStatement, ast));
     else if (ast->type == AST_IF) 
         generate_if_statement(AST_CAST(Ast_IfStatement, ast));
+    else if (ast->type == AST_WHILE)
+        generate_while_statement(AST_CAST(Ast_WhileStatement, ast));
 }
 
 void CodeGenerator::generate_function(Ast_Function* function) {
     function_pointers[function->ident] = bytecode.count;  
 
     generate_scope(function->scope);
-    write(OP_RET, function);
+    if (bytecode.code[bytecode.count - 1] != OP_RETV)
+        write(OP_RET, function);
 }
 
 void CodeGenerator::generate_if_statement(Ast_IfStatement* if_statement) {
@@ -61,8 +63,7 @@ int CodeGenerator::generate_conditional_statement(Ast_ConditionalStatement* cond
     if (conditional->type == AST_IF || conditional->type == AST_ELIF) {
         write(OP_JMPN, conditional);
         skip_condition_location = bytecode.count;
-        write(0xFF, conditional); //lower
-        write(0xFF, conditional); //higher
+        write(0x00, conditional); //lower
     }
 
     generate_scope(conditional->scope);
@@ -70,27 +71,38 @@ int CodeGenerator::generate_conditional_statement(Ast_ConditionalStatement* cond
     if (conditional->type == AST_IF || conditional->type == AST_ELIF) {
         write(OP_JMP, conditional);
         go_to_end_location = bytecode.count;
-        write(0xFF, conditional); //lower
-        write(0xFF, conditional); //higher
+        write(0x00, conditional); //higher
     }   
 
     if (conditional->next) {
         int skip_condition_address = generate_conditional_statement(conditional->next);
-        bytecode.code[skip_condition_location] = (skip_condition_address & 0x00FF);
-        bytecode.code[skip_condition_location + 1] = (skip_condition_address >> 8); 
+        bytecode.code[skip_condition_location] = skip_condition_address;
     }
     else if (conditional->type == AST_IF || conditional->type == AST_ELIF) {
         int skip_address = bytecode.count;
-        bytecode.code[skip_condition_location] = (skip_address & 0x00FF);
-        bytecode.code[skip_condition_location + 1] = (skip_address >> 8);      
+        bytecode.code[skip_condition_location] = skip_address;
     }
 
     if (go_to_end_location != -1) {
         int skip_address = bytecode.count;
-        bytecode.code[go_to_end_location] = (skip_address & 0x00FF);
-        bytecode.code[go_to_end_location + 1] = (skip_address >> 8); 
+        bytecode.code[go_to_end_location] = skip_address;
     }
     return start_address;
+}
+
+void CodeGenerator::generate_while_statement(Ast_WhileStatement* while_statement) {
+    uint32_t return_location = bytecode.count;
+    generate_expression(while_statement->condition);
+
+    write(OP_JMPN, while_statement);
+    uint32_t skip_location = bytecode.count;
+    write(0x00, while_statement);
+
+    generate_scope(while_statement->scope);
+
+    write(OP_JMP, while_statement);
+    write(return_location, while_statement);
+    bytecode.code[skip_location] = bytecode.count;
 }
 
 void CodeGenerator::generate_scope(Ast_Scope* scope) {
@@ -102,10 +114,10 @@ void CodeGenerator::generate_scope(Ast_Scope* scope) {
 
 void CodeGenerator::generate_variable_decleration(Ast_VarDecleration* decleration) {
     generate_expression(decleration->expression);
-    references[decleration->ident] = max_references_address++;
-    write(OP_CONST, decleration);
-    write_constant(INT_VALUE(references[decleration->ident]), decleration); //writes the address of the references
+    if (!references[decleration->ident].init)
+        references[decleration->ident] = Reference(max_references_address++);
     write(OP_GSTORE, decleration);
+    write(references[decleration->ident].address, decleration); //writes the address of the references
 }
 
 void CodeGenerator::generate_print_statement(Ast_PrintStatement* print_statement) {
@@ -114,7 +126,8 @@ void CodeGenerator::generate_print_statement(Ast_PrintStatement* print_statement
 }
 
 void CodeGenerator::generate_return_statement(Ast_ReturnStatement* return_statement) {
-  
+    generate_expression(return_statement->expression);
+    write(OP_RETV, return_statement);
 }
 
 void CodeGenerator::generate_expression(Ast_Expression* expression) {
@@ -173,9 +186,10 @@ void CodeGenerator::generate_expression(Ast_Expression* expression) {
                 write(-3 - prim->local_index, prim);
             }
             else {
-                write(OP_CONST, prim);
-                write_constant(INT_VALUE(references[prim->ident]), prim); //writes the address of the references
                 write(OP_GLOAD, prim);
+                if (!references[prim->ident].init) 
+                    references[prim->ident] = Reference(max_references_address++);
+                write(references[prim->ident].address, prim); //writes the address of the references
             }
 
         }
@@ -199,9 +213,8 @@ void CodeGenerator::generate_expression(Ast_Expression* expression) {
             write(-3 - assign_id->local_index, assign);
         }
         else {
-            write(OP_CONST, assign);
-            write_constant(INT_VALUE(references[AST_CAST(Ast_PrimaryExpression, assign->id)->ident]), assign); //writes the address of the references
             write(OP_GSTORE, assign);
+            write(references[AST_CAST(Ast_PrimaryExpression, assign->id)->ident].address, assign); //writes the address of the references
         }
 
         if (assign->next)

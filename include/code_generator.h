@@ -11,6 +11,13 @@ extern "C" {
 
 using FunctionScope = Map<String, int>;
 
+struct Reference {
+    Reference() = default;
+    Reference(int address) : address(address) { init = true; }
+    int address = 0;
+    bool init = false;
+};
+
 class CodeGenerator {
 public:
     CodeGenerator(Ast_TranslationUnit* root, Vector<int>* function_indices, Scope* scope);
@@ -31,6 +38,7 @@ private:
     void generate_return_statement(Ast_ReturnStatement* return_statement);
     void generate_if_statement(Ast_IfStatement* if_statement);
     int generate_conditional_statement(Ast_ConditionalStatement* conditional);
+    void generate_while_statement(Ast_WhileStatement* while_statement);
 
     ObjString* allocate_string(const char* str);
 private:
@@ -39,7 +47,7 @@ private:
     Scope* scope = nullptr;
     Bytecode bytecode;
 
-    Map<String, int> references;
+    Map<String, Reference> references;
     Map<String, int> function_pointers;
     int max_references_address = 0;
 };

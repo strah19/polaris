@@ -158,6 +158,7 @@ void check_expression(Ast_Expression* expression, AstDataType* current_expr_type
             break;
         case AST_PRIM_NESTED: {
             check_expression(prim->nested, current_expr_type);
+            break;
         }
         }
     }
@@ -169,7 +170,10 @@ void compare_current_type(Ast* ast, AstDataType type, AstDataType* current_expr_
         *current_expr_type = type;
     }
     else {
-        if (*current_expr_type != type) {
+        if ((*current_expr_type == AST_TYPE_INT && type == AST_TYPE_FLOAT) || (*current_expr_type == AST_TYPE_FLOAT && type == AST_TYPE_INT)) {
+            *current_expr_type = AST_TYPE_FLOAT;
+        }
+        else if (*current_expr_type != type) {
             report_semantic_error(ast, "Mismatched type in expression");
         }
         else {

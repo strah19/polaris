@@ -46,16 +46,16 @@ bool vm_run(Bytecode* bytecode) {
     bool skip = false;
     bool ret = false;
 
-    debug_disassemble_bytecode(bytecode, "Assignment Program");
-    printf("\n\n");
+    //debug_disassemble_bytecode(bytecode, "Assignment Program");
+    //printf("\n\n");
 
     while (vm.bytecode) {
         vm.ip = bytecode->start_address;
         while (run) {
             uint32_t instruction = bytecode->code[vm.ip];
 
-            debug_disassemble_stack(vm.stack, vm.top);
-            debug_disassemble_instruction(vm.bytecode, vm.ip);
+            //debug_disassemble_stack(vm.stack, vm.top);
+            //debug_disassemble_instruction(vm.bytecode, vm.ip);
 
             switch (instruction) {
             case OP_CONST: {
@@ -76,7 +76,7 @@ bool vm_run(Bytecode* bytecode) {
                 break;
             }
             case OP_GSTORE: {
-                int address = vm_pop().int_value;
+                int32_t address = vm.bytecode->code[++vm.ip];
                 Value val = vm_pop();
                 if (address > vm.data.capacity)
                     return vm_runtime_error("Virtual machine cannot address to %d.\n", address);
@@ -89,7 +89,7 @@ bool vm_run(Bytecode* bytecode) {
                 break;
             }
             case OP_GLOAD: {
-                int address = vm_pop().int_value;
+                int32_t address = vm.bytecode->code[++vm.ip];
                 if (address > vm.data.capacity)
                     return vm_runtime_error("Virtual machine cannot address to %d.\n", address);
                 vm_push(vm.data.values[address]); //Expects an int value on the stack to be the address.
@@ -124,15 +124,22 @@ bool vm_run(Bytecode* bytecode) {
                 vm.top -= args;
                 //vm_push(ret);
 
-                printf("RET\n");
-                printf("IP: %d, FP: %d, TOP: %d.\n", vm.ip, vm.fp, vm.top - vm.stack);
+                break;
+            }
+            case OP_RETV: {
+                Value ret = vm_pop();
+
+                vm.top = vm.stack + vm.fp;
+                vm.ip = vm_pop().int_value;
+                vm.fp = vm_pop().int_value;
+                int32_t args = vm_pop().int_value;
+                vm.top -= args;
+                vm_push(ret);
 
                 break;
             }
             case OP_JMP: {
-                uint8_t skip_low = vm.bytecode->code[++vm.ip];
-                uint8_t skip_high = vm.bytecode->code[++vm.ip];
-                uint16_t skip = (skip_high << 8) | skip_low;
+                uint32_t skip = vm.bytecode->code[++vm.ip];
                 vm.ip = skip - 1;
                 break;
             }
@@ -145,13 +152,20 @@ bool vm_run(Bytecode* bytecode) {
             case OP_JMPN: {
                 Value condition = vm_pop();
 
-                uint8_t skip_low = vm.bytecode->code[++vm.ip];
-                uint8_t skip_high = vm.bytecode->code[++vm.ip];
-                uint16_t skip = (skip_high << 8) | skip_low;
+                uint32_t skip = vm.bytecode->code[++vm.ip];
 
                 if (!IS_TRUE(condition)) {
                     vm.ip = skip - 1;
                 }
+                break;
+            }
+            case OP_NEGATE: {
+                Value a = vm_pop();
+                if (IS_FLOAT(a)) a.float_value = -a.float_value;
+                if (IS_INT(a)) a.int_value = -a.int_value;
+                if (IS_BOOLEAN(a)) a.bool_value = -a.bool_value;
+
+                vm_push(a);
                 break;
             }
             case OP_ADD: BINARY(+); break;

@@ -31,6 +31,7 @@ enum Opcode {
     OP_JMPT,
     OP_JMPN,
     OP_RET,
+    OP_RETV,
     OP_CALL,
     OP_HALT
 };
