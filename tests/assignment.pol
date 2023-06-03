@@ -56,4 +56,8 @@ print_int : (integer: int) {
     print integer;
 }
 
-print_int(4);
+add : (a: int, b: int) {
+    print_int(a + b );
+}
+
+add(4, 9);

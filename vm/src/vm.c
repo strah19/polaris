@@ -115,7 +115,7 @@ bool vm_run(Bytecode* bytecode) {
                 break;
             }
             case OP_RET: {
-                Value ret = vm_pop();
+               // Value ret = vm_pop();
 
                 vm.top = vm.stack + vm.fp;
                 vm.ip = vm_pop().int_value;
@@ -123,6 +123,9 @@ bool vm_run(Bytecode* bytecode) {
                 int32_t args = vm_pop().int_value;
                 vm.top -= args;
                 //vm_push(ret);
+
+                printf("RET\n");
+                printf("IP: %d, FP: %d, TOP: %d.\n", vm.ip, vm.fp, vm.top - vm.stack);
 
                 break;
             }
