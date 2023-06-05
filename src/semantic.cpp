@@ -9,7 +9,7 @@ void check_ast(Ast* ast);
 
 bool can_type_be_this(AstDataType type, AstDataType trying);
 
-void check_expression(Ast_Expression* expression, AstDataType* current_expr_type);
+void check_expression(Ast_Expression* expression, AstDataType* current_expr_type, AstDataType can_it_be = AST_TYPE_NONE);
 void compare_current_type(Ast* ast, AstDataType type, AstDataType* current_expr_type);
 
 void report_semantic_error(Ast* ast, const char* msg);
@@ -23,7 +23,7 @@ void semantic_checker(Ast_TranslationUnit* root) {
 
 void check_variable_decleration(Ast_VarDecleration* decleration) {
     if (decleration->expression) {
-        AstDataType expr_type = get_expression_type(decleration->expression);
+        AstDataType expr_type = get_expression_type(decleration->expression, decleration->type_value);
         if (!can_type_be_this(decleration->type_value, expr_type)) {
             report_semantic_error(decleration, "Type in expression does not match variable decleration type");
         }
@@ -89,13 +89,13 @@ bool can_type_be_this(AstDataType type, AstDataType trying) {
     else return false;
 }
 
-AstDataType get_expression_type(Ast_Expression* expression) {
+AstDataType get_expression_type(Ast_Expression* expression, AstDataType can_it_be) {
     AstDataType current_expr_type = AST_TYPE_NONE;
-    check_expression(expression, &current_expr_type);
+    check_expression(expression, &current_expr_type, can_it_be);
     return current_expr_type;
 }
 
-void check_expression(Ast_Expression* expression, AstDataType* current_expr_type) {
+void check_expression(Ast_Expression* expression, AstDataType* current_expr_type, AstDataType can_it_be) {
     switch (expression->type) {
     case AST_BINARY: {
         Ast_BinaryExpression* bin = AST_CAST(Ast_BinaryExpression, expression);
@@ -134,6 +134,9 @@ void check_expression(Ast_Expression* expression, AstDataType* current_expr_type
             switch (prim->type_value) {
             case AST_TYPE_INT: {
                 compare_current_type(prim, AST_TYPE_INT, current_expr_type);
+                if (can_it_be == AST_TYPE_FLOAT) {
+                    prim->type_value = can_it_be;
+                }
                 break;
             }
             case AST_TYPE_FLOAT: {

@@ -1,3 +1,0 @@
-- The code generator will have two possible outputs, a generic bytecode that can be put into the Polaris Virtual Machine, or PVM.
-- [[Bytecode]]
-- [[VM]]

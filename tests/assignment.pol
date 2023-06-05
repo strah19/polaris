@@ -1,6 +1,5 @@
 </
     Math Library for Polaris.
-/>
 
 
 //Constants
@@ -63,7 +62,10 @@ sin : (x: float) -> float {
     }
     return result;
 }
+/>
 
-print sin(deg_to_rad(90.0));
+a : float = 1;
+b : float = 2;
+print a / b;
 
 print "exiting program";
