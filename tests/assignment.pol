@@ -64,8 +64,16 @@ sin : (x: float) -> float {
 }
 />
 
-a : float = 1;
-b : float = 2;
+a : float constant = 1;
+b : float constant = 2;
 print a / b;
+
+foo : (x: float constant) {
+    print x;
+    x = 433;
+    print x;
+}
+
+foo(4);
 
 print "exiting program";

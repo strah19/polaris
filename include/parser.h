@@ -34,14 +34,17 @@ enum DefinitionType {
 };
 
 struct VarSymbol {
-    AstDataType type;
-    uint32_t address; //for code generation
+    VarSymbol(AstDataType type, AstSpecifierType specifiers) : type(type), specifiers(specifiers) { }
+    VarSymbol() = default;
+    AstDataType type = AST_TYPE_NONE;
+    AstSpecifierType specifiers = AST_SPECIFIER_NONE;
+    uint32_t address = 0; //for code generation
 };
 
 struct FuncSymbol {
     AstDataType return_type = AST_TYPE_VOID;
-    Vector<AstDataType> arg_types;
     Vector<Ast_Expression*> default_values;
+    Vector<VarSymbol> args;
 };
 
 struct Symbol {
@@ -107,6 +110,7 @@ private:
     Ast_WhileStatement*         parse_while();
     Ast_Expression*             parse_expression(Precedence precedence = PREC_NONE);
     AstDataType                 parse_type();
+    AstSpecifierType            parser_specifier();
     Ast_ReturnStatement*        parse_return();
     const char*                 parse_identifier(const char* error_msg);
     Vector<Ast_VarDecleration*> parse_function_arguments(Symbol* sym);

@@ -186,7 +186,8 @@ TokenType Lexer::keywords() {
     case 'w': return (match("hile",   4) ? T_WHILE   : T_IDENTIFIER);
     case 'r': return (match("eturn",  5) ? T_RETURN  : T_IDENTIFIER);
     case 'c' :return (match("har",    3) ? T_CHAR    : 
-                     (match("ast",    3) ? T_CAST    : T_IDENTIFIER));
+                     (match("ast",    3) ? T_CAST    :
+                     (match("onstant",7) ? T_CONSTANT: T_IDENTIFIER)));
     case 'a': return (match("nd",     2) ? T_AND     : T_IDENTIFIER);
     case 'o': return (match("r",      1) ? T_OR      : T_IDENTIFIER);
     case 't': return (match("rue",    3) ? T_TRUE    : T_IDENTIFIER);
