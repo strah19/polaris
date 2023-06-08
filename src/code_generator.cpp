@@ -121,8 +121,10 @@ void CodeGenerator::generate_variable_decleration(Ast_VarDecleration* decleratio
 }
 
 void CodeGenerator::generate_print_statement(Ast_PrintStatement* print_statement) {
-    generate_expression(print_statement->expression);
-    write(OP_PRINT, print_statement);
+    for (auto& expr : print_statement->expressions) {
+        generate_expression(expr);
+        write(OP_PRINT, print_statement);
+    }
 }
 
 void CodeGenerator::generate_return_statement(Ast_ReturnStatement* return_statement) {

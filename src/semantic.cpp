@@ -4,6 +4,7 @@
 void check_variable_decleration(Ast_VarDecleration* decleration);
 void check_function_decleration(Ast_Function* function);
 void check_return_statement(Ast_ReturnStatement* return_statement);
+void check_print_statement(Ast_PrintStatement* print_statement);
 void check_scope(Ast_Scope* scope);
 void check_ast(Ast* ast);
 
@@ -51,7 +52,7 @@ void check_ast(Ast* ast) {
     else if (ast->type == AST_EXPRESSION_STATEMENT)
         get_expression_type(AST_CAST(Ast_ExpressionStatement, ast)->expression);
     else if (ast->type == AST_PRINT)
-        get_expression_type(AST_CAST(Ast_PrintStatement, ast)->expression);
+        check_print_statement(AST_CAST(Ast_PrintStatement, ast));
 }
 
 void check_return_statement(Ast_ReturnStatement* return_statement) {
@@ -70,6 +71,12 @@ void check_return_statement(Ast_ReturnStatement* return_statement) {
             printf("Mismatched %d and %d\n", expr_type, return_statement->expected_return_type);
             report_semantic_error(return_statement, "Type in expression does not match return type");
         }
+    }
+}
+
+void check_print_statement(Ast_PrintStatement* print_statement) {
+    for (auto& expr : print_statement->expressions) {
+        get_expression_type(expr);
     }
 }
 

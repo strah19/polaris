@@ -164,6 +164,7 @@ Token Lexer::single_character(char single_character_tokens) {
     case '~': return init_token(T_NOT     );
     case ',': return init_token(T_COMMA   );
     case '"': return string();
+    case '\'': return character();
     case '.': {
         if (check('.') && check('.')) return init_token(T_ARGS);
     }
@@ -174,7 +175,8 @@ Token Lexer::single_character(char single_character_tokens) {
 TokenType Lexer::keywords() {
     switch (*start) {
     case 'i': return (match("f",      1) ? T_IF      : 
-                     (match("nt",     2) ? T_INT     : T_IDENTIFIER));
+                     (match("nput",   4)  ? T_INPUT  :
+                     (match("nt",     2) ? T_INT     : T_IDENTIFIER)));
     case 'e': return (match("lse",    3) ? T_ELSE    : 
                      (match("lif",    3) ? T_ELIF    : T_IDENTIFIER));
     case 's': return (match("tring",  5) ? T_STRING  : T_IDENTIFIER);
@@ -216,6 +218,20 @@ Token Lexer::string() {
     if (is_eof()) return error_token("Unterminating string");
     advance();
     return init_str();
+}
+
+Token Lexer::character() {
+    advance();
+    advance();
+    advance();
+
+    Token token;
+    token.type = T_CHAR_CONST;
+    token.line = line;
+    token.start = start + 1;
+    token.size =(int) (current - start - 2);
+
+    return token;
 }
 
 Token Lexer::init_str() {

@@ -244,12 +244,12 @@ struct Ast_ExpressionStatement : public Ast_Statement {
 };
 
 struct Ast_PrintStatement : public Ast_Statement {
-    Ast_PrintStatement(Ast_Expression* expression) : expression(expression) { type = AST_PRINT; }
+    Ast_PrintStatement(Vector<Ast_Expression*> expressions) : expressions(expressions) { type = AST_PRINT; }
     ~Ast_PrintStatement() override {
-        delete expression;
+        for (auto& expr : expressions) delete expr;
     }
 
-    Ast_Expression* expression = nullptr;
+    Vector<Ast_Expression*> expressions;
 };
 
 struct Ast_ConditionalStatement : public Ast_Statement {

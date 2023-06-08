@@ -13,7 +13,6 @@
 #include "error.h"
 #include "lexer.h"
 #include "util.h"
-#include "c_converter.h"
 #include "code_generator.h"
 #include "parser.h"
 #include "benchmark.h"

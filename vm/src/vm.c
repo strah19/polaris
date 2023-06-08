@@ -47,6 +47,9 @@ bool vm_run(Bytecode* bytecode) {
     bool ret = false;
 
 #ifdef DEBUG_VM
+#ifdef DEBUG_LOG_VM
+    freopen("vmlog.txt", "a+", stdout);
+#endif
     debug_disassemble_bytecode(bytecode, "Assignment Program");
     printf("\n\n");
 #endif
@@ -59,7 +62,7 @@ bool vm_run(Bytecode* bytecode) {
         #ifdef DEBUG_VM
             debug_disassemble_stack(vm.stack, vm.top);
             debug_disassemble_instruction(vm.bytecode, vm.ip);
-        #endif
+       #endif
 
             switch (instruction) {
             case OP_CONST: {
@@ -197,8 +200,16 @@ bool vm_run(Bytecode* bytecode) {
         vm.bytecode = vm.bytecode->next;
         if (vm.bytecode) 
             run = true;
-        else
+        else {
+        #ifdef DEBUG_LOG_VM
+        #ifdef __MINGW32__
+            freopen("CON", "w", stdout); 
+        #endif
+        #elif __linux__
+            freopen("/dev/tty", "w", stdout);
+        #endif
             return true;
+        }
     }
 
     return true;

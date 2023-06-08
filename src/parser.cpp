@@ -239,6 +239,8 @@ Ast_Scope* Parser::parse_function_scope(bool return_needed, Vector<Ast_VarDecler
     current_scope = new Scope;
     current_scope->previous = previous_scope;
 
+    return_warning_enabled = true;
+
     for (int i = 0; i < args.size(); i++) {
         if (current_scope->in_any(args[i]->ident))
             throw parser_error(peek(), "Redefinition of variable in argument");
@@ -260,7 +262,7 @@ Ast_Scope* Parser::parse_function_scope(bool return_needed, Vector<Ast_VarDecler
         }
     }
 
-    if (expected_return && return_needed)
+    if (expected_return && return_needed && return_warning_enabled)
         parser_warning(peek(), "Need return statement in function");
 
     previous_scope->children_scopes.push_back(*current_scope);
@@ -278,9 +280,13 @@ Ast_ExpressionStatement* Parser::parse_expression_statement() {
 }
 
 Ast_PrintStatement* Parser::parse_print_statement() {
-    auto expression = parse_expression();
+    Vector<Ast_Expression*> expressions;
+    expressions.push_back(parse_expression());
+    while (match(T_COMMA)) {
+        expressions.push_back(parse_expression());
+    }
     consume(T_SEMICOLON, "Expected ';' after expression statement");
-    return AST_NEW(Ast_PrintStatement, expression);
+    return AST_NEW(Ast_PrintStatement, expressions);
 }
 
 Ast_Function* Parser::parse_function() {
@@ -426,6 +432,10 @@ Ast_ElifStatement* Parser::parse_elif() {
 }
 
 Ast_ElseStatement* Parser::parse_else() {
+    if (current_scope->previous->last.is == DEF_FUN) {
+        return_warning_enabled = false;
+    }
+
     consume(T_LCURLY, "Expected '{' in else statement");
     Ast_Scope* scope = parse_scope();
     return AST_NEW(Ast_ElseStatement, scope);

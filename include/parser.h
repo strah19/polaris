@@ -138,6 +138,7 @@ private:
     Vector<String> locals;
     bool errors = false;
     bool show_warnings = true;
+    bool return_warning_enabled = true;
 
     Scope* current_scope;
     Scope main_scope;
