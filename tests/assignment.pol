@@ -1,10 +1,10 @@
 </
     Math Library for Polaris.
-
+/>
 
 //Constants
-e := 2.71;
-PI := 3.14159265;
+e : float constant = 2.71;
+PI : float constant = 3.14159265;
 
 print_to : (max: int) {
     if max > 0 {
@@ -42,10 +42,10 @@ deg_to_rad : (degree: float) -> float {
 }
 
 factorial : (n: int) -> int {
-    if (n < 0) {   
+    if n < 0 {   
         return(-1);
     }
-    if ( n == 0) {    
+    if n == 0 {    
         return 1;
     }
     else {    
@@ -53,7 +53,8 @@ factorial : (n: int) -> int {
     }  
 } 
 
-sin : (x: float) -> float {
+//Implemented using Maclaurin  Series 
+sin : (x: float constant) -> float {
     n : float = 0;
     result : float = 0.0;
     while n < 10 {
@@ -62,18 +63,7 @@ sin : (x: float) -> float {
     }
     return result;
 }
-/>
 
-a : float constant = 1;
-b : float constant = 2;
-print a / b;
+print sin(deg_to_rad(90));
 
-foo : (x: float constant) {
-    print x;
-    x = 433;
-    print x;
-}
-
-foo(4);
-
-print "exiting program";
+print "exiting program...";

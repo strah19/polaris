@@ -320,8 +320,7 @@ Vector<Ast_VarDecleration*> Parser::parse_function_arguments(Symbol* sym) {
         consume(T_COLON, "Expected ':' in function argument");  
         AstDataType var_type = parse_type();
         AstSpecifierType spec = parser_specifier();
-        printf("FUNCTION SPEC %d.\n",  spec);
-        sym->func.args.push_back(VarSymbol(var_type, spec));
+        sym->func.arg_count++;
 
         Ast_Expression* expression = nullptr;
         if (match(T_EQUAL)) {
@@ -334,7 +333,7 @@ Vector<Ast_VarDecleration*> Parser::parse_function_arguments(Symbol* sym) {
             throw parser_error(peek(), "Default value for argument must be at end of function");
         
         sym->func.default_values.push_back(expression);
-        args.push_back(AST_NEW(Ast_VarDecleration, id, expression, var_type, AST_SPECIFIER_NONE)); 
+        args.push_back(AST_NEW(Ast_VarDecleration, id, expression, var_type, spec)); 
         if (!check(T_RPAR)) 
             consume(T_COMMA, "Expected ',' between function arguments");
     }
@@ -474,7 +473,6 @@ Ast_Expression* Parser::parse_assignment_expression(Ast_Expression* expression, 
             throw parser_error(peek(-1), "Expected Lvalue in assignment");
 
         Symbol sym = current_scope->get(std::string(id->ident));
-        printf("IS CONSTANT %d\n", sym.var.specifiers);
         if ((sym.var.specifiers & AST_SPECIFIER_CONST))
             throw parser_error(peek(-1), "Identifier is a constant, it cannot be modified");
 
@@ -568,12 +566,12 @@ Ast_Expression* Parser::parse_primary_expression() {
                     consume(T_COMMA, "Expected ',' between function arguments");
             }
 
-            if (primary->call->args.size() != symbol.func.args.size()) {
-                if (primary->call->args.size() > symbol.func.args.size())
+            if (primary->call->args.size() != symbol.func.arg_count) {
+                if (primary->call->args.size() > symbol.func.arg_count)
                     throw parser_error(peek(), "Too many arguments in function call");
                 else {
                     int i = primary->call->args.size();
-                    while (primary->call->args.size() < symbol.func.args.size()) {
+                    while (primary->call->args.size() < symbol.func.arg_count) {
                         if (symbol.func.default_values[i]) {
                             primary->call->args.push_back(symbol.func.default_values[i]);
                         }
@@ -582,7 +580,7 @@ Ast_Expression* Parser::parse_primary_expression() {
                         i++;
                     }
 
-                    if (primary->call->args.size() != symbol.func.args.size())
+                    if (primary->call->args.size() != symbol.func.arg_count)
                         throw parser_error(peek(), "Not enough arguments in function call");
                 }
             }

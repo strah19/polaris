@@ -28,6 +28,7 @@ extern "C" {
 #include <time.h>
 
 #define MAX_REPL_SIZE 256
+#define BENCHMARK_DEBUG
 
 void repl();
 void run_src_file(const char* filepath);
@@ -59,30 +60,13 @@ void repl() {
         }
     }
 }
-
-void print_scope(Scope* scope, int tabs = 1) {
-    for (int i = 0; i < tabs; i++) printf("\t");
-    printf("--------New Scope--------\n");
-
-    for (int i = 0; i < tabs; i++) printf("\t");
-
-    if (scope->definitions.size() != 0)
-        printf("Symbols in Scope\n");
-    for (auto& sym : scope->definitions) {
-        for (int i = 0; i < tabs; i++) printf("\t");
-        printf("Name: '%s', Type: %d.\n", sym.first.c_str(), sym.second.is);
-    }
-
-    for (auto& child : scope->children_scopes) {
-        print_scope(&child, tabs++);
-    }
-}
-
 void run_src_file(const char* filepath) {
     char* src = open_file(filepath);
 
+#ifdef BENCHMARK_DEBUG
     Benchmark compiler_benchmark("Compiler");
-  
+#endif
+
     Lexer lexer(src);
     Tokens tokens = lexer.run();
     if (log_tokens) lexer.log(tokens);
@@ -90,20 +74,24 @@ void run_src_file(const char* filepath) {
     Parser parser(&tokens[0], filepath);
     parser.parse();
 
-    //print_scope(parser.get_scope());
-
     semantic_checker(parser.get_unit());
 
     if (!parser.has_errors() && !semantic_error_count()) {
         CodeGenerator generator(parser.get_unit(), parser.get_functions(), parser.get_scope());
         generator.run();
+    #ifdef BENCHMARK_DEBUG
         compiler_benchmark.stop();
+    #endif
         vm_init();
 
+        {
+    #ifdef BENCHMARK_DEBUG
         Benchmark vm_benchmark("Virtual Machine");
+    #endif
+
         if (!vm_run(generator.get_bytecode()))
             printf("Exiting with run time error(s).\n");
-        vm_benchmark.stop();
+        }
 
         vm_reset_stack();
         vm_free();

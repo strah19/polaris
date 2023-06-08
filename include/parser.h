@@ -38,13 +38,12 @@ struct VarSymbol {
     VarSymbol() = default;
     AstDataType type = AST_TYPE_NONE;
     AstSpecifierType specifiers = AST_SPECIFIER_NONE;
-    uint32_t address = 0; //for code generation
 };
 
 struct FuncSymbol {
     AstDataType return_type = AST_TYPE_VOID;
     Vector<Ast_Expression*> default_values;
-    Vector<VarSymbol> args;
+    size_t arg_count = 0;
 };
 
 struct Symbol {

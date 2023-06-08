@@ -20,6 +20,7 @@ install(TARGETS POLARIS DESTINATION bin)
 install(FILES "${PROJECT_BINARY_DIR}/include/config.h"
         DESTINATION include)
 
+enable_testing()
 include(CTest)
 
-add_test(NAME runs COMMAND POLARIS "../tests/basic.pol")
+add_test(NAME Assignment COMMAND POLARIS "../tests/assignment.pol")

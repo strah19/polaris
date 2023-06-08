@@ -46,16 +46,20 @@ bool vm_run(Bytecode* bytecode) {
     bool skip = false;
     bool ret = false;
 
-    //debug_disassemble_bytecode(bytecode, "Assignment Program");
-    //printf("\n\n");
+#ifdef DEBUG_VM
+    debug_disassemble_bytecode(bytecode, "Assignment Program");
+    printf("\n\n");
+#endif
 
     while (vm.bytecode) {
         vm.ip = bytecode->start_address;
         while (run) {
             uint32_t instruction = bytecode->code[vm.ip];
 
-            //debug_disassemble_stack(vm.stack, vm.top);
-            //debug_disassemble_instruction(vm.bytecode, vm.ip);
+        #ifdef DEBUG_VM
+            debug_disassemble_stack(vm.stack, vm.top);
+            debug_disassemble_instruction(vm.bytecode, vm.ip);
+        #endif
 
             switch (instruction) {
             case OP_CONST: {
@@ -115,15 +119,11 @@ bool vm_run(Bytecode* bytecode) {
                 break;
             }
             case OP_RET: {
-               // Value ret = vm_pop();
-
                 vm.top = vm.stack + vm.fp;
                 vm.ip = vm_pop().int_value;
                 vm.fp = vm_pop().int_value;
                 int32_t args = vm_pop().int_value;
                 vm.top -= args;
-                //vm_push(ret);
-
                 break;
             }
             case OP_RETV: {
