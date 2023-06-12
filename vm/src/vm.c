@@ -12,6 +12,9 @@
     else if (IS_INT(a) && IS_INT(b)) vm_push(INT_VALUE(AS_INT(a) op AS_INT(b))); \
     else if (IS_INT(a) && IS_FLOAT(b)) vm_push(FLOAT_VALUE(AS_INT(a) op AS_FLOAT(b))); \
     else if (IS_FLOAT(a) && IS_INT(b)) vm_push(FLOAT_VALUE(AS_FLOAT(a) op AS_INT(b))); \
+    else if (IS_INT(a) && IS_CHAR(b)) vm_push(INT_VALUE(AS_INT(a) op AS_CHAR(b))); \
+    else if (IS_CHAR(a) && IS_INT(b)) vm_push(INT_VALUE(AS_CHAR(a) op AS_INT(b))); \
+    else if (IS_CHAR(a) && IS_CHAR(b)) vm_push(CHAR_VALUE(AS_CHAR(a) op AS_CHAR(b))); \
     else if (IS_BOOLEAN(a) && IS_BOOLEAN(b)) vm_push(BOOLEAN_VALUE(AS_BOOLEAN(a) op AS_BOOLEAN(b))); \
     else return vm_runtime_error("Operands must be numbers in '%s' operation and must match.\n", #op); \
     }\
@@ -20,6 +23,7 @@ bool IS_TRUE(Value a) {
     if (IS_FLOAT(a) && AS_FLOAT(a)) return true;
     else if (IS_INT(a) && AS_INT(a)) return true;
     else if (IS_BOOLEAN(a) && AS_BOOLEAN(a)) return true;
+    else if (IS_CHAR(a) && AS_CHAR(a)) return true;
     else return false;
 }
 

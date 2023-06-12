@@ -11,7 +11,7 @@ typedef enum {
     TYPE_INT,
     TYPE_FLOAT,
     TYPE_BOOLEAN,
-    TYPE_BINARY,
+    TYPE_CHAR,
     TYPE_OBJ
 } ValueType;
 
@@ -36,6 +36,7 @@ typedef struct {
         int      int_value;
         float    float_value;
         bool     bool_value;
+        char     char_value;
         Object* obj;
     };
 } Value;
@@ -49,17 +50,20 @@ typedef struct {
 #define AS_INT(value) value.int_value
 #define AS_FLOAT(value) value.float_value
 #define AS_BOOLEAN(value) value.bool_value
+#define AS_CHAR(value) value.char_value
 #define AS_OBJ(value) value.obj
 #define AS_STRING(value) ((ObjString*) AS_OBJ(value))
 
 #define INT_VALUE(value)   ((Value) { TYPE_INT, {.int_value = value }})
 #define FLOAT_VALUE(value) ((Value) { TYPE_FLOAT, {.float_value = value }})
 #define BOOLEAN_VALUE(value) ((Value) { TYPE_BOOLEAN, {.bool_value = value }})
+#define CHAR_VALUE(value) ((Value) { TYPE_CHAR, {.char_value = value }})
 #define OBJ_VALUE(value) ((Value) { TYPE_OBJ, {.obj = (Object*)value }})
 
 #define IS_INT(value)     (value.type == TYPE_INT)
 #define IS_FLOAT(value)   (value.type == TYPE_FLOAT)
 #define IS_BOOLEAN(value) (value.type == TYPE_BOOLEAN)
+#define IS_CHAR(value)    (value.type == TYPE_CHAR)
 #define IS_OBJ(value)     (value.type == TYPE_OBJ)
 #define IS_NUMBER(value)  (value.type == TYPE_FLOAT || value.type == TYPE_INT)
 #define IS_NUMERIC(value) (value.type == TYPE_FLOAT || value.type == TYPE_INT || value.type == TYPE_BOOLEAN)

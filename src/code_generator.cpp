@@ -63,7 +63,7 @@ int CodeGenerator::generate_conditional_statement(Ast_ConditionalStatement* cond
     if (conditional->type == AST_IF || conditional->type == AST_ELIF) {
         write(OP_JMPN, conditional);
         skip_condition_location = bytecode.count;
-        write(0x00, conditional); //lower
+        write(0x00, conditional); 
     }
 
     generate_scope(conditional->scope);
@@ -71,7 +71,7 @@ int CodeGenerator::generate_conditional_statement(Ast_ConditionalStatement* cond
     if (conditional->type == AST_IF || conditional->type == AST_ELIF) {
         write(OP_JMP, conditional);
         go_to_end_location = bytecode.count;
-        write(0x00, conditional); //higher
+        write(0x00, conditional); 
     }   
 
     if (conditional->next) {
@@ -177,6 +177,7 @@ void CodeGenerator::generate_expression(Ast_Expression* expression) {
             case AST_TYPE_FLOAT:   write_constant(FLOAT_VALUE(prim->float_const), prim); break;
             case AST_TYPE_BOOLEAN: write_constant(BOOLEAN_VALUE(prim->boolean), prim);   break;
             case AST_TYPE_STRING:  write_constant(OBJ_VALUE(allocate_string(prim->string)), prim); break;
+            case AST_TYPE_CHAR:    write_constant(CHAR_VALUE(prim->char_const), prim); break;
             }
         }
         else if (prim->prim_type == AST_PRIM_NESTED) {

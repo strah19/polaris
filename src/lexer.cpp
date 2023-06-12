@@ -223,13 +223,12 @@ Token Lexer::string() {
 Token Lexer::character() {
     advance();
     advance();
-    advance();
 
     Token token;
     token.type = T_CHAR_CONST;
     token.line = line;
     token.start = start + 1;
-    token.size =(int) (current - start - 2);
+    token.size = 1;
 
     return token;
 }

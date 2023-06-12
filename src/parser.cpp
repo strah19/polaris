@@ -11,7 +11,7 @@
 
 /*
     To-Do:
-    - Get rid of expect return in scope funcion bool.
+    -
 
 */
 
@@ -610,6 +610,12 @@ Ast_Expression* Parser::parse_primary_expression() {
         primary->type_value = AST_TYPE_STRING;
         break;
     }
+    case T_CHAR_CONST: {
+        primary->char_const = *peek(-1)->start;
+        primary->prim_type = AST_PRIM_DATA;
+        primary->type_value = AST_TYPE_CHAR;
+        break;
+    }
     case T_CAST: {
         primary->prim_type = AST_PRIM_CAST;
         consume(T_LARROW, "Expected '<' after 'cast' keyword");
@@ -685,6 +691,7 @@ AstDataType Parser::parse_type() {
     case T_FLOAT:   var_type = AST_TYPE_FLOAT;   break;
     case T_BOOLEAN: var_type = AST_TYPE_BOOLEAN; break;
     case T_STRING:  var_type = AST_TYPE_STRING;  break;
+    case T_CHAR:    var_type = AST_TYPE_CHAR;    break;
     default: throw parser_error(peek(), "Unknown type");
     }
     match(peek()->type);
@@ -731,7 +738,8 @@ bool Parser::is_unary(Token* token) {
 bool Parser::is_primary(Token* token) {
     return (token->type == T_INT_CONST || token->type == T_FLOAT_CONST || token->type == T_LPAR || 
             token->type == T_TRUE || token->type == T_FALSE || token->type == T_IDENTIFIER ||
-            token->type == T_CAST || token->type == T_STRING_CONST || token->type == T_BINARY_CONST);
+            token->type == T_CAST || token->type == T_STRING_CONST || token->type == T_BINARY_CONST || 
+            token->type == T_CHAR_CONST);
 }
 
 bool Parser::is_equal(Token* token) {
