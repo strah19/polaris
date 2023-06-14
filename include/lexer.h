@@ -56,6 +56,8 @@ private:
     TokenType   keywords();
     Token skip_whitespaces();
 
+    const char* escape_characters();
+
     Token string();
     Token character();
     Token identifier();

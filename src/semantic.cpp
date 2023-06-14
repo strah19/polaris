@@ -7,6 +7,8 @@ void check_return_statement(Ast_ReturnStatement* return_statement);
 void check_print_statement(Ast_PrintStatement* print_statement);
 void check_scope(Ast_Scope* scope);
 void check_ast(Ast* ast);
+void check_condition(Ast_ConditionalStatement* conditional_statement);
+void check_while(Ast_WhileStatement* while_statement);
 
 bool can_type_be_this(AstDataType type, AstDataType trying);
 
@@ -53,6 +55,25 @@ void check_ast(Ast* ast) {
         get_expression_type(AST_CAST(Ast_ExpressionStatement, ast)->expression);
     else if (ast->type == AST_PRINT)
         check_print_statement(AST_CAST(Ast_PrintStatement, ast));
+    else if (ast->type == AST_FUNCTION) 
+        check_function_decleration(AST_CAST(Ast_Function, ast));
+    else if (ast->type == AST_WHILE) 
+        check_while(AST_CAST(Ast_WhileStatement, ast));
+    else if (ast->type == AST_IF)
+        check_condition(AST_CAST(Ast_IfStatement, ast));
+}
+
+void check_condition(Ast_ConditionalStatement* conditional_statement) {
+    if (conditional_statement->condition)
+        get_expression_type(conditional_statement->condition);
+    check_scope(conditional_statement->scope);
+    if (conditional_statement->next)
+        check_condition(conditional_statement->next);
+}
+
+void check_while(Ast_WhileStatement* while_statement) {
+    get_expression_type(while_statement->condition);
+    check_scope(while_statement->scope);
 }
 
 void check_return_statement(Ast_ReturnStatement* return_statement) {
@@ -126,12 +147,12 @@ void check_expression(Ast_Expression* expression, AstDataType* current_expr_type
         check_expression(assign->id, current_expr_type, can_it_be);
         AstDataType id_type = *current_expr_type;
         AstDataType value_type = AST_TYPE_NONE;
-        check_expression(assign->value, &value_type, can_it_be);
+        check_expression(assign->value, &value_type, id_type);
         if (!can_type_be_this(id_type, value_type))
             report_semantic_error(assign, "Type does not match in assignment");
         if (assign->next) {
             value_type = AST_TYPE_NONE;
-            check_expression(assign->next, &value_type, can_it_be);
+            check_expression(assign->next, &value_type, id_type);
         }
         break;
     }

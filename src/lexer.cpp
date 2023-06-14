@@ -14,7 +14,7 @@
 #include <string.h>
 #include <stdio.h>
 
-#define NESTED_COMMENTS 255
+#define NESTED_COMMENTS 256
 
 Lexer::Lexer(const char* source) {
     current = source;
@@ -221,16 +221,39 @@ Token Lexer::string() {
 }
 
 Token Lexer::character() {
+    Token token;
+    const char* escape = escape_characters();
+
+    if (escape)
+        token.start = escape;
+    else 
+        token.start = start + 1;
+        
     advance();
     advance();
 
-    Token token;
     token.type = T_CHAR_CONST;
     token.line = line;
-    token.start = start + 1;
     token.size = 1;
 
     return token;
+}
+
+const char* Lexer::escape_characters() {
+    const char* escape = NULL;
+    if (peek() == '\\') {
+        advance();
+        switch (peek()) {
+        case 'a': escape = "\a"; break;
+        case 'b': escape = "\b"; break;
+        case 'n': escape = "\n"; break;
+        case 'f': escape = "\f"; break;
+        case 'r': escape = "\r"; break;
+        case 't': escape = "\t"; break;
+        case 'v': escape = "\v"; break;
+        }
+    }
+    return escape;
 }
 
 Token Lexer::init_str() {

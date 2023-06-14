@@ -74,7 +74,7 @@ bool vm_run(Bytecode* bytecode) {
                 break;
             }
             case OP_PRINT: {
-                value_print(vm_pop(), true);
+                value_print(vm_pop(), false);
                 break;
             }
             case OP_HALT: {
