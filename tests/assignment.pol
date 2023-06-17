@@ -70,8 +70,13 @@ NL : char constant = '\n';
 
 character : char = 'a';
 while (character <= 'z') {
-    print character, NL;
+    print character, ' ';
     character = character + 1;
 }
+print NL;
+
+a : boolean = true;
+a = 4;
+print a, NL;
 
 print "exiting program...", NL;

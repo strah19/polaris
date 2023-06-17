@@ -10,10 +10,7 @@ void check_ast(Ast* ast);
 void check_condition(Ast_ConditionalStatement* conditional_statement);
 void check_while(Ast_WhileStatement* while_statement);
 
-bool can_type_be_this(AstDataType type, AstDataType trying);
-
 void check_expression(Ast_Expression* expression, AstDataType* current_expr_type, AstDataType can_it_be = AST_TYPE_NONE);
-void compare_current_type(Ast* ast, AstDataType type, AstDataType* current_expr_type);
 
 void report_semantic_error(Ast* ast, const char* msg);
 
@@ -49,8 +46,6 @@ void check_ast(Ast* ast) {
         check_variable_decleration(AST_CAST(Ast_VarDecleration, ast));
     else if (ast->type == AST_RETURN)
         check_return_statement(AST_CAST(Ast_ReturnStatement, ast));
-    else if (ast->type == AST_EXPRESSION)
-        get_expression_type(AST_CAST(Ast_Expression, ast));
     else if (ast->type == AST_EXPRESSION_STATEMENT)
         get_expression_type(AST_CAST(Ast_ExpressionStatement, ast)->expression);
     else if (ast->type == AST_PRINT)
@@ -111,116 +106,10 @@ int semantic_error_count() {
     return error_count;
 }
 
-bool can_type_be_this(AstDataType type, AstDataType trying) {
-    if (type == trying) return true;
-    else if (type == AST_TYPE_FLOAT && trying == AST_TYPE_INT) return true;
-    else if (type == AST_TYPE_INT && trying == AST_TYPE_CHAR) return true;
-    else if (type == AST_TYPE_CHAR && trying == AST_TYPE_INT) return true;
-    else return false;
-}
+AstDataType get_expression_type(Ast_Expression* expression) {
 
-AstDataType get_expression_type(Ast_Expression* expression, AstDataType can_it_be) {
-    AstDataType current_expr_type = AST_TYPE_NONE;
-    check_expression(expression, &current_expr_type, can_it_be);
-    return current_expr_type;
 }
 
 void check_expression(Ast_Expression* expression, AstDataType* current_expr_type, AstDataType can_it_be) {
-    switch (expression->type) {
-    case AST_BINARY: {
-        Ast_BinaryExpression* bin = AST_CAST(Ast_BinaryExpression, expression);
-        check_expression(bin->left, current_expr_type, can_it_be);
-        AstDataType left = *current_expr_type;
-        check_expression(bin->right, current_expr_type, can_it_be);
-        if ((left == AST_TYPE_STRING || *current_expr_type == AST_TYPE_STRING) && bin->op != AST_OPERATOR_ADD) {
-            report_semantic_error(bin, "Binary operations cannot be conducted on strings");
-        }
-        break;
-    }
-    case AST_UNARY: {
-        Ast_UnaryExpression* unary = AST_CAST(Ast_UnaryExpression, expression);
-        check_expression(unary->next, current_expr_type, can_it_be);
-        break;
-    }
-    case AST_ASSIGNMENT: {
-        Ast_Assignment* assign = AST_CAST(Ast_Assignment, expression);
-        check_expression(assign->id, current_expr_type, can_it_be);
-        AstDataType id_type = *current_expr_type;
-        AstDataType value_type = AST_TYPE_NONE;
-        check_expression(assign->value, &value_type, id_type);
-        if (!can_type_be_this(id_type, value_type))
-            report_semantic_error(assign, "Type does not match in assignment");
-        if (assign->next) {
-            value_type = AST_TYPE_NONE;
-            check_expression(assign->next, &value_type, id_type);
-        }
-        break;
-    }
-    case AST_PRIMARY: {
-        Ast_PrimaryExpression* prim = AST_CAST(Ast_PrimaryExpression, expression);
 
-        switch (prim->prim_type) {
-        case AST_PRIM_DATA: {
-            switch (prim->type_value) {
-            case AST_TYPE_INT: {
-                printf("%d\n", can_it_be);
-                compare_current_type(prim, AST_TYPE_INT, current_expr_type);
-                if (can_it_be == AST_TYPE_FLOAT)
-                    prim->type_value = can_it_be;
-                else if (can_it_be == AST_TYPE_CHAR) {
-                    prim->type_value = can_it_be;
-                }
-                break;
-            }
-            case AST_TYPE_FLOAT: {
-                compare_current_type(prim, AST_TYPE_FLOAT, current_expr_type);
-                break;
-            }
-            case AST_TYPE_BOOLEAN: {
-                compare_current_type(prim, AST_TYPE_BOOLEAN, current_expr_type);
-                break;
-            }
-            case AST_TYPE_STRING: {
-                compare_current_type(prim, AST_TYPE_STRING, current_expr_type);
-                break;
-            }
-            case AST_TYPE_CHAR: {
-                compare_current_type(prim, AST_TYPE_CHAR, current_expr_type);
-                break;
-            }
-            }
-
-            break;
-        }
-        case AST_PRIM_ID: 
-        case AST_PRIM_CALL: 
-            compare_current_type(prim, prim->type_value, current_expr_type);
-            break;
-        case AST_PRIM_NESTED: {
-            check_expression(prim->nested, current_expr_type, can_it_be);
-            break;
-        }
-        }
-    }
-    }
-}
-
-void compare_current_type(Ast* ast, AstDataType type, AstDataType* current_expr_type) {
-    if (*current_expr_type == AST_TYPE_NONE) {
-        *current_expr_type = type;
-    }
-    else {
-        if ((*current_expr_type == AST_TYPE_INT && type == AST_TYPE_FLOAT) || (*current_expr_type == AST_TYPE_FLOAT && type == AST_TYPE_INT)) {
-            *current_expr_type = AST_TYPE_FLOAT;
-        }
-        else if ((*current_expr_type == AST_TYPE_INT && type == AST_TYPE_CHAR) || (*current_expr_type == AST_TYPE_CHAR && type == AST_TYPE_INT)) {
-            *current_expr_type = AST_TYPE_INT;
-        }
-        else if (*current_expr_type != type) {
-            report_semantic_error(ast, "Mismatched type in expression");
-        }
-        else {
-            *current_expr_type = type;
-        }
-    }
 }
