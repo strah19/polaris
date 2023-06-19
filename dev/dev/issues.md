@@ -1,0 +1,2 @@
+- Escape characters in strings are currently not being parsed. For example, "hello\n" is not hello followed by a newline, it is literally "hello\n".
+- 

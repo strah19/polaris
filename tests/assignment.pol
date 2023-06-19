@@ -1,7 +1,7 @@
 </
     Math Library for Polaris.
+/>
 
-//Constants
 e : float constant = 2.71;
 PI : float constant = 3.14159265;
 
@@ -52,10 +52,10 @@ factorial : (n: int) -> int {
     }  
 } 
 
-//Implemented using Maclaurin  Series 
 sin : (x: float constant) -> float {
     n : float = 0;
-    result : float = 0.0;
+    result : float = 0;
+
     while n < 10 {
         result = result + ((pow(-1, n) * pow(x, (2 * n) + 1)) / (factorial((2 * n) + 1)));
         n = n + 1;
@@ -63,10 +63,12 @@ sin : (x: float constant) -> float {
     return result;
 }
 
-print sin(deg_to_rad(90));
-/>
-
 NL : char constant = '\n';
+
+print ret(5), NL;
+print pow(2, 3), NL;
+print deg_to_rad(90), NL;
+print sin(deg_to_rad(30)), NL;
 
 character : char = 'a';
 while (character <= 'z') {
@@ -75,8 +77,9 @@ while (character <= 'z') {
 }
 print NL;
 
-a : boolean = true;
-a = 4;
+a : float = 2.3 + 4;
+
+
 print a, NL;
 
 print "exiting program...", NL;

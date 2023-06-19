@@ -11,6 +11,7 @@ void check_condition(Ast_ConditionalStatement* conditional_statement);
 void check_while(Ast_WhileStatement* while_statement);
 
 void check_expression(Ast_Expression* expression, AstDataType* current_expr_type, AstDataType can_it_be = AST_TYPE_NONE);
+bool can_convert(AstDataType type1, AstDataType type2);
 
 void report_semantic_error(Ast* ast, const char* msg);
 
@@ -23,8 +24,9 @@ void semantic_checker(Ast_TranslationUnit* root) {
 
 void check_variable_decleration(Ast_VarDecleration* decleration) {
     if (decleration->expression) {
-        AstDataType expr_type = get_expression_type(decleration->expression, decleration->type_value);
-        if (!can_type_be_this(decleration->type_value, expr_type)) {
+        AstDataType expr_type = AST_TYPE_NONE;
+        check_expression(decleration->expression, &expr_type, decleration->type_value);
+        if (!can_convert(decleration->type_value, expr_type)) {
             report_semantic_error(decleration, "Type in expression does not match variable decleration type");
         }
     }
@@ -76,14 +78,13 @@ void check_return_statement(Ast_ReturnStatement* return_statement) {
         report_semantic_error(return_statement, "Return statement expected an expression");
         return;
     }
-
     if (return_statement->expected_return_type == AST_TYPE_VOID && return_statement->expression) {
         report_semantic_error(return_statement, "No return expression is allowed as function is type void");
         return;
     }
     if (return_statement->expression) {
         AstDataType expr_type = get_expression_type(return_statement->expression);
-        if (expr_type != return_statement->expected_return_type) {
+        if (!can_convert(expr_type, return_statement->expected_return_type)) {
             printf("Mismatched %d and %d\n", expr_type, return_statement->expected_return_type);
             report_semantic_error(return_statement, "Type in expression does not match return type");
         }
@@ -107,9 +108,85 @@ int semantic_error_count() {
 }
 
 AstDataType get_expression_type(Ast_Expression* expression) {
+    AstDataType type = AST_TYPE_NONE;
+    check_expression(expression, &type);
+    return type;
+}
 
+static const AstDataType STD_CONVERSION_TABLE[6][6] = {
+    AST_TYPE_NONE, AST_TYPE_NONE,    AST_TYPE_NONE,    AST_TYPE_NONE,    AST_TYPE_NONE,   AST_TYPE_NONE,
+    AST_TYPE_NONE, AST_TYPE_FLOAT,   AST_TYPE_BOOLEAN, AST_TYPE_FLOAT,   AST_TYPE_NONE,   AST_TYPE_FLOAT,
+    AST_TYPE_NONE, AST_TYPE_BOOLEAN, AST_TYPE_BOOLEAN, AST_TYPE_BOOLEAN, AST_TYPE_NONE,   AST_TYPE_BOOLEAN,
+    AST_TYPE_NONE, AST_TYPE_FLOAT,   AST_TYPE_BOOLEAN, AST_TYPE_INT,     AST_TYPE_NONE,   AST_TYPE_CHAR,
+    AST_TYPE_NONE, AST_TYPE_NONE,    AST_TYPE_NONE,    AST_TYPE_NONE,    AST_TYPE_STRING, AST_TYPE_NONE,
+    AST_TYPE_NONE, AST_TYPE_FLOAT,   AST_TYPE_BOOLEAN, AST_TYPE_CHAR,    AST_TYPE_NONE,   AST_TYPE_CHAR
+};
+
+void convert_primary(Ast_PrimaryExpression* primary, AstDataType new_type) {
+    if (primary->type_value == new_type) return;
+    if (primary->type_value == AST_TYPE_INT && new_type == AST_TYPE_FLOAT) {
+        primary->float_const = primary->int_const;
+    }
+    else if (primary->type_value == AST_TYPE_FLOAT && new_type == AST_TYPE_INT) {
+        primary->int_const = primary->float_const;
+    }
 }
 
 void check_expression(Ast_Expression* expression, AstDataType* current_expr_type, AstDataType can_it_be) {
+    if (expression->type == AST_BINARY) {
+        auto bin = AST_CAST(Ast_BinaryExpression, expression);
+        check_expression(bin->left, current_expr_type, can_it_be);
+        check_expression(bin->right, current_expr_type, can_it_be);
 
+        //Check string stuff here...strings can only do '+' and comparative operands.
+    }
+    else if (expression->type == AST_UNARY) {
+        auto unary = AST_CAST(Ast_UnaryExpression, expression);
+        check_expression(unary->next, current_expr_type, can_it_be);
+    }
+    else if (expression->type == AST_ASSIGNMENT) {
+        Ast_Assignment* assign = AST_CAST(Ast_Assignment, expression);
+        check_expression(assign->id, current_expr_type, can_it_be);
+        AstDataType id_type = *current_expr_type;
+        AstDataType value_type = id_type;
+        check_expression(assign->value, &value_type, id_type);
+
+        if (assign->next) {
+            value_type = AST_TYPE_NONE;
+            check_expression(assign->next, &value_type, id_type);
+        }
+    }
+    else if (expression->type == AST_PRIMARY) {
+        auto primary = AST_CAST(Ast_PrimaryExpression, expression);
+        if (primary->prim_type == AST_PRIM_DATA || primary->prim_type == AST_PRIM_ID || primary->prim_type == AST_PRIM_CALL) {
+            if (can_it_be != AST_TYPE_NONE) {
+                if (can_convert(can_it_be, primary->type_value)) {
+                    convert_primary(primary, can_it_be);
+                    primary->type_value = can_it_be;
+                    *current_expr_type = can_it_be;
+                }
+                else
+                    report_semantic_error(primary, "Unable to convert types");
+            }
+            else {
+                if (*current_expr_type == AST_TYPE_NONE) 
+                    *current_expr_type = primary->type_value;
+                else if (*current_expr_type != primary->type_value && !can_convert(*current_expr_type, primary->type_value)) 
+                    report_semantic_error(primary, "Mismatched types! Unable to auto convert types");
+                else {
+                    *current_expr_type = STD_CONVERSION_TABLE[*current_expr_type][primary->type_value];
+                }
+            }
+        }
+        else if (primary->prim_type == AST_PRIM_NESTED) {
+            check_expression(primary->nested, current_expr_type, can_it_be);
+        }
+    }
+}
+
+bool can_convert(AstDataType type1, AstDataType type2) {
+    if (type1 == AST_TYPE_NONE || type2 == AST_TYPE_NONE)     return false;
+    if (type1 == AST_TYPE_STRING && type2 != AST_TYPE_STRING) return false;
+    if (type1 != AST_TYPE_STRING && type2 == AST_TYPE_STRING) return false;
+    return true;
 }

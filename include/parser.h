@@ -57,13 +57,13 @@ struct Scope {
     Scope() = default;
     Map<String, Symbol> definitions;
     Scope* previous = nullptr;
-    Vector<Scope> children_scopes;
 
     Symbol last;
 
     void add(const String& name, const Symbol& sym);
     bool in_scope(const String& name);
     bool in_any(const String& name);
+    void log();
     Symbol get(const String& name); 
 };  
 
@@ -136,9 +136,11 @@ private:
     Ast_TranslationUnit* unit = nullptr;
     Vector<int> function_indices;
     Vector<String> locals;
+
     bool errors = false;
     bool show_warnings = true;
     bool return_warning_enabled = true;
+    AstDataType current_function_return = AST_TYPE_VOID;
 
     Scope* current_scope;
     Scope main_scope;

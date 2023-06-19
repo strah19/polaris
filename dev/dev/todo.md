@@ -1,0 +1,20 @@
+- [ ] Create a developer guide.
+- [x] Log what the virtual machine does. 
+- [ ] Document the grammar of the language and the opcodes for the VM.
+- [ ] Add a basic input keyword that will always return a string.
+- [x] Add chars.
+- [ ] Create a basic casting system.
+- [x] Support special characters for chars
+- [ ] Support special characters for strings
+	- https://en.wikipedia.org/wiki/Escape_sequences_in_C
+- [x] Add constants into the language.
+- [x] Fix return warning even when there is an else statement.
+- [ ] Arrays/Lists
+- [ ] Pointers
+- [ ] Classes
+- [ ] Complex Number Support
+- [ ] Support different equal operands including ++ and --
+- [ ] Hex Support
+- [ ] Code generator needs to support different equal operators.
+- [ ] Clean up parser.
+- [ ] Add copyright to files.

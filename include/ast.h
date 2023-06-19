@@ -88,13 +88,13 @@ enum AstPrimaryType {
 };
 
 enum AstDataType {
-    AST_TYPE_NONE = 0x00,
-    AST_TYPE_FLOAT = 0x01,
-    AST_TYPE_BOOLEAN = 0x02,
-    AST_TYPE_INT = 0x04,
-    AST_TYPE_STRING = 0x08,
-    AST_TYPE_CHAR = 0x10,
-    AST_TYPE_VOID = 0x20,
+    AST_TYPE_NONE,
+    AST_TYPE_FLOAT,
+    AST_TYPE_BOOLEAN,
+    AST_TYPE_INT,
+    AST_TYPE_STRING,
+    AST_TYPE_CHAR,
+    AST_TYPE_VOID,
 };
 
 enum AstSpecifierType {
@@ -134,6 +134,7 @@ struct Ast_FunctionCall {
 };
 
 struct Ast_Cast {
+    Ast_Cast() = default;
     Ast_Cast(Ast_Expression* expression, AstDataType cast_type) : cast_type(cast_type), expression(expression) { }
     ~Ast_Cast() {
         delete expression;
@@ -165,11 +166,11 @@ struct Ast_PrimaryExpression : public Ast_Expression {
         const char* string;
         char        char_const;
         bool        boolean;
-        
-        Ast_FunctionCall* call;
-        Ast_Expression*   nested;
-        Ast_Cast          cast;
     };
+
+    Ast_FunctionCall* call;
+    Ast_Expression*   nested;
+    Ast_Cast          cast;
 };
 
 struct Ast_BinaryExpression : public Ast_Expression {

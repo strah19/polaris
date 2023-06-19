@@ -62,6 +62,19 @@ bool Scope::in_any(const String& name) {
     return false;
 }
 
+void Scope::log() {
+    for (auto& def : definitions) {
+        Symbol sym = def.second;
+        String name = def.first;
+        if (sym.is == DEF_VAR) {
+            printf("VAR: '%s'.\n", name.c_str());
+        }
+        else if (sym.is == DEF_FUN) {
+            printf("FUN: '%s', RET: %d.\n", name.c_str(), sym.func.return_type);
+        }
+    }
+}
+
 Ast* Parser::default_ast(Ast* ast) {
     ast->line = peek()->line;
     ast->file = filepath;
@@ -224,7 +237,6 @@ Ast_Scope* Parser::parse_scope() {
     while (!check(T_RCURLY) && !is_end()) 
         scope->declerations.push_back(parse_decleration());
 
-    previous_scope->children_scopes.push_back(*current_scope);
     delete current_scope;
     current_scope = previous_scope;
 
@@ -265,7 +277,6 @@ Ast_Scope* Parser::parse_function_scope(bool return_needed, Vector<Ast_VarDecler
     if (expected_return && return_needed && return_warning_enabled)
         parser_warning(peek(), "Need return statement in function");
 
-    previous_scope->children_scopes.push_back(*current_scope);
     delete current_scope;
     current_scope = previous_scope;
 
@@ -305,10 +316,13 @@ Ast_Function* Parser::parse_function() {
     if (match(T_POINTER_ARROW)) {
         function->return_type = parse_type();
         sym.func.return_type = function->return_type;
+        current_function_return = function->return_type;
     } 
+    else
+        current_function_return = AST_TYPE_VOID;
 
     sym.is = DEF_FUN;
-    current_scope->add(function->ident, sym);
+    current_scope->add(String(function->ident), sym);
 
     consume(T_LCURLY, "Expected '{' before function body");  
     function->scope = parse_function_scope((function->return_type != AST_TYPE_VOID) ? true : false, function->args);
@@ -354,11 +368,7 @@ Ast_ReturnStatement* Parser::parse_return() {
 
     if (!current_scope->previous)
         throw parser_error(peek(), "Return statement may only be in a function");
-
-    Symbol sym = current_scope->previous->last;
-    AstDataType expected_type = sym.func.return_type;
-
-    return AST_NEW(Ast_ReturnStatement, expression, expected_type);
+    return AST_NEW(Ast_ReturnStatement, expression, current_function_return);
 }
 
 Ast_VarDecleration* Parser::parse_variable_decleration() {
