@@ -17,4 +17,6 @@
 - [ ] Hex Support
 - [ ] Code generator needs to support different equal operators.
 - [ ] Clean up parser.
-- [ ] Add copyright to files.
+- [x] Add copyright to files.
+- [x] Setup release and debug builds for cmake.
+- [ ] Create tests for specific functions of the language.

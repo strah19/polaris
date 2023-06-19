@@ -2,6 +2,9 @@ cmake_minimum_required(VERSION 3.10)
 
 project(POLARIS VERSION 1.0)
 
+set(CMAKE_CXX_FLAGS_DEBUG_INIT "-Wall -Wextra")
+set(CMAKE_CXX_FLAGS_RELEASE_INIT "-O -O3")
+
 configure_file(${PROJECT_SOURCE_DIR}/include/config.h.in ${PROJECT_SOURCE_DIR}/include/config.h)
 
 include_directories(include)

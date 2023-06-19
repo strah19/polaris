@@ -1,19 +1,13 @@
 /**
-* @file debug.c
-* @author strah19
-* @date July 12, 2022
-* @version 1.0
-*
-* @section LICENSE
-*
-* This program is free software; you can redistribute it and/or
-* modify it under the terms of the MIT License as published
-* by the Free Software Foundation.
-*
-* @section DESCRIPTION
-*
-* Helper functions to view what the virtual machine is actually doing.
-*/
+ * Copyright (C) 2023 Strahinja Marinkovic - All Rights Reserved
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the MIT License as
+ * published by the Free Software Foundation.
+ *
+ * You should have received a copy of the MIT License along with
+ * this program. If not, see https://opensource.org/license/mit/
+ */
 
 #include "debug.h"
 #include "opcodes.h"

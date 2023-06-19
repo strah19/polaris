@@ -5,3 +5,7 @@
 - It is 12:02 AM, I solved the above issue by just having a variable keep track of the current function return type being parsed (it is only one at any given time).
 - I would like to clean up the parser some day, probably not today (maybe at work...) but it could use some house keeping. It has been added to [[todo]].
 - I also want to put some copyright comments in each file ([[todo]]).
+- I want to start to test the speed of the compiler and virtual machine, I need to figure out how to set up a debug and release mode from cmake [[todo]].
+- Added copyright and license notice in all files.
+- I think I should start working on lists. I'm not sure if I want to represent them as pointers in polaris but that's how it will be internally.
+	- Possible syntax of lists: a : int [5] = {1, 2, 3, 4, 5};
