@@ -1,0 +1,7 @@
+NL : char constant = '\n';
+
+foo : () {
+    print "a", NL;
+}
+
+foo();

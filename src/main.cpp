@@ -76,7 +76,7 @@ void run_src_file(const char* filepath) {
     semantic_checker(parser.get_unit());
 
     if (!parser.has_errors() && !semantic_error_count()) {
-        CodeGenerator generator(parser.get_unit(), parser.get_functions(), parser.get_scope());
+        CodeGenerator generator(parser.get_unit(), parser.get_functions());
         generator.run();
     #ifdef BENCHMARK_DEBUG
         compiler_benchmark.stop();

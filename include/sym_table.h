@@ -1,0 +1,50 @@
+/**
+ * Copyright (C) 2023 Strahinja Marinkovic - All Rights Reserved
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the MIT License as
+ * published by the Free Software Foundation.
+ *
+ * You should have received a copy of the MIT License along with
+ * this program. If not, see https://opensource.org/license/mit/
+ */
+
+#ifndef SYMBOL_TABLE_H
+#define SYMBOL_TABLE_H
+
+#include "ast.h"
+
+enum DefinitionType {
+    DEF_VAR, DEF_FUN, DEF_CLS, DEF_NONE
+};
+
+//Other definitions would go here too like procedures and classes.
+struct SymbolDefinition {
+    DefinitionType type = DEF_NONE;
+    struct {
+        AstDataType var_type = AST_TYPE_NONE;
+        AstSpecifierType specifiers = AST_SPECIFIER_NONE;
+    } var;
+
+    struct {
+        AstDataType return_type = AST_TYPE_VOID;
+        Vector<Ast_Expression*> default_values;
+        size_t arg_count = 0;        
+    } func;
+};
+
+struct Symbol {
+    Symbol* left;
+    Symbol* right;
+    SymbolDefinition defn;
+    char* name;
+    char* info;
+};
+
+Symbol* search_symbol_table(const char* name, Symbol* root);
+
+Symbol* enter_symbol(const char* name, Symbol** root);
+
+void free_symbol_table(Symbol* root);
+
+#endif

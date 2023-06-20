@@ -12,7 +12,7 @@
 #include "code_generator.h"
 #include <string.h>
 
-CodeGenerator::CodeGenerator(Ast_TranslationUnit* root, Vector<int>* function_indices, Scope* scope) : root(root), function_indices(function_indices), scope(scope) { }
+CodeGenerator::CodeGenerator(Ast_TranslationUnit* root, Vector<int>* function_indices) : root(root), function_indices(function_indices) { }
 
 CodeGenerator::~CodeGenerator() {
     bytecode_free(&bytecode);

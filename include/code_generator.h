@@ -31,7 +31,7 @@ struct Reference {
 
 class CodeGenerator {
 public:
-    CodeGenerator(Ast_TranslationUnit* root, Vector<int>* function_indices, Scope* scope);
+    CodeGenerator(Ast_TranslationUnit* root, Vector<int>* function_indices);
     ~CodeGenerator();
     void run();
 
@@ -55,7 +55,6 @@ private:
 private:
     Ast_TranslationUnit* root = nullptr;
     Vector<int>* function_indices = nullptr;
-    Scope* scope = nullptr;
     Bytecode bytecode;
 
     Map<String, Reference> references;
