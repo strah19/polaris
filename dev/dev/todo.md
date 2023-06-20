@@ -18,7 +18,9 @@
 - [ ] Code generator needs to support different equal operators.
 - [ ] Code generator needs to support the default values.
 - [ ] Clean up parser.
-	- [ ] Use different structure for scope, possibly from Faraday.
+	- [x] Use different structure for scope, possibly from Faraday.
+	- [ ] Do some simple function rearrangements and make a few utility functions.
 - [x] Add copyright to files.
 - [x] Setup release and debug builds for cmake.
 - [ ] Create tests for specific functions of the language.
+- [ ] Get rid of String and Vector structure, use regular arrays and char*.

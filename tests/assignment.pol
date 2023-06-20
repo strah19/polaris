@@ -72,7 +72,7 @@ NL : char constant = '\n';
 print ret(5), NL;
 print pow(2, 3), NL;
 print deg_to_rad(90), NL;
-print sin(deg_to_rad(30)), NL;
+print sin(deg_to_rad(25)), NL;
 
 character : char = 'a';
 while (character <= 'z') {

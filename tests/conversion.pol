@@ -1,7 +1,9 @@
 NL : char constant = '\n';
 
-foo : () {
+foo : (c: int) {
     print "a", NL;
+    l := 3;
+    print l, NL;
 }
 
-foo();
+foo(3);

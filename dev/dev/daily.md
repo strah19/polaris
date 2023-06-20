@@ -9,4 +9,7 @@
 - Added copyright and license notice in all files.
 - I think I should start working on lists. I'm not sure if I want to represent them as pointers in polaris but that's how it will be internally.
 	- Possible syntax of lists: a : int [5] = {1, 2, 3, 4, 5};
-- Currently redoing Scopes and using C style symbol table. MAKE A NOTE: At line 401, there is code that needs to be uncommented and fixed. 
+- Currently redoing Scopes and using C style symbol table. MAKE A NOTE: At line 440, there is code that needs to be uncommented and fixed. 
+- I was able to get the other symbol table to work, I just need to make sure default values are working
+#### 6/20/2023
+- Fixed issue with default values. I got rid of the Vector and am using a standard array, I should do this with all the values in the AST.h and remove anything using Vectors.

@@ -13,6 +13,7 @@
 #define PARSER_H
 
 #include "lexer.h"
+#include "sym_table.h"
 #include "ast.h"
 #include <cinttypes>
 
@@ -40,42 +41,16 @@ struct ParserError {
     ParserError(Token* token) : token(token) { }
 };
 
-enum DefinitionType {
-    DEF_VAR, DEF_FUN, DEF_CLS, DEF_NONE
-};
-
-struct VarSymbol {
-    VarSymbol(AstDataType type, AstSpecifierType specifiers) : type(type), specifiers(specifiers) { }
-    VarSymbol() = default;
-    AstDataType type = AST_TYPE_NONE;
-    AstSpecifierType specifiers = AST_SPECIFIER_NONE;
-};
-
-struct FuncSymbol {
-    AstDataType return_type = AST_TYPE_VOID;
-    Vector<Ast_Expression*> default_values;
-    size_t arg_count = 0;
-};
-
-struct Symbol {
-    DefinitionType is;
-
-    VarSymbol var;
-    FuncSymbol func;
-};
-
 struct Scope {
     Scope() = default;
-    Map<String, Symbol> definitions;
+    Symbol* root = nullptr;
     Scope* previous = nullptr;
 
-    Symbol last;
+    SymbolDefinition last;
 
-    void add(const String& name, const Symbol& sym);
-    bool in_scope(const String& name);
-    bool in_any(const String& name);
-    void log();
-    Symbol get(const String& name); 
+    void add(const char* name, SymbolDefinition defn);
+    bool in_any(const char* name);
+    SymbolDefinition get(const char* name); 
 };  
 
 void log_token(Token* token);
@@ -123,7 +98,7 @@ private:
     AstSpecifierType            parser_specifier();
     Ast_ReturnStatement*        parse_return();
     const char*                 parse_identifier(const char* error_msg);
-    Vector<Ast_VarDecleration*> parse_function_arguments(Symbol* sym);
+    Vector<Ast_VarDecleration*> parse_function_arguments(SymbolDefinition* sym);
 
     Ast_Expression* parse_assignment_expression(Ast_Expression* expression, AstEqualType equal);
     Ast_Expression* parse_binary_expression(Ast_Expression* left);

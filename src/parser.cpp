@@ -27,46 +27,28 @@ void log_token(Token* token) {
     printf("token (%d) '%.*s' on line %d.\n", token->type, token->size, token->start, token->line);
 }
 
-void Scope::add(const String& name, const Symbol& sym) {
-    definitions[name] = sym;
-    last = sym;
+void Scope::add(const char* name, SymbolDefinition defn) {
+    Symbol* new_node = enter_symbol(name, defn, &root);
+    last = defn;
 }
 
-bool Scope::in_scope(const String& name) {
-    return (definitions.find(name) != definitions.end());
-}
-
-Symbol Scope::get(const String& name) {
+SymbolDefinition Scope::get(const char* name) {
     Scope* current = this;
     while (current) {
-        if (current->in_scope(name)) return current->definitions[name];
+        Symbol* node = search_symbol_table(name, current->root);
+        if (node) return node->defn;
         current = current->previous;
     }
-    Symbol sym;
-    sym.is = DEF_NONE;
-    return sym;
+    return SymbolDefinition();
 }
 
-bool Scope::in_any(const String& name) {
+bool Scope::in_any(const char* name) {
     Scope* current = this;
     while (current) {
-        if (current->in_scope(name)) return true;
+        if (search_symbol_table(name, current->root)) return true;
         current = current->previous;
     }
     return false;
-}
-
-void Scope::log() {
-    for (auto& def : definitions) {
-        Symbol sym = def.second;
-        String name = def.first;
-        if (sym.is == DEF_VAR) {
-            printf("VAR: '%s'.\n", name.c_str());
-        }
-        else if (sym.is == DEF_FUN) {
-            printf("FUN: '%s', RET: %d.\n", name.c_str(), sym.func.return_type);
-        }
-    }
 }
 
 Ast* Parser::default_ast(Ast* ast) {
@@ -250,9 +232,9 @@ Ast_Scope* Parser::parse_function_scope(bool return_needed, Vector<Ast_VarDecler
     for (int i = 0; i < args.size(); i++) {
         if (current_scope->in_any(args[i]->ident))
             throw parser_error(peek(), "Redefinition of variable in argument");
-        Symbol sym;
-        sym.is = DEF_VAR;
-        sym.var.type = args[i]->type_value;
+        SymbolDefinition sym;
+        sym.type = DEF_VAR;
+        sym.var.var_type = args[i]->type_value;
         sym.var.specifiers = args[i]->specifiers;
         current_scope->add(args[i]->ident, sym);
     }
@@ -298,7 +280,7 @@ Ast_Function* Parser::parse_function() {
     Ast_Function* function = AST_NEW(Ast_Function);
     function->ident = parse_identifier("Expected identifier in function decleration");
 
-    Symbol sym;
+    SymbolDefinition sym;
     if (current_scope->in_any(function->ident))
         throw parser_error(peek(-1), "Redecleration of function");
 
@@ -315,8 +297,8 @@ Ast_Function* Parser::parse_function() {
     else
         current_function_return = AST_TYPE_VOID;
 
-    sym.is = DEF_FUN;
-    current_scope->add(String(function->ident), sym);
+    sym.type = DEF_FUN;
+    current_scope->add(function->ident, sym);
 
     consume(T_LCURLY, "Expected '{' before function body");  
     function->scope = parse_function_scope((function->return_type != AST_TYPE_VOID) ? true : false, function->args);
@@ -324,7 +306,7 @@ Ast_Function* Parser::parse_function() {
     return function;
 }
 
-Vector<Ast_VarDecleration*> Parser::parse_function_arguments(Symbol* sym) {
+Vector<Ast_VarDecleration*> Parser::parse_function_arguments(SymbolDefinition* sym) {
     Vector<Ast_VarDecleration*> args;
     bool expect_default = false;
     locals.clear();
@@ -345,8 +327,7 @@ Vector<Ast_VarDecleration*> Parser::parse_function_arguments(Symbol* sym) {
         }
         else if (expect_default) 
             throw parser_error(peek(), "Default value for argument must be at end of function");
-        
-        sym->func.default_values.push_back(expression);
+        sym->func.default_values[sym->func.arg_count - 1] = expression;
         args.push_back(AST_NEW(Ast_VarDecleration, id, expression, var_type, spec)); 
         if (!check(T_RPAR)) 
             consume(T_COMMA, "Expected ',' between function arguments");
@@ -381,9 +362,9 @@ Ast_VarDecleration* Parser::parse_variable_decleration() {
             expression = parse_expression();
         }
         consume(T_SEMICOLON, "Expected ';' in variable decleration");
-        Symbol sym;
-        sym.is = DEF_VAR;
-        sym.var.type = var_type;
+        SymbolDefinition sym;
+        sym.type = DEF_VAR;
+        sym.var.var_type = var_type;
         sym.var.specifiers = spec;
         current_scope->add(id, sym);
         return AST_NEW(Ast_VarDecleration, id, expression, var_type, AST_SPECIFIER_NONE);
@@ -394,9 +375,9 @@ Ast_VarDecleration* Parser::parse_variable_decleration() {
     AstDataType expr_type = get_expression_type(expression);
 
     consume(T_SEMICOLON, "Expected ';' in variable decleration");
-    Symbol sym;
-    sym.is = DEF_VAR;
-    sym.var.type = expr_type;
+    SymbolDefinition sym;
+    sym.type = DEF_VAR;
+    sym.var.var_type = expr_type;
     current_scope->add(id, sym);
     return AST_NEW(Ast_VarDecleration, id, expression, expr_type, AST_SPECIFIER_NONE);
 }
@@ -436,7 +417,7 @@ Ast_ElifStatement* Parser::parse_elif() {
 }
 
 Ast_ElseStatement* Parser::parse_else() {
-    if (current_scope->previous->last.is == DEF_FUN) {
+    if (current_scope->previous->last.type == DEF_FUN) {
         return_warning_enabled = false;
     }
 
@@ -486,7 +467,7 @@ Ast_Expression* Parser::parse_assignment_expression(Ast_Expression* expression, 
         if (id->prim_type != AST_PRIM_ID)
             throw parser_error(peek(-1), "Expected Lvalue in assignment");
 
-        Symbol sym = current_scope->get(std::string(id->ident));
+        SymbolDefinition sym = current_scope->get(id->ident);
         if ((sym.var.specifiers & AST_SPECIFIER_CONST))
             throw parser_error(peek(-1), "Identifier is a constant, it cannot be modified");
 
@@ -499,7 +480,7 @@ Ast_Expression* Parser::parse_assignment_expression(Ast_Expression* expression, 
             throw parser_error(peek(-1), "Expected an identifier in assignment expression");
         auto id = AST_CAST(Ast_PrimaryExpression, past_assign->value);
 
-        Symbol sym = current_scope->get(std::string(id->ident));
+        SymbolDefinition sym = current_scope->get(id->ident);
         if ((sym.var.specifiers & AST_SPECIFIER_CONST))
             throw parser_error(peek(-1), "Identifier is a constant, it cannot be modified");
 
@@ -554,11 +535,11 @@ Ast_Expression* Parser::parse_primary_expression() {
     }
     case T_IDENTIFIER: {
         char* id = create_string((char*) peek(-1)->start, peek(-1)->size);
-        Symbol symbol = current_scope->get(std::string(id));
+        SymbolDefinition symbol = current_scope->get(id);
 
-        if (symbol.is == DEF_VAR) {
+        if (symbol.type == DEF_VAR) {
             primary->prim_type = AST_PRIM_ID;
-            primary->type_value = symbol.var.type;
+            primary->type_value = symbol.var.var_type;
             primary->ident = (const char*) id;
             //Marks the use of a variable if it is local to the function it is in.
             for (int i = 0; i < locals.size(); i++) {
@@ -568,7 +549,7 @@ Ast_Expression* Parser::parse_primary_expression() {
                 }
             }
         }
-        else if (symbol.is == DEF_FUN) {
+        else if (symbol.type == DEF_FUN) {
             primary->prim_type = AST_PRIM_CALL;
             primary->call = new Ast_FunctionCall();
             primary->call->ident = (const char*) id;
