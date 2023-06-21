@@ -24,3 +24,5 @@
 - [x] Setup release and debug builds for cmake.
 - [ ] Create tests for specific functions of the language.
 - [ ] Get rid of String and Vector structure, use regular arrays and char*.
+- [ ] Create a buffer output system so VM is not constantly stopping execution to output to screen.
+- [ ] COMMENT LINE 152, semantic.cpp

@@ -10,6 +10,7 @@
  */
 
 #include "code_generator.h"
+#include "semantic.h"
 #include <string.h>
 
 CodeGenerator::CodeGenerator(Ast_TranslationUnit* root, Vector<int>* function_indices) : root(root), function_indices(function_indices) { }

@@ -120,6 +120,7 @@ private:
     uint32_t current = 0;
     const char* filepath = nullptr;
     Ast_TranslationUnit* unit = nullptr;
+
     Vector<int> function_indices;
     Vector<String> locals;
 

@@ -13,3 +13,6 @@
 - I was able to get the other symbol table to work, I just need to make sure default values are working
 #### 6/20/2023
 - Fixed issue with default values. I got rid of the Vector and am using a standard array, I should do this with all the values in the AST.h and remove anything using Vectors.
+- I realized I was not doing any semantic checks on arguments so right now I am trying to find a solution to getting access to function data from a function call.
+- A semantic bug has been found, it crashes when it tries to convert an identifier (I think).
+- I think I need to create a CAST opcode. So when the semantic analyzer sees an id that needs to be casted, it adds that info to its AST and then the code generator sees that and adds a cast opcode. 

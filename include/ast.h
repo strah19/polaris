@@ -136,11 +136,14 @@ struct Ast_Expression : Ast {
     virtual ~Ast_Expression() {    }
 };
 
+struct Ast_Function;
+
 struct Ast_FunctionCall {
     Ast_FunctionCall() { }
-    Ast_FunctionCall(const char* ident, const Vector<Ast_Expression*>& args) : ident(ident), args(args) { }
+    Ast_FunctionCall(const char* ident, Vector<Ast_Expression*> args, Ast_Function* func_ptr) : ident(ident), args(args), func_ptr(func_ptr) { }
     ~Ast_FunctionCall() { }
     const char* ident;
+    Ast_Function* func_ptr;
     Vector<Ast_Expression*> args;
 };
 
@@ -166,6 +169,7 @@ struct Ast_PrimaryExpression : public Ast_Expression {
 
     AstPrimaryType prim_type = AST_PRIM_NONE;
     AstDataType type_value = AST_TYPE_NONE;
+    AstDataType casted_type = AST_TYPE_NONE;
 
     bool local = false;
     int local_index = 0;

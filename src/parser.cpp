@@ -298,6 +298,7 @@ Ast_Function* Parser::parse_function() {
         current_function_return = AST_TYPE_VOID;
 
     sym.type = DEF_FUN;
+    sym.func.function_ptr = function;
     current_scope->add(function->ident, sym);
 
     consume(T_LCURLY, "Expected '{' before function body");  
@@ -553,6 +554,8 @@ Ast_Expression* Parser::parse_primary_expression() {
             primary->prim_type = AST_PRIM_CALL;
             primary->call = new Ast_FunctionCall();
             primary->call->ident = (const char*) id;
+            primary->call->func_ptr = symbol.func.function_ptr;
+            
             consume(T_LPAR, "Expected '(' in function call");
 
             while (!check(T_RPAR)) {

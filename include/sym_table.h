@@ -27,7 +27,8 @@ struct VarSymbol {
 struct FunctionSymbol {
     AstDataType return_type = AST_TYPE_VOID;
     Ast_Expression* default_values[MAX_ARGS];
-    size_t arg_count = 0;        
+    size_t arg_count = 0;      
+    Ast_Function* function_ptr;  
 };
 
 //Other definitions would go here too like procedures and classes.

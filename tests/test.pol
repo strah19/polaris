@@ -1,0 +1,6 @@
+foo : () -> float {
+    return 1.3;
+}
+
+s : int = foo() + 2.4;
+print s, '\n';
