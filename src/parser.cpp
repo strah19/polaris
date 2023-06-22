@@ -220,7 +220,7 @@ Ast_Scope* Parser::parse_scope() {
     return scope;
 }
 
-Ast_Scope* Parser::parse_function_scope(bool return_needed, Vector<Ast_VarDecleration*> args) {
+Ast_Scope* Parser::parse_function_scope(bool return_needed, Ast_FunctionArgument* args) {
     Ast_Scope* scope = AST_NEW(Ast_Scope);
 
     Scope* previous_scope = current_scope;
@@ -229,14 +229,14 @@ Ast_Scope* Parser::parse_function_scope(bool return_needed, Vector<Ast_VarDecler
 
     return_warning_enabled = true;
 
-    for (int i = 0; i < args.size(); i++) {
-        if (current_scope->in_any(args[i]->ident))
+    for (int i = 0; i < args->arg_count; i++) {
+        if (current_scope->in_any(args->args[i]->ident))
             throw parser_error(peek(), "Redefinition of variable in argument");
         SymbolDefinition sym;
         sym.type = DEF_VAR;
-        sym.var.var_type = args[i]->type_value;
-        sym.var.specifiers = args[i]->specifiers;
-        current_scope->add(args[i]->ident, sym);
+        sym.var.var_type = args->args[i]->type_value;
+        sym.var.specifiers = args->args[i]->specifiers;
+        current_scope->add(args->args[i]->ident, sym);
     }
 
     bool expected_return = true;
@@ -302,15 +302,16 @@ Ast_Function* Parser::parse_function() {
     current_scope->add(function->ident, sym);
 
     consume(T_LCURLY, "Expected '{' before function body");  
-    function->scope = parse_function_scope((function->return_type != AST_TYPE_VOID) ? true : false, function->args);
+    function->scope = parse_function_scope((function->return_type != AST_TYPE_VOID) ? true : false, &function->args);
     
     return function;
 }
 
-Vector<Ast_VarDecleration*> Parser::parse_function_arguments(SymbolDefinition* sym) {
-    Vector<Ast_VarDecleration*> args;
+Ast_FunctionArgument Parser::parse_function_arguments(SymbolDefinition* sym) {
+    Ast_FunctionArgument args;
     bool expect_default = false;
     locals.clear();
+    int arg_count = 0;
     while (!check(T_RPAR)) {
         const char* id = parse_identifier("Expected identifier in function argument");
         locals.push_back(id);
@@ -329,7 +330,8 @@ Vector<Ast_VarDecleration*> Parser::parse_function_arguments(SymbolDefinition* s
         else if (expect_default) 
             throw parser_error(peek(), "Default value for argument must be at end of function");
         sym->func.default_values[sym->func.arg_count - 1] = expression;
-        args.push_back(AST_NEW(Ast_VarDecleration, id, expression, var_type, spec)); 
+
+        args.args[args.arg_count++] = AST_NEW(Ast_VarDecleration, id, expression, var_type, spec); 
         if (!check(T_RPAR)) 
             consume(T_COMMA, "Expected ',' between function arguments");
     }
@@ -558,31 +560,33 @@ Ast_Expression* Parser::parse_primary_expression() {
             
             consume(T_LPAR, "Expected '(' in function call");
 
+            int arg_count = 0;
             while (!check(T_RPAR)) {
-                primary->call->args.push_back(parse_expression());
+                primary->call->args[arg_count++] = parse_expression();
                 if (!check(T_RPAR)) 
                     consume(T_COMMA, "Expected ',' between function arguments");
             }
 
-            if (primary->call->args.size() != symbol.func.arg_count) {
-                if (primary->call->args.size() > symbol.func.arg_count)
+            if (arg_count != symbol.func.arg_count) {
+                if (arg_count > symbol.func.arg_count)
                     throw parser_error(peek(), "Too many arguments in function call");
                 else {
-                    int i = primary->call->args.size();
-                    while (primary->call->args.size() < symbol.func.arg_count) {
+                    int i = arg_count;
+                    while (arg_count < symbol.func.arg_count) {
                         if (symbol.func.default_values[i]) {
-                            primary->call->args.push_back(symbol.func.default_values[i]);
+                            primary->call->args[arg_count++] = symbol.func.default_values[i];
                         }
                         else 
                             throw parser_error(peek(), "Expected argument in function call");
                         i++;
                     }
 
-                    if (primary->call->args.size() != symbol.func.arg_count)
+                    if (arg_count != symbol.func.arg_count)
                         throw parser_error(peek(), "Not enough arguments in function call");
                 }
             }
             consume(T_RPAR, "Expected ')' in function call");
+            primary->call->arg_count = arg_count;
             primary->type_value = symbol.func.return_type;
         }
         else {

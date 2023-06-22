@@ -19,15 +19,15 @@
 #include "mem.h"
 
 typedef enum {
-    TYPE_INT,
-    TYPE_FLOAT,
-    TYPE_BOOLEAN,
-    TYPE_CHAR,
+    TYPE_FLOAT = 1,
+    TYPE_BOOLEAN = 2,
+    TYPE_INT = 3,
+    TYPE_CHAR = 5,
     TYPE_OBJ
 } ValueType;
 
 typedef enum {
-    OBJ_STRING
+    OBJ_STRING = 4
 } ObjectType;
 
 typedef struct {

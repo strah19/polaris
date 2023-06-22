@@ -174,11 +174,14 @@ void check_expression(Ast_Expression* expression, AstDataType* current_expr_type
 
             if (can_it_be != AST_TYPE_NONE) {
                 if (can_convert(can_it_be, primary->type_value)) {
-                    printf("BEFORE CONVERSION: PRIM: %d, CURRENT: %d, CAN: %d.\n", primary->type_value, *current_expr_type, can_it_be);
-                    convert_primary(primary, can_it_be);
-                    primary->type_value = can_it_be;
+                    if (primary->prim_type == AST_PRIM_ID || primary->prim_type == AST_PRIM_CALL) {
+                        primary->casted_type = can_it_be;
+                    }
+                    else {
+                        convert_primary(primary, can_it_be);
+                        primary->type_value = can_it_be;
+                    }
                     *current_expr_type = can_it_be;
-                    printf("AFTER CONVERSION: PRIM: %d, CURRENT: %d, CAN: %d.\n\n", primary->type_value, *current_expr_type, can_it_be);
                 }
                 else
                     report_semantic_error(primary, "Unable to convert types");
@@ -193,7 +196,14 @@ void check_expression(Ast_Expression* expression, AstDataType* current_expr_type
                 }
             }
             if (primary->prim_type == AST_PRIM_CALL) {
-                
+                Ast_Function* func_ptr = primary->call->func_ptr;
+                for (int i = 0; i < func_ptr->args.arg_count; i++) {
+                    AstDataType arg_type = AST_TYPE_NONE;
+                    check_expression(primary->call->args[i], &arg_type, func_ptr->args.args[i]->type_value);
+                    if (!can_convert(func_ptr->args.args[i]->type_value, arg_type)) {
+                        report_semantic_error(primary, "Type in argument does not match parameter type");
+                    }
+                }
             }
         }
         else if (primary->prim_type == AST_PRIM_NESTED) {

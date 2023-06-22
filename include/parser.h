@@ -88,7 +88,7 @@ private:
     Ast_ExpressionStatement*    parse_expression_statement();
     Ast_PrintStatement*         parse_print_statement();
     Ast_Scope*                  parse_scope();
-    Ast_Scope*                  parse_function_scope(bool return_needed, Vector<Ast_VarDecleration*> args);
+    Ast_Scope*                  parse_function_scope(bool return_needed, Ast_FunctionArgument* args);
     Ast_IfStatement*            parse_if();
     Ast_ElifStatement*          parse_elif();
     Ast_ElseStatement*          parse_else();
@@ -98,7 +98,7 @@ private:
     AstSpecifierType            parser_specifier();
     Ast_ReturnStatement*        parse_return();
     const char*                 parse_identifier(const char* error_msg);
-    Vector<Ast_VarDecleration*> parse_function_arguments(SymbolDefinition* sym);
+    Ast_FunctionArgument parse_function_arguments(SymbolDefinition* sym);
 
     Ast_Expression* parse_assignment_expression(Ast_Expression* expression, AstEqualType equal);
     Ast_Expression* parse_binary_expression(Ast_Expression* left);

@@ -16,6 +16,7 @@
 #include <stdio.h>
 #include <vector>
 #include <map>
+#include "common.h"
 #include <string>
 
 //These are temporary until custom data structures are made.
@@ -140,11 +141,11 @@ struct Ast_Function;
 
 struct Ast_FunctionCall {
     Ast_FunctionCall() { }
-    Ast_FunctionCall(const char* ident, Vector<Ast_Expression*> args, Ast_Function* func_ptr) : ident(ident), args(args), func_ptr(func_ptr) { }
     ~Ast_FunctionCall() { }
     const char* ident;
     Ast_Function* func_ptr;
-    Vector<Ast_Expression*> args;
+    uint32_t arg_count = 0;
+    Ast_Expression* args[MAX_ARGS];
 };
 
 struct Ast_Cast {
@@ -330,20 +331,23 @@ struct Ast_VarDecleration : public Ast_Decleration {
     Ast_Expression* expression = nullptr;
 };
 
+struct Ast_FunctionArgument {
+    int arg_count = 0;
+    Ast_VarDecleration* args[MAX_ARGS];
+};
+
 struct Ast_Function : public Ast_Decleration {
     Ast_Function() { type = AST_FUNCTION; }
-    Ast_Function(const char* ident, AstDataType return_type, const Vector<Ast_VarDecleration*> args, Ast_Scope* scope) : 
-        ident(ident), return_type(return_type), args(args), scope(scope) { type = AST_FUNCTION; }
     ~Ast_Function() override {
-        for (auto& arg : args) {
-            delete arg;
+        for (int i = 0; i < args.arg_count; i++) {
+            delete args.args[i];
         }
         delete scope;
     }
 
     const char* ident = nullptr;
     AstDataType return_type = AST_TYPE_VOID;
-    Vector<Ast_VarDecleration*> args;
+    Ast_FunctionArgument args;
     Ast_Scope* scope = nullptr;
 };
 

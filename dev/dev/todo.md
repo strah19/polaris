@@ -26,3 +26,5 @@
 - [ ] Get rid of String and Vector structure, use regular arrays and char*.
 - [ ] Create a buffer output system so VM is not constantly stopping execution to output to screen.
 - [ ] COMMENT LINE 152, semantic.cpp
+- [ ] Have clearer error messages
+- [ ] Have more warning messages

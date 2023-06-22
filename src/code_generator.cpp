@@ -207,15 +207,25 @@ void CodeGenerator::generate_expression(Ast_Expression* expression) {
                 write(references[prim->ident].address, prim); //writes the address of the references
             }
 
+            if (prim->casted_type != AST_TYPE_NONE) {
+                write(OP_CAST, prim);
+                write(prim->casted_type, prim);
+            }
         }
         else if (prim->prim_type == AST_PRIM_CALL) {
-            for (int i = prim->call->args.size() - 1; i >= 0 ; i--) {
+            Ast_Function* func_ptr = prim->call->func_ptr;
+            for (int i = func_ptr->args.arg_count - 1; i >= 0 ; i--) {
                 generate_expression(prim->call->args[i]);
             }
 
             write(OP_CALL, prim);
             write(function_pointers[prim->call->ident], prim);
-            write((uint32_t) prim->call->args.size(), prim);
+            write((uint32_t) func_ptr->args.arg_count, prim);
+
+            if (prim->casted_type != AST_TYPE_NONE) {
+                write(OP_CAST, prim);
+                write(prim->casted_type, prim);
+            }
         }
     }
     else if (expression->type == AST_ASSIGNMENT) {

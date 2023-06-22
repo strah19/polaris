@@ -23,5 +23,6 @@ print a() + b(), NL;
 
 c(1);
 n : float = 2.4;
-print (2 * n) + 1, NL;
+aa : int = (2 * n) + 1;
+print aa, NL;
 d('d' + 1 * 2);

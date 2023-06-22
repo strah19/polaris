@@ -43,7 +43,8 @@
               }
             }
           }
-        ]
+        ],
+        "currentTab": 2
       }
     ],
     "direction": "vertical"
@@ -109,7 +110,7 @@
             "state": {
               "type": "backlink",
               "state": {
-                "file": "daily.md",
+                "file": "todo.md",
                 "collapseAll": false,
                 "extraContext": false,
                 "sortOrder": "alphabetical",
@@ -126,7 +127,7 @@
             "state": {
               "type": "outgoing-link",
               "state": {
-                "file": "daily.md",
+                "file": "todo.md",
                 "linksCollapsed": false,
                 "unlinkedCollapsed": true
               }
@@ -149,7 +150,7 @@
             "state": {
               "type": "outline",
               "state": {
-                "file": "daily.md"
+                "file": "todo.md"
               }
             }
           }
@@ -170,11 +171,11 @@
       "command-palette:Open command palette": false
     }
   },
-  "active": "7db76dda85ad9030",
+  "active": "ed0c325e7ec24298",
   "lastOpenFiles": [
+    "daily.md",
     "todo.md",
     "issues.md",
-    "daily.md",
     "Untitled"
   ]
 }

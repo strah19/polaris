@@ -136,6 +136,16 @@ bool vm_run(Bytecode* bytecode) {
                 continue;
                 break;
             }
+            case OP_CAST: {
+                Value v = vm_pop();
+                vm.ip++;
+                int old_type = v.type;
+                v.type = vm.bytecode->code[vm.ip];
+                if (v.type == TYPE_FLOAT && old_type == TYPE_INT) v.float_value = v.int_value;
+                else if (v.type == TYPE_INT && old_type == TYPE_FLOAT) v.int_value = v.float_value;
+                vm_push(v);
+                break;
+            }
             case OP_RET: {
                 vm.top = vm.stack + vm.fp;
                 vm.ip = vm_pop().int_value;

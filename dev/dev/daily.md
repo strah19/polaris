@@ -16,3 +16,5 @@
 - I realized I was not doing any semantic checks on arguments so right now I am trying to find a solution to getting access to function data from a function call.
 - A semantic bug has been found, it crashes when it tries to convert an identifier (I think).
 - I think I need to create a CAST opcode. So when the semantic analyzer sees an id that needs to be casted, it adds that info to its AST and then the code generator sees that and adds a cast opcode. 
+#### 6/21/2023
+- The issue has been resolved, I created a CAST opcode that will change the type of a variable once it is on the stack. Currently adding the semantic checks for arguments.
