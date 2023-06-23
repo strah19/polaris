@@ -20,8 +20,6 @@ extern "C" {
     #include "bytecode.h"
 }
 
-using FunctionScope = Map<String, int>;
-
 struct Reference {
     Reference() = default;
     Reference(int address) : address(address) { init = true; }
@@ -58,7 +56,6 @@ private:
     Bytecode bytecode;
 
     Map<String, Reference> references;
-    Map<String, int> function_pointers;
     int max_references_address = 0;
 };
 

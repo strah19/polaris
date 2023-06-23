@@ -349,6 +349,8 @@ struct Ast_Function : public Ast_Decleration {
     AstDataType return_type = AST_TYPE_VOID;
     Ast_FunctionArgument args;
     Ast_Scope* scope = nullptr;
+    
+    int code_generator_address = 0;
 };
 
 struct Ast_TranslationUnit : public Ast {

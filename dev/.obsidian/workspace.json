@@ -4,16 +4,16 @@
     "type": "split",
     "children": [
       {
-        "id": "24476b5aa6aaf3be",
+        "id": "95f0d3c5f41b01c6",
         "type": "tabs",
         "children": [
           {
-            "id": "82fb8edaaea791ab",
+            "id": "633c38f592cd53bf",
             "type": "leaf",
             "state": {
               "type": "markdown",
               "state": {
-                "file": "dev/daily.md",
+                "file": "dev/todo.md",
                 "mode": "source",
                 "source": false
               }
@@ -85,7 +85,7 @@
             "state": {
               "type": "backlink",
               "state": {
-                "file": "dev/daily.md",
+                "file": "dev/todo.md",
                 "collapseAll": false,
                 "extraContext": false,
                 "sortOrder": "alphabetical",
@@ -102,7 +102,7 @@
             "state": {
               "type": "outgoing-link",
               "state": {
-                "file": "dev/daily.md",
+                "file": "dev/todo.md",
                 "linksCollapsed": false,
                 "unlinkedCollapsed": true
               }
@@ -125,11 +125,12 @@
             "state": {
               "type": "outline",
               "state": {
-                "file": "dev/daily.md"
+                "file": "dev/todo.md"
               }
             }
           }
-        ]
+        ],
+        "currentTab": 2
       }
     ],
     "direction": "horizontal",
@@ -146,10 +147,10 @@
       "command-palette:Open command palette": false
     }
   },
-  "active": "82fb8edaaea791ab",
+  "active": "633c38f592cd53bf",
   "lastOpenFiles": [
-    "dev/issues.md",
     "dev/daily.md",
-    "dev/todo.md"
+    "dev/todo.md",
+    "dev/issues.md"
   ]
 }

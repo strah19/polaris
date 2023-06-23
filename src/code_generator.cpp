@@ -54,7 +54,7 @@ void CodeGenerator::generate_from_ast(Ast* ast) {
 }
 
 void CodeGenerator::generate_function(Ast_Function* function) {
-    function_pointers[function->ident] = bytecode.count;  
+    function->code_generator_address = bytecode.count;
 
     generate_scope(function->scope);
     if (bytecode.code[bytecode.count - 1] != OP_RETV)
@@ -219,7 +219,7 @@ void CodeGenerator::generate_expression(Ast_Expression* expression) {
             }
 
             write(OP_CALL, prim);
-            write(function_pointers[prim->call->ident], prim);
+            write(func_ptr->code_generator_address, prim);
             write((uint32_t) func_ptr->args.arg_count, prim);
 
             if (prim->casted_type != AST_TYPE_NONE) {

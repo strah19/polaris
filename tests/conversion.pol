@@ -17,6 +17,10 @@ d : (w: char) {
     print w, NL;
 }
 
+f : () {
+    
+}
+
 print a(), NL;
 print b(), NL;
 print a() + b(), NL;
