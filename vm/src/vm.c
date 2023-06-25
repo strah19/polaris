@@ -88,6 +88,10 @@ bool vm_run(Bytecode* bytecode) {
                 value_print(vm_pop(), false);
                 break;
             }
+            case OP_PUSH: {
+                vm_push(INT_VALUE(vm.bytecode->code[++vm.ip]));
+                break;
+            }
             case OP_HALT: {
                 run = false;
                 break;
@@ -196,13 +200,47 @@ bool vm_run(Bytecode* bytecode) {
                 vm_push(a);
                 break;
             }
-            case OP_ADD: BINARY(+); break;
+            case OP_ADD: {
+                Value v = vm_peek(0);
+                if (v.type == TYPE_OBJ && v.obj->type == OBJ_STRING) {
+                    Value a = vm_pop();
+                    Value b = vm_pop();
+                    Value dest;
+                    dest.type = TYPE_OBJ;
+                    dest.obj = ALLOCATE_OBJ(ObjString, OBJ_STRING);
+                    AS_STRING(dest)->chars = ALLOC_STR(AS_STRING(b)->len + AS_STRING(a)->len + 1);
+                    strcpy(AS_STRING(dest)->chars, AS_STRING(b)->chars);
+                    strcat(AS_STRING(dest)->chars, AS_STRING(a)->chars);
+                    vm_push(dest);
+                }
+                else
+                    BINARY(+); 
+                break;
+            } 
             case OP_MIN: BINARY(-); break;
             case OP_MUL: BINARY(*); break;
             case OP_DIV: BINARY(/); break;
             case OP_MOD: INT_BINARY(%); break;
-            case OP_EQL: BINARY(==); break;
-            case OP_NEQ: BINARY(!=); break;
+            case OP_EQL: {
+                Value v = vm_peek(0);
+                if (v.type == TYPE_OBJ && v.obj->type == OBJ_STRING) {
+                    bool dest = (strcmp(AS_STRING(vm_pop())->chars, AS_STRING(vm_pop())->chars) == 0) ? true : false;
+                    vm_push(BOOLEAN_VALUE(dest));
+                }
+                else
+                    BINARY(==); 
+                break;
+            }
+            case OP_NEQ: {
+                Value v = vm_peek(0);
+                if (v.type == TYPE_OBJ && v.obj->type == OBJ_STRING) {
+                    bool dest = (strcmp(AS_STRING(vm_pop())->chars, AS_STRING(vm_pop())->chars) == 0) ? false : true;
+                    vm_push(BOOLEAN_VALUE(dest));
+                }
+                else
+                    BINARY(!=); 
+                break;
+            }
             case OP_LTE: BINARY(<=); break;
             case OP_GTE: BINARY(>=); break;
             case OP_LT: BINARY(<); break;

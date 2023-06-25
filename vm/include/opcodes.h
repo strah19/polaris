@@ -45,6 +45,7 @@ enum Opcode {
     OP_RETV,
     OP_CALL,
     OP_CAST,
+    OP_PUSH,
     OP_HALT
 };
 

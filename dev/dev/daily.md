@@ -20,3 +20,14 @@
 - The issue has been resolved, I created a CAST opcode that will change the type of a variable once it is on the stack. Currently adding the semantic checks for arguments.
 #### 6/22/2023
 - Got rid of more Vectors in the Ast.h
+#### 6/23/2023
+- Currently I am making sure that String operations are functional, I am adding the ability for the VM to add strings and compare them.
+- For some reason, the else in test.pol is not working. Must investigate. I have investigated, seems the issue only occurs when the else is in the main scope....
+- The issue with the else is fixed, there was a nullptr that was not being checked causing a crash. Also the string operations are now working well.
+- I created a scope.h and a scope.cpp file to put all the code in there.
+#### 6/24/2023
+- Cleaning up the parser. Cleaned up some return type stuff.
+- If there is conditional code in a function and return statement is not called and a value is expected to be returned, the code generator will return a 0 no matter what the type is and there will be a parser warning.
+- Added the parser warning for returns in control flow.
+#### 6/25/2023
+- 

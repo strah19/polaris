@@ -1,2 +1,3 @@
 - Escape characters in strings are currently not being parsed. For example, "hello\n" is not hello followed by a newline, it is literally "hello\n".
 - Semantics does not check if type is VOID and can have a return.
+- ****RESOLVED**** For some reason, the else in test.pol is not working. Must investigate.

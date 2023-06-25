@@ -13,7 +13,7 @@
 #include "semantic.h"
 #include <string.h>
 
-CodeGenerator::CodeGenerator(Ast_TranslationUnit* root, Vector<int>* function_indices) : root(root), function_indices(function_indices) { }
+CodeGenerator::CodeGenerator(Ast_TranslationUnit* root) : root(root) { }
 
 CodeGenerator::~CodeGenerator() {
     bytecode_free(&bytecode);
@@ -22,16 +22,13 @@ CodeGenerator::~CodeGenerator() {
 void CodeGenerator::run() {
     bytecode_init(&bytecode);
     
-    for (auto& function : *function_indices) {
-        generate_function(AST_CAST(Ast_Function, root->declerations[function]));
-    }
+    for (int i = 0; i < root->declerations.size(); i++) 
+        if (root->declerations[i]->type == AST_FUNCTION) generate_function(AST_CAST(Ast_Function, root->declerations[i]));
 
     bytecode.start_address = bytecode.count;
-    for (int i = 0; i < root->declerations.size(); i++) {
-        Ast* ast = root->declerations[i];
-        if (ast->type != AST_FUNCTION)
-            generate_from_ast(ast);
-    }   
+
+    for (int i = 0; i < root->declerations.size(); i++) 
+        if (root->declerations[i]->type != AST_FUNCTION) generate_from_ast(root->declerations[i]);
 
     bytecode_write(OP_HALT, 0, &bytecode);
 }
@@ -56,9 +53,13 @@ void CodeGenerator::generate_from_ast(Ast* ast) {
 void CodeGenerator::generate_function(Ast_Function* function) {
     function->code_generator_address = bytecode.count;
 
-    generate_scope(function->scope);
-    if (bytecode.code[bytecode.count - 1] != OP_RETV)
-        write(OP_RET, function);
+    generate_scope(function->scope);        
+    if (function->return_type != AST_TYPE_VOID) {
+        write(OP_PUSH, function);
+        write(0x00, function);
+        write(OP_RETV, function);
+    }
+    else write(OP_RET, function);
 }
 
 void CodeGenerator::generate_if_statement(Ast_IfStatement* if_statement) {

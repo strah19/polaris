@@ -29,7 +29,7 @@ struct Reference {
 
 class CodeGenerator {
 public:
-    CodeGenerator(Ast_TranslationUnit* root, Vector<int>* function_indices);
+    CodeGenerator(Ast_TranslationUnit* root);
     ~CodeGenerator();
     void run();
 
@@ -52,7 +52,6 @@ private:
     ObjString* allocate_string(const char* str);
 private:
     Ast_TranslationUnit* root = nullptr;
-    Vector<int>* function_indices = nullptr;
     Bytecode bytecode;
 
     Map<String, Reference> references;

@@ -15,6 +15,7 @@
 #include "lexer.h"
 #include "sym_table.h"
 #include "ast.h"
+#include "scope.h"
 #include <cinttypes>
 
 enum Precedence {
@@ -41,41 +42,28 @@ struct ParserError {
     ParserError(Token* token) : token(token) { }
 };
 
-struct Scope {
-    Scope() = default;
-    Symbol* root = nullptr;
-    Scope* previous = nullptr;
-
-    SymbolDefinition last;
-
-    void add(const char* name, SymbolDefinition defn);
-    bool in_any(const char* name);
-    SymbolDefinition get(const char* name); 
-};  
-
-void log_token(Token* token);
-
 class Parser {
 public:
     Parser(Token* tokens);
     Parser(Token* tokens, const char* filepath);
     ~Parser();
+
     void parse();
     Ast_TranslationUnit* get_unit() { return unit; }
-    Vector<int>* get_functions() { return &function_indices; }
-    Scope* get_scope() { return &main_scope; }
 
     Token* peek(int index = 0);
     Token* advance();
 
+    //Error functions
     ParserError parser_error(Token* token, const char* msg);
     void        parser_warning(Token* token, const char* msg);
+
+    //Utility parser functions
     Token*      consume(int type, const char* msg);
     bool        match(int type);
     bool        check(int type);
     bool        is_end();
     bool        has_errors() { return errors; }
-    void        warnings(bool set) { show_warnings = set; }
 private:
     Ast* default_ast(Ast* ast);
     void init(Token* tokens, const char* filepath);
@@ -87,7 +75,7 @@ private:
     Ast_VarDecleration*         parse_variable_decleration();
     Ast_ExpressionStatement*    parse_expression_statement();
     Ast_PrintStatement*         parse_print_statement();
-    Ast_Scope*                  parse_scope();
+    Ast_Scope*                  parse_scope(bool check_for_return = true);
     Ast_Scope*                  parse_function_scope(bool return_needed, Ast_FunctionArgument* args);
     Ast_IfStatement*            parse_if();
     Ast_ElifStatement*          parse_elif();
@@ -105,8 +93,6 @@ private:
     Ast_Expression* parse_unary_expression();
     Ast_Expression* parse_primary_expression();
 
-    void select_functions();
-
     bool is_unary(Token* token);
     bool is_primary(Token* token);
     bool is_equal(Token* token);
@@ -116,17 +102,18 @@ private:
 
     void check_expression_for_default_args(Token* token, Ast_Expression* expression);
 private:
+    const char* filepath = nullptr;
     Token* tokens = nullptr;
     uint32_t current = 0;
-    const char* filepath = nullptr;
     Ast_TranslationUnit* unit = nullptr;
 
-    Vector<int> function_indices;
     Vector<String> locals;
 
     bool errors = false;
-    bool show_warnings = true;
     bool return_warning_enabled = true;
+    bool end_non_void_function_warning_enabled = false;
+
+    //Used to track the return type for the current function being parsed
     AstDataType current_function_return = AST_TYPE_VOID;
 
     Scope* current_scope;

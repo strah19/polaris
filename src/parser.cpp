@@ -23,34 +23,6 @@
 
 static Precedence PRECEDENCE [T_OK] = { PREC_PRIMARY };
 
-void log_token(Token* token) {
-    printf("token (%d) '%.*s' on line %d.\n", token->type, token->size, token->start, token->line);
-}
-
-void Scope::add(const char* name, SymbolDefinition defn) {
-    Symbol* new_node = enter_symbol(name, defn, &root);
-    last = defn;
-}
-
-SymbolDefinition Scope::get(const char* name) {
-    Scope* current = this;
-    while (current) {
-        Symbol* node = search_symbol_table(name, current->root);
-        if (node) return node->defn;
-        current = current->previous;
-    }
-    return SymbolDefinition();
-}
-
-bool Scope::in_any(const char* name) {
-    Scope* current = this;
-    while (current) {
-        if (search_symbol_table(name, current->root)) return true;
-        current = current->previous;
-    }
-    return false;
-}
-
 Ast* Parser::default_ast(Ast* ast) {
     ast->line = peek()->line;
     ast->file = filepath;
@@ -102,24 +74,6 @@ Parser::~Parser() {
     delete unit;
 }
 
-void Parser::parse() {
-    while (!is_end()) {
-        auto decleration = parse_decleration();
-
-        if (decleration) {
-            unit->declerations.push_back(decleration);
-        }
-    }
-
-    select_functions();
-}
-
-void Parser::select_functions() {
-    for (int i = 0; i < unit->declerations.size(); i++) 
-        if (unit->declerations[i]->type == AST_FUNCTION)
-            function_indices.push_back(i);
-}
-
 Token* Parser::peek(int index) {
     return &tokens[current + index];
 }
@@ -139,12 +93,7 @@ ParserError Parser::parser_error(Token* token, const char* msg) {
 }
 
 void Parser::parser_warning(Token* token, const char* msg) {
-    if (show_warnings) {
-        if (filepath)
-            report_warning("In file '%s', near '%.*s' on line %d, '%s'.\n", filepath, token->size, token->start, token->line, msg);
-        else 
-            report_warning("Near '%.*s' on line %d, '%s'.\n", token->size, token->start, token->line, msg);
-    }
+    report_warning("In file '%s', near '%.*s' on line %d, '%s'.\n", filepath, token->size, token->start, token->line, msg);
 }
 
 Token* Parser::consume(int type, const char* msg) {
@@ -177,6 +126,16 @@ void Parser::synchronize() {
     }   
 }
 
+void Parser::parse() {
+    while (!is_end()) {
+        auto decleration = parse_decleration();
+
+        if (decleration) {
+            unit->declerations.push_back(decleration);
+        }
+    }
+}
+
 Ast_Decleration* Parser::parse_decleration() {
     try {
         if (peek()->type == T_IDENTIFIER && (peek(1)->type == T_COLON || peek(1)->type == T_COLON_EQUAL)) {
@@ -190,90 +149,6 @@ Ast_Decleration* Parser::parse_decleration() {
         synchronize();
         return nullptr;
     }
-}
-
-Ast_Statement* Parser::parse_statement() {
-    if (match(T_LCURLY))      return parse_scope();
-    else if (match(T_IF))     return parse_if();
-    else if (match(T_WHILE))  return parse_while();
-    else if (match(T_RETURN)) return parse_return();
-    else if (match(T_PRINT))  return parse_print_statement();
-    else if (match(T_ELIF))   throw parser_error(peek(), "Cannot have 'elif' without an if");
-    else if (match(T_ELSE))   throw parser_error(peek(), "Cannot have 'else' without an if");
-    return parse_expression_statement();
-}
-
-Ast_Scope* Parser::parse_scope() {
-    Ast_Scope* scope = AST_NEW(Ast_Scope);
-
-    Scope* previous_scope = current_scope;
-    current_scope = new Scope;
-    current_scope->previous = previous_scope;
-
-    while (!check(T_RCURLY) && !is_end()) 
-        scope->declerations.push_back(parse_decleration());
-
-    delete current_scope;
-    current_scope = previous_scope;
-
-    consume(T_RCURLY, "Expected '}' to end scope");
-    return scope;
-}
-
-Ast_Scope* Parser::parse_function_scope(bool return_needed, Ast_FunctionArgument* args) {
-    Ast_Scope* scope = AST_NEW(Ast_Scope);
-
-    Scope* previous_scope = current_scope;
-    current_scope = new Scope;
-    current_scope->previous = previous_scope;
-
-    return_warning_enabled = true;
-
-    for (int i = 0; i < args->arg_count; i++) {
-        if (current_scope->in_any(args->args[i]->ident))
-            throw parser_error(peek(), "Redefinition of variable in argument");
-        SymbolDefinition sym;
-        sym.type = DEF_VAR;
-        sym.var.var_type = args->args[i]->type_value;
-        sym.var.specifiers = args->args[i]->specifiers;
-        current_scope->add(args->args[i]->ident, sym);
-    }
-
-    bool expected_return = true;
-
-    while (!check(T_RCURLY) && !is_end()) {
-        scope->declerations.push_back(parse_decleration());
-        if (scope->declerations.back()->type == AST_RETURN) {
-            Ast_ReturnStatement* return_statement = AST_CAST(Ast_ReturnStatement, scope->declerations.back());
-            if (return_needed && expected_return)
-                expected_return = false;
-        }
-    }
-
-    if (expected_return && return_needed && return_warning_enabled)
-        parser_warning(peek(), "Need return statement in function");
-
-    delete current_scope;
-    current_scope = previous_scope;
-
-    consume(T_RCURLY, "Expected '}' to end scope");
-    return scope;
-}
-
-Ast_ExpressionStatement* Parser::parse_expression_statement() {
-    auto expression = parse_expression();
-    consume(T_SEMICOLON, "Expected ';' after expression statement");
-    return AST_NEW(Ast_ExpressionStatement, expression);
-}
-
-Ast_PrintStatement* Parser::parse_print_statement() {
-    Vector<Ast_Expression*> expressions;
-    expressions.push_back(parse_expression());
-    while (match(T_COMMA)) {
-        expressions.push_back(parse_expression());
-    }
-    consume(T_SEMICOLON, "Expected ';' after expression statement");
-    return AST_NEW(Ast_PrintStatement, expressions);
 }
 
 Ast_Function* Parser::parse_function() {
@@ -305,6 +180,92 @@ Ast_Function* Parser::parse_function() {
     function->scope = parse_function_scope((function->return_type != AST_TYPE_VOID) ? true : false, &function->args);
     
     return function;
+}
+
+Ast_Scope* Parser::parse_function_scope(bool return_needed, Ast_FunctionArgument* args) {
+    Ast_Scope* scope = AST_NEW(Ast_Scope);
+
+    Scope* previous_scope = current_scope;
+    current_scope = new Scope;
+    current_scope->previous = previous_scope;
+
+    return_warning_enabled = true;
+
+    for (int i = 0; i < args->arg_count; i++) {
+        if (current_scope->in_any(args->args[i]->ident))
+            throw parser_error(peek(), "Redefinition of variable in argument");
+        SymbolDefinition sym;
+        sym.type = DEF_VAR;
+        sym.var.var_type = args->args[i]->type_value;
+        sym.var.specifiers = args->args[i]->specifiers;
+        current_scope->add(args->args[i]->ident, sym);
+    }
+
+    while (!check(T_RCURLY) && !is_end()) 
+        scope->declerations.push_back(parse_decleration());
+
+    if (return_needed && return_warning_enabled)
+        parser_warning(peek(), "Need return statement in function");
+
+    delete current_scope;
+    current_scope = previous_scope;
+
+    consume(T_RCURLY, "Expected '}' to end scope");
+    return scope;
+}
+
+Ast_Statement* Parser::parse_statement() {
+    if (match(T_LCURLY))      return parse_scope();
+    else if (match(T_IF))     return parse_if();
+    else if (match(T_WHILE))  return parse_while();
+    else if (match(T_RETURN)) return parse_return();
+    else if (match(T_PRINT))  return parse_print_statement();
+    else if (match(T_ELIF))   throw parser_error(peek(), "Cannot have 'elif' without an if");
+    else if (match(T_ELSE))   throw parser_error(peek(), "Cannot have 'else' without an if");
+    return parse_expression_statement();
+}
+
+Ast_Scope* Parser::parse_scope(bool check_for_return) {
+    if (current_scope->previous && current_scope->previous->last.type == DEF_FUN && current_function_return != AST_TYPE_VOID && check_for_return) {
+        end_non_void_function_warning_enabled = true;
+    }
+
+    Ast_Scope* scope = AST_NEW(Ast_Scope);
+
+    Scope* previous_scope = current_scope;
+    current_scope = new Scope;
+    current_scope->previous = previous_scope;
+
+    while (!check(T_RCURLY) && !is_end()) 
+        scope->declerations.push_back(parse_decleration());
+
+    delete current_scope;
+    current_scope = previous_scope;
+
+    consume(T_RCURLY, "Expected '}' to end scope");
+
+    if (end_non_void_function_warning_enabled) {
+        parser_warning(peek(), "control reaches end of non-void function");
+        end_non_void_function_warning_enabled = false;
+    }
+
+    return scope;
+}
+
+Ast_ExpressionStatement* Parser::parse_expression_statement() {
+    auto expression = parse_expression();
+    consume(T_SEMICOLON, "Expected ';' after expression statement");
+    return AST_NEW(Ast_ExpressionStatement, expression);
+}
+
+Ast_PrintStatement* Parser::parse_print_statement() {
+    Vector<Ast_Expression*> expressions;
+    expressions.push_back(parse_expression());
+    while (match(T_COMMA)) {
+        expressions.push_back(parse_expression());
+    }
+    consume(T_SEMICOLON, "Expected ';' after expression statement");
+    return AST_NEW(Ast_PrintStatement, expressions);
 }
 
 Ast_FunctionArgument Parser::parse_function_arguments(SymbolDefinition* sym) {
@@ -339,6 +300,9 @@ Ast_FunctionArgument Parser::parse_function_arguments(SymbolDefinition* sym) {
 }
 
 Ast_ReturnStatement* Parser::parse_return() {
+    return_warning_enabled = false;
+    end_non_void_function_warning_enabled = false;
+
     Ast_Expression* expression = nullptr;
     if (is_unary(peek()) || is_primary(peek()))
         expression = parse_expression();
@@ -420,10 +384,6 @@ Ast_ElifStatement* Parser::parse_elif() {
 }
 
 Ast_ElseStatement* Parser::parse_else() {
-    if (current_scope->previous->last.type == DEF_FUN) {
-        return_warning_enabled = false;
-    }
-
     consume(T_LCURLY, "Expected '{' in else statement");
     Ast_Scope* scope = parse_scope();
     return AST_NEW(Ast_ElseStatement, scope);
@@ -432,7 +392,7 @@ Ast_ElseStatement* Parser::parse_else() {
 Ast_WhileStatement* Parser::parse_while() {
     Ast_Expression* condition = parse_expression();
     consume(T_LCURLY, "Expected '{' in while statement");
-    Ast_Scope* scope = parse_scope();
+    Ast_Scope* scope = parse_scope(false);
     return AST_NEW(Ast_WhileStatement, condition, scope);
 }
 

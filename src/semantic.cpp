@@ -149,7 +149,9 @@ void check_expression(Ast_Expression* expression, AstDataType* current_expr_type
         check_expression(bin->left, current_expr_type, can_it_be);
         check_expression(bin->right, current_expr_type, can_it_be);
 
-        //Check string stuff here...strings can only do '+' and comparative operands.
+        if (*current_expr_type == AST_TYPE_STRING && (bin->op != AST_OPERATOR_ADD && bin->op != AST_OPERATOR_COMPARITIVE_NOT_EQUAL && bin->op != AST_OPERATOR_COMPARITIVE_EQUAL)) {
+            report_semantic_error(bin, "Strings can only be added or compared");
+        }
     }
     else if (expression->type == AST_UNARY) {
         auto unary = AST_CAST(Ast_UnaryExpression, expression);

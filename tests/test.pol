@@ -1,6 +1,31 @@
-foo : () -> int {
-    return 3;
+a : float = 1.6;
+print a, '\n';
+
+str : string = "hello";
+print str + "hi", '\n';
+if str == "hello" {
+    print "working", '\n';
+}
+elif 1 == 1{
+
+}
+else {
+    
 }
 
-a : float = foo() + 1.6;
-print a, '\n';
+
+func : (w: int) {
+
+}
+
+boo : (w: int) -> string {
+    if 1 == 1 {
+
+    }
+    else {
+        return "hi";
+    }
+}
+
+print boo(2);
+print "exiting program", '\n';

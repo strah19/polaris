@@ -23,9 +23,22 @@
 - [x] Add copyright to files.
 - [x] Setup release and debug builds for cmake.
 - [ ] Create tests for specific functions of the language.
+	- [ ] Conversions
+	- [ ] Conditionals
+		- [ ] If/Elif/Else
+		- [ ] While
+	- [ ] Functions
+		- [ ] Recursion
+		- [ ] Function calls within functions
+		- [ ] Args
+		- [ ] Default Args
+	- [ ] Types
+	- [ ] Operators
+	- [ ] Strings
 - [ ] Get rid of String and Vector structure, use regular arrays and char*.
 	- [x] Get rid of the Maps in the code generator, could maybe use a Symbol*
 - [ ] Create a buffer output system so VM is not constantly stopping execution to output to screen.
-- [ ] COMMENT LINE 152, semantic.cpp
+- [x] COMMENT LINE 152, semantic.cpp
 - [ ] Have clearer error messages
 - [ ] Have more warning messages
+- [ ] Clean up VM...It is very dirty
