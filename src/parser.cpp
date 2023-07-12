@@ -50,6 +50,7 @@ Ast* Parser::default_ast(Ast* ast) {
     PRECEDENCE[T_MINUS_EQUAL]   = PREC_ASSIGNMENT;
     PRECEDENCE[T_STAR_EQUAL]    = PREC_ASSIGNMENT;
     PRECEDENCE[T_SLASH_EQUAL]   = PREC_ASSIGNMENT;
+    PRECEDENCE[T_MOD_EQUAL]     = PREC_ASSIGNMENT;
 
     return ast;
 }
@@ -80,18 +81,24 @@ Token* Parser::advance() {
 
 ParserError Parser::parser_error(Token* token, const char* msg) {
     error_count++;
-    if (current_function) 
+    if (current_function) {
         printf("%s: In function '%s':\n", filepath, current_function->ident);
-    report_error("In file '%s', near '%.*s' on line %d, '%s'.\n", filepath, token->size, token->start, token->line, msg);
+        report_error("near '%.*s' on line %d, '%s'.\n", token->size, token->start, token->line, msg);
+    }
+    else
+        report_error("In file '%s', near '%.*s' on line %d, '%s'.\n", filepath, token->size, token->start, token->line, msg);
     printf("\n");
 
     return ParserError(token);
 }
 
 void Parser::parser_warning(Token* token, const char* msg) {
-    if (current_function) 
+    if (current_function) {
         printf("%s: In function '%s':\n", filepath, current_function->ident);
-    report_warning("In file '%s', near '%.*s' on line %d, '%s'.\n", filepath, token->size, token->start, token->line, msg);
+        report_warning("near '%.*s' on line %d, '%s'.\n", token->size, token->start, token->line, msg);
+    }
+    else
+        report_warning("In file '%s', near '%.*s' on line %d, '%s'.\n", filepath, token->size, token->start, token->line, msg);
     printf("\n");
 }
 
@@ -434,7 +441,7 @@ Ast_Expression* Parser::parse_assignment_expression(Ast_Expression* expression, 
             throw parser_error(peek(-1), "Identifier is a constant, it cannot be modified");
 
         auto value = parse_expression(PREC_ASSIGNMENT);
-        return AST_NEW(Ast_Assignment, id, value, nullptr);
+        return AST_NEW(Ast_Assignment, id, value, nullptr, equal);
     }
     else if (expression->type == AST_ASSIGNMENT) {
         auto past_assign = AST_CAST(Ast_Assignment, expression);
@@ -447,7 +454,7 @@ Ast_Expression* Parser::parse_assignment_expression(Ast_Expression* expression, 
             throw parser_error(peek(-1), "Identifier is a constant, it cannot be modified");
 
         auto value = parse_expression(PREC_ASSIGNMENT);
-        return AST_NEW(Ast_Assignment, id, value, past_assign);
+        return AST_NEW(Ast_Assignment, id, value, past_assign, equal);
     }
     else {
         throw parser_error(peek(-1), "Expected an assignemnt expression");
@@ -695,7 +702,7 @@ bool Parser::is_primary(Token* token) {
 
 bool Parser::is_equal(Token* token) {
     return (token->type == T_EQUAL || token->type == T_PLUS_EQUAL || token->type == T_MINUS_EQUAL || 
-            token->type == T_STAR_EQUAL || token->type == T_SLASH_EQUAL);
+            token->type == T_STAR_EQUAL || token->type == T_SLASH_EQUAL || token->type == T_MOD_EQUAL);
 }
 
 AstEqualType Parser::convert_to_equal(TokenType type) {
@@ -704,6 +711,7 @@ AstEqualType Parser::convert_to_equal(TokenType type) {
     case T_MINUS_EQUAL: return AST_EQUAL_MINUS;
     case T_STAR_EQUAL:  return AST_EQUAL_MULTIPLY;
     case T_SLASH_EQUAL: return AST_EQUAL_DIVIDE;
+    case T_MOD_EQUAL:   return AST_EQUAL_MOD;
     default: return AST_EQUAL;
     }
 }

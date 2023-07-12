@@ -50,10 +50,8 @@ void free_symbol_table(Symbol* root) {
 void log_symbol(Symbol* symbol) {
     if (!symbol) return;
 
-    if (symbol->defn.type == DEF_VAR) {
+    if (symbol->defn.type == DEF_VAR)
         printf("VAR '%s', TYPE: %d, SPECIFIERS: %d.\n", symbol->name, symbol->defn.var.var_type, symbol->defn.var.specifiers);
-    }
-    else if (symbol->defn.type == DEF_FUN) {
+    else if (symbol->defn.type == DEF_FUN) 
         printf("FUNC '%s', ARG COUNT: %d, RET TYPE: %d.\n", symbol->name, symbol->defn.func.return_type, symbol->defn.func.arg_count);
-    }
 }

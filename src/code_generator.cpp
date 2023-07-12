@@ -197,6 +197,7 @@ void CodeGenerator::generate_expression(Ast_Expression* expression) {
             generate_expression(prim->nested);
         }
         else if (prim->prim_type == AST_PRIM_ID) {
+            
             if (prim->local) {
                 write(OP_LOAD, prim);
                 write(-3 - prim->local_index, prim);
@@ -231,7 +232,33 @@ void CodeGenerator::generate_expression(Ast_Expression* expression) {
     }
     else if (expression->type == AST_ASSIGNMENT) {
         auto assign = AST_CAST(Ast_Assignment, expression);
-        generate_expression(assign->value);
+
+        //Load the id in so the operation can be performed
+        printf("%d\n", assign->equal_type);
+        if (assign->equal_type != AST_EQUAL) {
+            auto assign_id = AST_CAST(Ast_PrimaryExpression, assign->id);
+            if (assign_id->local) {
+                write(OP_LOAD, assign_id);
+                write(-3 - assign_id->local_index, assign_id);
+            }
+            else {
+                write(OP_GLOAD, assign_id);
+                if (!references[assign_id->ident].init) 
+                    references[assign_id->ident] = Reference(max_references_address++);
+                write(references[assign_id->ident].address, assign_id); //writes the address of the references
+            }
+            generate_expression(assign->value);
+            switch (assign->equal_type) {
+            case AST_EQUAL_PLUS:     write(OP_ADD, assign); break;
+            case AST_EQUAL_MINUS:    write(OP_MIN, assign); break;
+            case AST_EQUAL_DIVIDE:   write(OP_DIV, assign); break;
+            case AST_EQUAL_MULTIPLY: write(OP_MUL, assign); break;
+            case AST_EQUAL_MOD:      write(OP_MOD, assign); break;
+            }
+        }
+        else {
+            generate_expression(assign->value);
+        }
 
         auto assign_id = AST_CAST(Ast_PrimaryExpression, assign->id);
         if (assign_id->local) {

@@ -15,8 +15,8 @@
 - [ ] Complex Number Support
 - [ ] Support different equal operands including ++ and --
 - [ ] Hex Support
-- [ ] Code generator needs to support different equal operators.
-- [ ] Code generator needs to support the default values.
+- [x] Code generator needs to support different equal operators.
+- [x] Code generator needs to support the default values.
 - [x] Clean up parser.
 	- [x] Use different structure for scope, possibly from Faraday.
 	- [x] Do some simple function rearrangements and make a few utility functions.
@@ -42,3 +42,4 @@
 - [x] Have clearer error messages
 - [x] Have more warning messages
 - [ ] Clean up VM...It is very dirty
+- [x] Semantic check is not checking arguments passed into a function call...

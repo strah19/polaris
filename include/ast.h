@@ -221,7 +221,7 @@ struct Ast_UnaryExpression : public Ast_Expression {
 
 struct Ast_Assignment : public Ast_Expression {
     Ast_Assignment() { type = AST_ASSIGNMENT; }
-    Ast_Assignment(Ast_PrimaryExpression* id, Ast_Expression* value, Ast_Assignment* next, AstEqualType equal_type = AST_EQUAL) : id(id), value(value), next(next), equal_type(equal_type) { type = AST_ASSIGNMENT; }
+    Ast_Assignment(Ast_PrimaryExpression* id, Ast_Expression* value, Ast_Assignment* next, AstEqualType equal_type) : id(id), value(value), next(next), equal_type(equal_type) { type = AST_ASSIGNMENT; }
     ~Ast_Assignment() override {
         delete next;
     }

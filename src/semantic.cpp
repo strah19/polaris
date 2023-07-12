@@ -172,8 +172,6 @@ void check_expression(Ast_Expression* expression, AstDataType* current_expr_type
     else if (expression->type == AST_PRIMARY) {
         auto primary = AST_CAST(Ast_PrimaryExpression, expression);
         if (primary->prim_type == AST_PRIM_DATA || primary->prim_type == AST_PRIM_ID || primary->prim_type == AST_PRIM_CALL) {
-            //Need to check the arguments passed.
-
             if (can_it_be != AST_TYPE_NONE) {
                 if (can_convert(can_it_be, primary->type_value)) {
                     if (primary->prim_type == AST_PRIM_ID || primary->prim_type == AST_PRIM_CALL) {
@@ -212,48 +210,6 @@ void check_expression(Ast_Expression* expression, AstDataType* current_expr_type
             check_expression(primary->nested, current_expr_type, can_it_be);
         }
     }
-}
-
-void print_expression(Ast_Expression* expression) {
-       if (expression->type == AST_BINARY) {
-        auto bin = AST_CAST(Ast_BinaryExpression, expression);
-        print_expression(bin->left);
-        print_expression(bin->right);
-
-        //Check string stuff here...strings can only do '+' and comparative operands.
-    }
-    else if (expression->type == AST_UNARY) {
-        auto unary = AST_CAST(Ast_UnaryExpression, expression);
-        print_expression(unary->next);
-    }
-    else if (expression->type == AST_ASSIGNMENT) {
-        Ast_Assignment* assign = AST_CAST(Ast_Assignment, expression);
-        print_expression(assign->id);
-        print_expression(assign->value);
-
-        if (assign->next) {
-            print_expression(assign->next);
-        }
-    }
-    else if (expression->type == AST_PRIMARY) {
-        auto primary = AST_CAST(Ast_PrimaryExpression, expression);
-        if (primary->prim_type == AST_PRIM_DATA) {
-            if (primary->type_value == AST_TYPE_INT) printf(" PRIMARY(%d) \n", primary->int_const);
-            if (primary->type_value == AST_TYPE_FLOAT) printf(" PRIMARY(%f) \n", primary->float_const);
-            if (primary->type_value == AST_TYPE_CHAR) printf(" PRIMARY(%c) \n", primary->char_const);
-            if (primary->type_value == AST_TYPE_STRING) printf(" PRIMARY(%s) \n", primary->string);
-            if (primary->type_value == AST_TYPE_BOOLEAN) printf(" PRIMARY(%d) \n", primary->boolean);
-        }
-        else if (primary->prim_type == AST_PRIM_CALL) {
-            
-        }
-        else if (primary->prim_type == AST_PRIM_ID) {
-            printf(" PRIMARY ID (%s) \n", primary->ident);
-        }
-        else if (primary->prim_type == AST_PRIM_NESTED) {
-            print_expression(primary->nested);
-        }
-    } 
 }
 
 bool can_convert(AstDataType type1, AstDataType type2) {

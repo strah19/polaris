@@ -159,7 +159,7 @@ Token Lexer::single_character(char single_character_tokens) {
     case '[': return init_token(T_LBRACKET);
     case ']': return init_token(T_RBRACKET);
     case ':': return init_token((check('=')) ? T_COLON_EQUAL : T_COLON);
-    case '%': return init_token(T_PERCENT );
+    case '%': return init_token(check('=') ? T_MOD_EQUAL : T_PERCENT);
     case '^': return init_token(T_CARET   );
     case '~': return init_token(T_NOT     );
     case ',': return init_token(T_COMMA   );

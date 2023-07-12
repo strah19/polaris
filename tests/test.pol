@@ -1,4 +1,5 @@
 a : float = 1.6;
+NL : char constant = '\n';
 print a, '\n';
 
 str : string = "hello";
@@ -27,5 +28,19 @@ boo : (w: int) -> string {
     }
 }
 
-print boo(2);
+def : ( l: int, s: int = 4) {
+    print s, NL;
+}
+
+def(3);
+
+f := 3;
+f += 4;
+f *= 2;
+f -= 4;
+f /= 5;
+f %= 2;
+
+print f, NL;
+
 print "exiting program", '\n';
