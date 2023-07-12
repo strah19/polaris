@@ -44,7 +44,6 @@ struct ParserError {
 
 class Parser {
 public:
-    Parser(Token* tokens);
     Parser(Token* tokens, const char* filepath);
     ~Parser();
 
@@ -63,7 +62,7 @@ public:
     bool        match(int type);
     bool        check(int type);
     bool        is_end();
-    bool        has_errors() { return errors; }
+    int         errors() { return error_count; }
 private:
     Ast* default_ast(Ast* ast);
     void init(Token* tokens, const char* filepath);
@@ -109,12 +108,12 @@ private:
 
     Vector<String> locals;
 
-    bool errors = false;
+    int error_count = 0;
     bool return_warning_enabled = true;
     bool end_non_void_function_warning_enabled = false;
 
     //Used to track the return type for the current function being parsed
-    AstDataType current_function_return = AST_TYPE_VOID;
+    Ast_Function* current_function = nullptr;
 
     Scope* current_scope;
     Scope main_scope;

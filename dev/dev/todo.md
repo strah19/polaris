@@ -17,9 +17,9 @@
 - [ ] Hex Support
 - [ ] Code generator needs to support different equal operators.
 - [ ] Code generator needs to support the default values.
-- [ ] Clean up parser.
+- [x] Clean up parser.
 	- [x] Use different structure for scope, possibly from Faraday.
-	- [ ] Do some simple function rearrangements and make a few utility functions.
+	- [x] Do some simple function rearrangements and make a few utility functions.
 - [x] Add copyright to files.
 - [x] Setup release and debug builds for cmake.
 - [ ] Create tests for specific functions of the language.
@@ -39,6 +39,6 @@
 	- [x] Get rid of the Maps in the code generator, could maybe use a Symbol*
 - [ ] Create a buffer output system so VM is not constantly stopping execution to output to screen.
 - [x] COMMENT LINE 152, semantic.cpp
-- [ ] Have clearer error messages
-- [ ] Have more warning messages
+- [x] Have clearer error messages
+- [x] Have more warning messages
 - [ ] Clean up VM...It is very dirty

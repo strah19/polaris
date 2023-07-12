@@ -54,10 +54,6 @@ Ast* Parser::default_ast(Ast* ast) {
     return ast;
 }
 
-Parser::Parser(Token* tokens) {
-    init(tokens, NULL);
-}
-
 Parser::Parser(Token* tokens, const char* filepath) {
     init(tokens, filepath);
 }
@@ -83,17 +79,20 @@ Token* Parser::advance() {
 }
 
 ParserError Parser::parser_error(Token* token, const char* msg) {
-    errors = true;
-    if (filepath)
-        report_error("In file '%s', near '%.*s' on line %d, '%s'.\n", filepath, token->size, token->start, token->line, msg);
-    else 
-        report_error("Near '%.*s' on line %d, '%s'.\n", token->size, token->start, token->line, msg);
+    error_count++;
+    if (current_function) 
+        printf("%s: In function '%s':\n", filepath, current_function->ident);
+    report_error("In file '%s', near '%.*s' on line %d, '%s'.\n", filepath, token->size, token->start, token->line, msg);
+    printf("\n");
 
     return ParserError(token);
 }
 
 void Parser::parser_warning(Token* token, const char* msg) {
+    if (current_function) 
+        printf("%s: In function '%s':\n", filepath, current_function->ident);
     report_warning("In file '%s', near '%.*s' on line %d, '%s'.\n", filepath, token->size, token->start, token->line, msg);
+    printf("\n");
 }
 
 Token* Parser::consume(int type, const char* msg) {
@@ -124,6 +123,8 @@ void Parser::synchronize() {
         if (peek(-1)->type == T_RCURLY)    return;
         advance();
     }   
+    return_warning_enabled = true;
+    end_non_void_function_warning_enabled = false;
 }
 
 void Parser::parse() {
@@ -154,6 +155,7 @@ Ast_Decleration* Parser::parse_decleration() {
 Ast_Function* Parser::parse_function() {
     Ast_Function* function = AST_NEW(Ast_Function);
     function->ident = parse_identifier("Expected identifier in function decleration");
+    current_function = function;
 
     SymbolDefinition sym;
     if (current_scope->in_any(function->ident))
@@ -167,10 +169,7 @@ Ast_Function* Parser::parse_function() {
     if (match(T_POINTER_ARROW)) {
         function->return_type = parse_type();
         sym.func.return_type = function->return_type;
-        current_function_return = function->return_type;
     } 
-    else
-        current_function_return = AST_TYPE_VOID;
 
     sym.type = DEF_FUN;
     sym.func.function_ptr = function;
@@ -214,6 +213,73 @@ Ast_Scope* Parser::parse_function_scope(bool return_needed, Ast_FunctionArgument
     return scope;
 }
 
+Ast_FunctionArgument Parser::parse_function_arguments(SymbolDefinition* sym) {
+    Ast_FunctionArgument args;
+    bool expect_default = false;
+    locals.clear();
+    int arg_count = 0;
+    while (!check(T_RPAR)) {
+        const char* id = parse_identifier("Expected identifier in function argument");
+        locals.push_back(id);
+        consume(T_COLON, "Expected ':' in function argument");  
+        AstDataType var_type = parse_type();
+        AstSpecifierType spec = parser_specifier();
+        sym->func.arg_count++;
+
+        Ast_Expression* expression = nullptr;
+        if (match(T_EQUAL)) {
+            Token* begin_of_expression = peek();
+            expression = parse_expression();
+            expect_default = true;
+            check_expression_for_default_args(begin_of_expression, expression);
+        }
+        else if (expect_default) 
+            throw parser_error(peek(), "Default value for argument must be at end of function");
+        sym->func.default_values[sym->func.arg_count - 1] = expression;
+
+        args.args[args.arg_count++] = AST_NEW(Ast_VarDecleration, id, expression, var_type, spec); 
+        if (!check(T_RPAR)) 
+            consume(T_COMMA, "Expected ',' between function arguments");
+    }
+    return args;
+}
+
+Ast_VarDecleration* Parser::parse_variable_decleration() {
+    const char* id = parse_identifier("Expected identifier in variable decleration");
+    Token* start_token = peek(-1);
+
+    if (current_scope->in_any(id))
+        throw parser_error(peek(-1), "Redecleration of variable");
+
+    if (match(T_COLON)) {
+        AstDataType var_type = parse_type();
+        AstSpecifierType spec = parser_specifier();
+        Ast_Expression* expression = nullptr;
+
+        if (match(T_EQUAL)) {
+            expression = parse_expression();
+        }
+        consume(T_SEMICOLON, "Expected ';' in variable decleration");
+        SymbolDefinition sym;
+        sym.type = DEF_VAR;
+        sym.var.var_type = var_type;
+        sym.var.specifiers = spec;
+        current_scope->add(id, sym);
+        return AST_NEW(Ast_VarDecleration, id, expression, var_type, AST_SPECIFIER_NONE);
+    }
+    consume(T_COLON_EQUAL, "Expected ':' or ':=' in variable decleration");  
+    Ast_Expression* expression = parse_expression();
+    
+    AstDataType expr_type = get_expression_type(expression);
+
+    consume(T_SEMICOLON, "Expected ';' in variable decleration");
+    SymbolDefinition sym;
+    sym.type = DEF_VAR;
+    sym.var.var_type = expr_type;
+    current_scope->add(id, sym);
+    return AST_NEW(Ast_VarDecleration, id, expression, expr_type, AST_SPECIFIER_NONE);
+}
+
 Ast_Statement* Parser::parse_statement() {
     if (match(T_LCURLY))      return parse_scope();
     else if (match(T_IF))     return parse_if();
@@ -226,7 +292,7 @@ Ast_Statement* Parser::parse_statement() {
 }
 
 Ast_Scope* Parser::parse_scope(bool check_for_return) {
-    if (current_scope->previous && current_scope->previous->last.type == DEF_FUN && current_function_return != AST_TYPE_VOID && check_for_return) {
+    if (current_scope->previous && current_scope->previous->last.type == DEF_FUN && current_function->return_type != AST_TYPE_VOID && check_for_return) {
         end_non_void_function_warning_enabled = true;
     }
 
@@ -268,37 +334,6 @@ Ast_PrintStatement* Parser::parse_print_statement() {
     return AST_NEW(Ast_PrintStatement, expressions);
 }
 
-Ast_FunctionArgument Parser::parse_function_arguments(SymbolDefinition* sym) {
-    Ast_FunctionArgument args;
-    bool expect_default = false;
-    locals.clear();
-    int arg_count = 0;
-    while (!check(T_RPAR)) {
-        const char* id = parse_identifier("Expected identifier in function argument");
-        locals.push_back(id);
-        consume(T_COLON, "Expected ':' in function argument");  
-        AstDataType var_type = parse_type();
-        AstSpecifierType spec = parser_specifier();
-        sym->func.arg_count++;
-
-        Ast_Expression* expression = nullptr;
-        if (match(T_EQUAL)) {
-            Token* begin_of_expression = peek();
-            expression = parse_expression();
-            expect_default = true;
-            check_expression_for_default_args(begin_of_expression, expression);
-        }
-        else if (expect_default) 
-            throw parser_error(peek(), "Default value for argument must be at end of function");
-        sym->func.default_values[sym->func.arg_count - 1] = expression;
-
-        args.args[args.arg_count++] = AST_NEW(Ast_VarDecleration, id, expression, var_type, spec); 
-        if (!check(T_RPAR)) 
-            consume(T_COMMA, "Expected ',' between function arguments");
-    }
-    return args;
-}
-
 Ast_ReturnStatement* Parser::parse_return() {
     return_warning_enabled = false;
     end_non_void_function_warning_enabled = false;
@@ -310,51 +345,7 @@ Ast_ReturnStatement* Parser::parse_return() {
 
     if (!current_scope->previous)
         throw parser_error(peek(), "Return statement may only be in a function");
-    return AST_NEW(Ast_ReturnStatement, expression, current_function_return);
-}
-
-Ast_VarDecleration* Parser::parse_variable_decleration() {
-    const char* id = parse_identifier("Expected identifier in variable decleration");
-    Token* start_token = peek(-1);
-
-    if (current_scope->in_any(id))
-        throw parser_error(peek(-1), "Redecleration of variable");
-
-    if (match(T_COLON)) {
-        AstDataType var_type = parse_type();
-        AstSpecifierType spec = parser_specifier();
-        Ast_Expression* expression = nullptr;
-
-        if (match(T_EQUAL)) {
-            expression = parse_expression();
-        }
-        consume(T_SEMICOLON, "Expected ';' in variable decleration");
-        SymbolDefinition sym;
-        sym.type = DEF_VAR;
-        sym.var.var_type = var_type;
-        sym.var.specifiers = spec;
-        current_scope->add(id, sym);
-        return AST_NEW(Ast_VarDecleration, id, expression, var_type, AST_SPECIFIER_NONE);
-    }
-    consume(T_COLON_EQUAL, "Expected ':' or ':=' in variable decleration");  
-    Ast_Expression* expression = parse_expression();
-    
-    AstDataType expr_type = get_expression_type(expression);
-
-    consume(T_SEMICOLON, "Expected ';' in variable decleration");
-    SymbolDefinition sym;
-    sym.type = DEF_VAR;
-    sym.var.var_type = expr_type;
-    current_scope->add(id, sym);
-    return AST_NEW(Ast_VarDecleration, id, expression, expr_type, AST_SPECIFIER_NONE);
-}
-
-const char* Parser::parse_identifier(const char* error_msg) {
-    consume(T_IDENTIFIER, error_msg);
-    Token* start_token = peek(-1);
-    char* id = (char*) start_token->start;
-    id[start_token->size] = '\0';
-    return (const char*) id;
+    return AST_NEW(Ast_ReturnStatement, expression, current_function->return_type);
 }
 
 Ast_IfStatement* Parser::parse_if() {
@@ -394,6 +385,14 @@ Ast_WhileStatement* Parser::parse_while() {
     consume(T_LCURLY, "Expected '{' in while statement");
     Ast_Scope* scope = parse_scope(false);
     return AST_NEW(Ast_WhileStatement, condition, scope);
+}
+
+const char* Parser::parse_identifier(const char* error_msg) {
+    consume(T_IDENTIFIER, error_msg);
+    Token* start_token = peek(-1);
+    char* id = (char*) start_token->start;
+    id[start_token->size] = '\0';
+    return (const char*) id;
 }
 
 //Pratt Parsing :)

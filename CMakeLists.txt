@@ -12,8 +12,8 @@ file(GLOB SOURCES "src/*.cpp")
 
 add_executable(POLARIS ${SOURCES})
 
-add_subdirectory(VM)
-list(APPEND EXTRA_LIBS VM)
+add_subdirectory(vm)
+list(APPEND EXTRA_LIBS vm)
 
 target_link_libraries(POLARIS PUBLIC ${EXTRA_LIBS})
 

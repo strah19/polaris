@@ -9,14 +9,4 @@
  * this program. If not, see https://opensource.org/license/mit/
  */
 
-#include "compiler.h"
-#include "error.h"
-
-int main(int argc, char* argv[]) {
-    if (argc >= 2)
-        compile_source(argv[1]);
-    else
-        fatal_error("No input file.\n");
-    return 0;
-}
-
+void compile_source(const char* filepath);
