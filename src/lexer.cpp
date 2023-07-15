@@ -47,9 +47,10 @@ Token Lexer::scan() {
     if (is_eof()) return init_token(T_EOF);
 
     char first = advance();
-    if (first == '0' && peek() == 'b') return binary();
-    if (is_digit(first)) return number();
-    if (is_alpha(first)) return identifier();
+    if (first == '0' && (peek() == 'b' || peek() == 'B')) return binary();
+    else if (first == '0' && (peek() == 'x' || peek() == 'x')) return hex();
+    else if (is_digit(first)) return number();
+    else if (is_alpha(first)) return identifier();
 
     return single_character(first);
 }
@@ -81,6 +82,13 @@ Token Lexer::binary() {
     while (peek() == '0' || peek() == '1')
         advance();
     return init_token(T_BINARY_CONST);
+}
+
+Token Lexer::hex() {
+    advance();
+    while ((peek() >= '0' && peek() <= '9') || (peek() >= 'a' && peek() <= 'f') || (peek() >= 'A' && peek() <= 'F'))
+        advance();
+    return init_token(T_HEX_CONST);
 }
 
 Token Lexer::identifier() {

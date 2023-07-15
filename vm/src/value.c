@@ -64,5 +64,6 @@ void value_print(Value value, bool newline) {
     }
     default: printf("(null)"); break;
     }
-    printf("%s", (newline) ? "\n" : "");
+
+    if (newline) printf("\n");
 }

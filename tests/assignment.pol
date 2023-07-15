@@ -84,4 +84,10 @@ print NL;
 a : float = 2.3 + 4;
 print a, NL;
 
+bin_num : int = 0b1101;
+print bin_num, NL;
+
+hex_num : int = 0xFF;
+print hex_num, NL;
+
 print "exiting program...", NL;

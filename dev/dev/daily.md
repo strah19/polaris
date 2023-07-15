@@ -29,5 +29,6 @@
 - Cleaning up the parser. Cleaned up some return type stuff.
 - If there is conditional code in a function and return statement is not called and a value is expected to be returned, the code generator will return a 0 no matter what the type is and there will be a parser warning.
 - Added the parser warning for returns in control flow.
-#### 6/25/2023
-- 
+#### 7/14/2023
+- Code generator supports different equal operands and default values.
+- Added hex support but there is a bug for hex and binary during clean up. There is an invalid pointer somewhere...Will be added to [[todo]] list.

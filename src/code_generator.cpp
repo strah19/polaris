@@ -234,7 +234,6 @@ void CodeGenerator::generate_expression(Ast_Expression* expression) {
         auto assign = AST_CAST(Ast_Assignment, expression);
 
         //Load the id in so the operation can be performed
-        printf("%d\n", assign->equal_type);
         if (assign->equal_type != AST_EQUAL) {
             auto assign_id = AST_CAST(Ast_PrimaryExpression, assign->id);
             if (assign_id->local) {

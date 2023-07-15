@@ -35,7 +35,7 @@ enum TokenType {
     T_CHAR, T_STRING, T_FLOAT, T_AND, T_OR, T_TRUE, T_FALSE, T_PRINT,
     T_CAST, T_CONSTANT, T_INPUT,
 
-    T_IDENTIFIER, T_INT_CONST, T_FLOAT_CONST, T_BINARY_CONST, T_STRING_CONST, T_CHAR_CONST,
+    T_IDENTIFIER, T_INT_CONST, T_FLOAT_CONST, T_BINARY_CONST, T_HEX_CONST, T_STRING_CONST, T_CHAR_CONST,
     T_EOF, T_ERROR, T_OK
 };
 
@@ -74,6 +74,7 @@ private:
     Token identifier();
     Token number();
     Token binary();
+    Token hex();
 private:
     const char* start;
     const char* current;

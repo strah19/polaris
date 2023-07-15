@@ -14,7 +14,7 @@
 - [ ] Classes
 - [ ] Complex Number Support
 - [ ] Support different equal operands including ++ and --
-- [ ] Hex Support
+- [x] Hex Support
 - [x] Code generator needs to support different equal operators.
 - [x] Code generator needs to support the default values.
 - [x] Clean up parser.
@@ -43,3 +43,4 @@
 - [x] Have more warning messages
 - [ ] Clean up VM...It is very dirty
 - [x] Semantic check is not checking arguments passed into a function call...
+- [ ] Invalid pointer bug for bin and hex numbers.

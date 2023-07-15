@@ -1,0 +1,9 @@
+NL : char constant = '\n';
+
+bin_num : int = 0b1101;
+print bin_num, NL;
+
+hex_num : int = 0xFF;
+print hex_num, NL;
+
+print "exiting", NL;

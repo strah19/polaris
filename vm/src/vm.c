@@ -16,6 +16,8 @@
 #include <stdarg.h>
 #include <string.h>
 
+#define DEBUG_VM
+
 #define BINARY(op) \
     { Value b = vm_pop(); \
     Value a = vm_pop(); \
@@ -65,7 +67,7 @@ bool vm_run(Bytecode* bytecode) {
 #ifdef DEBUG_LOG_VM
     freopen("vmlog.txt", "a+", stdout);
 #endif
-    debug_disassemble_bytecode(bytecode, "Assignment Program");
+    debug_disassemble_bytecode(bytecode, "Program");
     printf("\n\n");
 #endif
 

@@ -30,6 +30,7 @@ boo : (w: int) -> string {
 
 def : ( l: int, s: int = 4) {
     print s, NL;
+    return 3;
 }
 
 def(3);

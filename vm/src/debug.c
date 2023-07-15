@@ -82,9 +82,8 @@ int debug_address_opcode(Bytecode* bytecode, const char* name, int off) {
 int debug_constant_instruction(Bytecode* bytecode, int off) {
     uint8_t constant_address = bytecode->code[off + 1];
     printf("OP_CONSTANT ");
-    printf("%04d '", constant_address);
-    value_print(bytecode->constants.values[constant_address], false);
-    printf("'\n");
+    printf("%04d ", constant_address);
+    //value_print(bytecode->constants.values[constant_address], false);
     return off + 2;
 }
 
