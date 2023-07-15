@@ -43,4 +43,4 @@
 - [x] Have more warning messages
 - [ ] Clean up VM...It is very dirty
 - [x] Semantic check is not checking arguments passed into a function call...
-- [ ] Invalid pointer bug for bin and hex numbers.
+- [x] Invalid pointer bug for bin and hex numbers.

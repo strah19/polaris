@@ -18,14 +18,17 @@ static int debug_call_instruction(Bytecode* bytecode, int off);
 
 static int debug_address_opcode(Bytecode* bytecode, const char* name, int off);
 
+static bool is_runtime = false;
+
 void debug_disassemble_bytecode(Bytecode* bytecode, const char* name) {
     printf("----- %s -----\n", name);
     printf("IP: %04d.\n", bytecode->start_address);
     for (int i = 0; i < bytecode->count;) 
-        i = debug_disassemble_instruction(bytecode, i);
+        i = debug_disassemble_instruction(bytecode, i, false);
 }
 
-int debug_disassemble_instruction(Bytecode* bytecode, int off) {
+int debug_disassemble_instruction(Bytecode* bytecode, int off, bool runtime) {
+    is_runtime = runtime;
     printf ("%04d ", off);
 
     if (off > 0 && bytecode->line[off] == bytecode->line[off - 1])
@@ -61,6 +64,8 @@ int debug_disassemble_instruction(Bytecode* bytecode, int off) {
     case OP_CONST:  return debug_constant_instruction(bytecode,     off);
     case OP_JMP:    return debug_address_opcode(bytecode, "OP_JMP", off);
     case OP_JMPN:   return debug_address_opcode(bytecode, "OP_JMPN", off);
+    case OP_CAST:   return debug_simple_instruction("OP_CAST", off);
+    case OP_PUSH:   return debug_simple_instruction("OP_PUSH", off);
     default:
         printf("Unknown opcode %d\n", instruction);
         return off + 1;
@@ -83,7 +88,8 @@ int debug_constant_instruction(Bytecode* bytecode, int off) {
     uint8_t constant_address = bytecode->code[off + 1];
     printf("OP_CONSTANT ");
     printf("%04d ", constant_address);
-    //value_print(bytecode->constants.values[constant_address], false);
+    if (is_runtime) value_print(bytecode->constants.values[constant_address], false);
+    else printf("\n");
     return off + 2;
 }
 

@@ -32,12 +32,12 @@ void value_write(Value value, Values* array) {
 }
 
 void value_free(Values* array) {
-    FREE(Value, array->values);
+    free(array->values);
     value_init(array);
 }
 
 void value_allocate(Values* array, int capacity) {
-    array->capacity = NEW_CAPACITY(array->capacity);
+    array->capacity = capacity;
     array->values = REALLOC(Value, array->values, array->capacity);
 }
 

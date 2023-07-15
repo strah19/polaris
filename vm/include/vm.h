@@ -14,7 +14,7 @@
 
 #include "bytecode.h"
 
-#define MAX_STACK 256
+#define MAX_STACK 512
 #define INITIAL_REFERENCE_SIZE 512
 
 typedef struct {

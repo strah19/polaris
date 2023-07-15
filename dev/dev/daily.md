@@ -32,3 +32,8 @@
 #### 7/14/2023
 - Code generator supports different equal operands and default values.
 - Added hex support but there is a bug for hex and binary during clean up. There is an invalid pointer somewhere...Will be added to [[todo]] list.
+#### 7/15/2023
+- Fixed a debug issue with when to print stack.
+- The bug seems to actually have no connection with bin or hex...It seems it has to do with a memory leak.
+- Issue #2 has been resolved. The issue was that the virtual machine initializes 512 slots for random access memory. However, the incorrect capacity was being initialized meaning the incorrect number of Values was being set and reallocations were occurring when they should not have been. 
+- Hex and bin are supported!

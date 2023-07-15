@@ -32,6 +32,7 @@ void compile_source(const char* filepath) {
 
     Lexer lexer(src);
     Tokens tokens = lexer.run();
+    
 
     Parser parser(&tokens[0], filepath);
     parser.parse();
@@ -45,6 +46,7 @@ void compile_source(const char* filepath) {
     #ifdef BENCHMARK_DEBUG
         compiler_benchmark.stop();
     #endif
+    
         vm_init();
 
         {

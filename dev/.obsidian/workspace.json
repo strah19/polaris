@@ -8,19 +8,19 @@
         "type": "tabs",
         "children": [
           {
-            "id": "1ab5e0162ef213a8",
+            "id": "633c38f592cd53bf",
             "type": "leaf",
             "state": {
               "type": "markdown",
               "state": {
-                "file": "dev/issues.md",
+                "file": "dev/daily.md",
                 "mode": "source",
                 "source": false
               }
             }
           },
           {
-            "id": "01fa1bb5221142cd",
+            "id": "1ab5e0162ef213a8",
             "type": "leaf",
             "state": {
               "type": "markdown",
@@ -30,8 +30,33 @@
                 "source": false
               }
             }
+          },
+          {
+            "id": "07c626501c82ac17",
+            "type": "leaf",
+            "state": {
+              "type": "markdown",
+              "state": {
+                "file": "dev/opcodes.md",
+                "mode": "source",
+                "source": false
+              }
+            }
+          },
+          {
+            "id": "dd96078db4c6d9c2",
+            "type": "leaf",
+            "state": {
+              "type": "markdown",
+              "state": {
+                "file": "dev/issues.md",
+                "mode": "source",
+                "source": false
+              }
+            }
           }
-        ]
+        ],
+        "currentTab": 2
       }
     ],
     "direction": "vertical"
@@ -97,7 +122,7 @@
             "state": {
               "type": "backlink",
               "state": {
-                "file": "dev/issues.md",
+                "file": "dev/opcodes.md",
                 "collapseAll": false,
                 "extraContext": false,
                 "sortOrder": "alphabetical",
@@ -114,7 +139,7 @@
             "state": {
               "type": "outgoing-link",
               "state": {
-                "file": "dev/issues.md",
+                "file": "dev/opcodes.md",
                 "linksCollapsed": false,
                 "unlinkedCollapsed": true
               }
@@ -137,7 +162,7 @@
             "state": {
               "type": "outline",
               "state": {
-                "file": "dev/issues.md"
+                "file": "dev/opcodes.md"
               }
             }
           }
@@ -159,10 +184,11 @@
       "command-palette:Open command palette": false
     }
   },
-  "active": "1ab5e0162ef213a8",
+  "active": "07c626501c82ac17",
   "lastOpenFiles": [
     "dev/todo.md",
-    "dev/issues.md",
-    "dev/daily.md"
+    "dev/opcodes.md",
+    "dev/daily.md",
+    "dev/issues.md"
   ]
 }

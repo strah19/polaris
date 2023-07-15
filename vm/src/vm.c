@@ -16,7 +16,9 @@
 #include <stdarg.h>
 #include <string.h>
 
-#define DEBUG_VM
+//#define DEBUG_VM
+//#define DEBUG_STACK_VM
+//#define DEBUG_LIVE_VM
 
 #define BINARY(op) \
     { Value b = vm_pop(); \
@@ -67,8 +69,10 @@ bool vm_run(Bytecode* bytecode) {
 #ifdef DEBUG_LOG_VM
     freopen("vmlog.txt", "a+", stdout);
 #endif
+#ifdef DEBUG_STACK_VM
     debug_disassemble_bytecode(bytecode, "Program");
     printf("\n\n");
+#endif
 #endif
 
     while (vm.bytecode) {
@@ -77,8 +81,10 @@ bool vm_run(Bytecode* bytecode) {
             uint32_t instruction = bytecode->code[vm.ip];
 
         #ifdef DEBUG_VM
+        #ifdef DEBUG_LIVE_VM
             debug_disassemble_stack(vm.stack, vm.top);
-            debug_disassemble_instruction(vm.bytecode, vm.ip);
+            debug_disassemble_instruction(vm.bytecode, vm.ip, true);
+       #endif
        #endif
 
             switch (instruction) {
