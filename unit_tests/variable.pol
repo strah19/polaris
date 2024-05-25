@@ -1,0 +1,21 @@
+a : int = 1;
+b := 3.0;
+c : float = 12;
+
+// This is the new-line character which can be added to the end of print statements
+NL := '\n';
+
+print a + b, NL;
+
+c = b = 2.0;
+print "c: ", c, " b: ", b, NL;
+
+hello : string = "hello";
+hello_world := hello + " world";
+print hello_world, NL;
+
+e := 0b101;
+e += 0x01;
+print e, NL;
+
+print 0xFFFF, NL;

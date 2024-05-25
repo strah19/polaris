@@ -46,6 +46,7 @@ enum Opcode {
     OP_CALL,
     OP_CAST,
     OP_PUSH,
+    OP_INPUT,
     OP_HALT
 };
 

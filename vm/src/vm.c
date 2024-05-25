@@ -17,7 +17,6 @@
 #include <string.h>
 
 //#define DEBUG_VM
-//#define DEBUG_STACK_VM
 //#define DEBUG_LIVE_VM
 
 #define BINARY(op) \
@@ -66,13 +65,8 @@ bool vm_run(Bytecode* bytecode) {
     bool ret = false;
 
 #ifdef DEBUG_VM
-#ifdef DEBUG_LOG_VM
-    freopen("vmlog.txt", "a+", stdout);
-#endif
-#ifdef DEBUG_STACK_VM
+    debug_init();
     debug_disassemble_bytecode(bytecode, "Program");
-    printf("\n\n");
-#endif
 #endif
 
     while (vm.bytecode) {
@@ -82,8 +76,8 @@ bool vm_run(Bytecode* bytecode) {
 
         #ifdef DEBUG_VM
         #ifdef DEBUG_LIVE_VM
-            debug_disassemble_stack(vm.stack, vm.top);
             debug_disassemble_instruction(vm.bytecode, vm.ip, true);
+            debug_disassemble_stack(vm.stack, vm.top);
        #endif
        #endif
 
@@ -93,7 +87,7 @@ bool vm_run(Bytecode* bytecode) {
                 break;
             }
             case OP_PRINT: {
-                value_print(vm_pop(), false);
+                value_print_output(vm_pop());  
                 break;
             }
             case OP_PUSH: {
@@ -261,6 +255,28 @@ bool vm_run(Bytecode* bytecode) {
             case OP_LSF: INT_BINARY(<<); break;
             case OP_RSF: INT_BINARY(>>); break;
 
+            case OP_INPUT: {  
+                /*
+                vm_push(vm.bytecode->constants.values[bytecode->code[++vm.ip]]); //Pushes the constant onto the stack.
+                value_print_output(vm_pop());
+                ++vm.ip;
+
+                char buffer[32];
+                fgets(buffer, 32, stdin);
+               
+                ObjString* str_obj = ALLOCATE_OBJ(ObjString, OBJ_STRING);
+                str_obj->len = strlen(buffer);
+                str_obj->chars = (char*) malloc(str_obj->len + 1);
+                memcpy(str_obj->chars, buffer, str_obj->len + 1);
+
+                vm_push(OBJ_VALUE(str_obj));
+                */
+
+               
+
+                break;
+            }
+
             default: {
                 return vm_runtime_error("Unknown instruction, '%d' found at line %d.\n", instruction, *vm.bytecode->line);
             }
@@ -271,17 +287,11 @@ bool vm_run(Bytecode* bytecode) {
         vm.bytecode = vm.bytecode->next;
         if (vm.bytecode) 
             run = true;
-        else {
-        #ifdef DEBUG_LOG_VM
-        #ifdef __MINGW32__
-            freopen("CON", "w", stdout); 
-        #endif
-        #elif __linux__
-            freopen("/dev/tty", "w", stdout);
-        #endif
-            return true;
-        }
     }
+    
+#ifdef DEBUG_VM
+    debug_close();
+#endif
 
     return true;
 }

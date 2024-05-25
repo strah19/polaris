@@ -40,6 +40,7 @@ enum AstType {
     AST_VAR_DECLERATION,
     AST_STATEMENT,
     AST_PRINT,
+    AST_INPUT,
     AST_EXPRESSION_STATEMENT,
     AST_SCOPE,
     AST_CONDITIONAL,
@@ -173,7 +174,7 @@ struct Ast_PrimaryExpression : public Ast_Expression {
     AstDataType casted_type = AST_TYPE_NONE;
 
     bool local = false;
-    int local_index = 0;
+    int local_index = -1; 
     
     union {
         int         int_const;

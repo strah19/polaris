@@ -12,8 +12,6 @@
 #include "value.h"
 #include "mem.h"
 
-#define BIN_BUF_SIZE 33
-
 static char* int_to_bin(int a, char *buffer, int buf_size);
 
 void value_init(Values* array) {
@@ -32,6 +30,10 @@ void value_write(Value value, Values* array) {
 }
 
 void value_free(Values* array) {
+    for (int i = 0; i < array->count; i++) 
+        if (array->values[i].type == TYPE_OBJ) 
+            free(array->values[i].obj);
+
     free(array->values);
     value_init(array);
 }
@@ -50,7 +52,29 @@ static char* int_to_bin(int a, char *buffer, int buf_size) {
     return buffer;
 }
 
-void value_print(Value value, bool newline) {
+void value_print_debug(Value value, FILE* log_file) {
+    switch (value.type) {
+    case TYPE_FLOAT:   fprintf(log_file, "%g", AS_FLOAT(value));   break;
+    case TYPE_INT:     fprintf(log_file, "%d", AS_INT(value));     break;
+    case TYPE_BOOLEAN: fprintf(log_file, "%d", AS_BOOLEAN(value)); break;
+    case TYPE_CHAR:    {
+        if (AS_CHAR(value) == '\n')
+            fprintf(log_file, "NL");
+        else
+            fprintf(log_file, "%c", AS_CHAR(value));    
+        break;
+    }
+    case TYPE_OBJ: {
+        switch (AS_OBJ(value)->type) {
+        case OBJ_STRING: fprintf(log_file, "%s", AS_STRING(value)->chars); break;
+        }
+        break;
+    }
+    default: fprintf(log_file, "(null)"); break;
+    }
+}
+
+void value_print_output(Value value) {
     switch (value.type) {
     case TYPE_FLOAT:   printf("%g", AS_FLOAT(value));   break;
     case TYPE_INT:     printf("%d", AS_INT(value));     break;
@@ -64,6 +88,4 @@ void value_print(Value value, bool newline) {
     }
     default: printf("(null)"); break;
     }
-
-    if (newline) printf("\n");
 }

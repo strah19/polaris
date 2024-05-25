@@ -14,6 +14,10 @@
 
 #include "bytecode.h"
 
+extern void debug_init();
+
+extern void debug_close();
+
 extern void debug_disassemble_bytecode(Bytecode* bytecode, const char* name);
 
 extern int  debug_disassemble_instruction(Bytecode* bytecode, int off, bool runtime);

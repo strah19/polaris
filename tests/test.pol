@@ -21,7 +21,7 @@ func : (w: int) {
 
 boo : (w: int) -> string {
     if 1 == 1 {
-
+1
     }
     else {
         return "hi";

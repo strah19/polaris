@@ -1,0 +1,20 @@
+s : string = "hello";
+str := "hi";
+
+NL := '\n';
+
+print s, NL;
+print str, NL;
+print s + str, NL;
+
+foo : () -> int {
+
+
+    return 2;
+}
+
+a := foo();
+print a, NL;
+
+
+

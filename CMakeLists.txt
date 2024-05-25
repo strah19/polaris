@@ -26,4 +26,5 @@ install(FILES "${PROJECT_BINARY_DIR}/include/config.h"
 enable_testing()
 include(CTest)
 
-add_test(NAME Assignment COMMAND POLARIS "../tests/assignment.pol")
+add_test(NAME Variable COMMAND POLARIS "../unit_tests/variable.pol")
+add_test(NAME Input    COMMAND POLARIS "../unit_tests/input.pol")

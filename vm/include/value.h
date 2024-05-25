@@ -104,6 +104,8 @@ extern void value_free(Values* array);
 
 extern void value_allocate(Values* array, int capacity);
 
-extern void value_print(Value value, bool newline);
+extern void value_print_debug(Value value, FILE* log_file);
+
+extern void value_print_output(Value value);
 
 #endif // !VALUE_H

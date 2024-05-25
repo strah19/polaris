@@ -459,7 +459,6 @@ Ast_Expression* Parser::parse_assignment_expression(Ast_Expression* expression, 
     else {
         throw parser_error(peek(-1), "Expected an assignemnt expression");
     }
-
 }
 
 Ast_Expression* Parser::parse_primary_expression() {
@@ -511,6 +510,17 @@ Ast_Expression* Parser::parse_primary_expression() {
     case T_IDENTIFIER: {
         char* id = create_string((char*) peek(-1)->start, peek(-1)->size);
         SymbolDefinition symbol = current_scope->get(id);
+
+        if (match(T_LBRACKET)) {
+            Ast_Expression* index = parse_primary_expression();
+            consume(T_RBRACKET, "Expected ']' for array indexing");
+
+            if (symbol.type != DEF_VAR)
+                throw parser_error(peek(), "Unable to index a non variable definition");
+
+        
+            break;
+        }
 
         if (symbol.type == DEF_VAR) {
             primary->prim_type = AST_PRIM_ID;

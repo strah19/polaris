@@ -25,26 +25,13 @@
             "state": {
               "type": "markdown",
               "state": {
-                "file": "issues.md",
-                "mode": "source",
-                "source": false
-              }
-            }
-          },
-          {
-            "id": "ed0c325e7ec24298",
-            "type": "leaf",
-            "state": {
-              "type": "markdown",
-              "state": {
                 "file": "todo.md",
                 "mode": "source",
                 "source": false
               }
             }
           }
-        ],
-        "currentTab": 2
+        ]
       }
     ],
     "direction": "vertical"
@@ -110,7 +97,7 @@
             "state": {
               "type": "backlink",
               "state": {
-                "file": "todo.md",
+                "file": "daily.md",
                 "collapseAll": false,
                 "extraContext": false,
                 "sortOrder": "alphabetical",
@@ -127,7 +114,7 @@
             "state": {
               "type": "outgoing-link",
               "state": {
-                "file": "todo.md",
+                "file": "daily.md",
                 "linksCollapsed": false,
                 "unlinkedCollapsed": true
               }
@@ -150,7 +137,7 @@
             "state": {
               "type": "outline",
               "state": {
-                "file": "todo.md"
+                "file": "daily.md"
               }
             }
           }
@@ -171,11 +158,12 @@
       "command-palette:Open command palette": false
     }
   },
-  "active": "ed0c325e7ec24298",
+  "active": "7db76dda85ad9030",
   "lastOpenFiles": [
-    "daily.md",
     "todo.md",
+    "daily.md",
     "issues.md",
+    "opcodes.md",
     "Untitled"
   ]
 }

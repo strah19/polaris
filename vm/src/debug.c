@@ -19,22 +19,38 @@ static int debug_call_instruction(Bytecode* bytecode, int off);
 static int debug_address_opcode(Bytecode* bytecode, const char* name, int off);
 
 static bool is_runtime = false;
+static FILE* log_file = NULL;
+
+void debug_init() {
+    log_file = fopen("log.txt", "a+");
+    if (!log_file) {
+        fprintf(stderr, "Unable to open 'log.txt' for logging.\n");
+        exit(EXIT_FAILURE);
+    }
+}
+
+void debug_close() {
+    fclose(log_file);
+}
 
 void debug_disassemble_bytecode(Bytecode* bytecode, const char* name) {
-    printf("----- %s -----\n", name);
-    printf("IP: %04d.\n", bytecode->start_address);
-    for (int i = 0; i < bytecode->count;) 
+    fprintf(log_file, "----- %s -----\n", name);
+    fprintf(log_file, "IP: %04d.\n", bytecode->start_address);
+    for (int i = 0; i < bytecode->count;) {
         i = debug_disassemble_instruction(bytecode, i, false);
+        fprintf(log_file, "\n");
+    }
+    fprintf(log_file, "\n");
 }
 
 int debug_disassemble_instruction(Bytecode* bytecode, int off, bool runtime) {
     is_runtime = runtime;
-    printf ("%04d ", off);
+    fprintf(log_file, "%04d ", off);
 
     if (off > 0 && bytecode->line[off] == bytecode->line[off - 1])
-        printf("   | ");
+        fprintf(log_file, "   | ");
     else
-        printf("%4d ", bytecode->line[off]);
+        fprintf(log_file, "%4d ", bytecode->line[off]);
 
     uint8_t instruction = bytecode->code[off];
     switch (instruction) {
@@ -66,30 +82,30 @@ int debug_disassemble_instruction(Bytecode* bytecode, int off, bool runtime) {
     case OP_JMPN:   return debug_address_opcode(bytecode, "OP_JMPN", off);
     case OP_CAST:   return debug_simple_instruction("OP_CAST", off);
     case OP_PUSH:   return debug_simple_instruction("OP_PUSH", off);
+    case OP_INPUT:  return debug_simple_instruction("OP_INPUT", off);
     default:
-        printf("Unknown opcode %d\n", instruction);
+        fprintf(log_file, "ERROR: Unknown opcode %d\n", instruction);
         return off + 1;
     }
 }
 
 int debug_simple_instruction(const char* name, int off) {
-    printf("%s\n", name);
+    fprintf(log_file, "%s", name);
     return off + 1;
 }
 
 int debug_address_opcode(Bytecode* bytecode, const char* name, int off) {
     uint8_t address = bytecode->code[off + 1];
-    printf("%s ", name);
-    printf("%04d\n", address);
+    fprintf(log_file, "%s ", name);
+    fprintf(log_file, "%04d", address);
     return off + 2;
 }
 
 int debug_constant_instruction(Bytecode* bytecode, int off) {
     uint8_t constant_address = bytecode->code[off + 1];
-    printf("OP_CONSTANT ");
-    printf("%04d ", constant_address);
-    if (is_runtime) value_print(bytecode->constants.values[constant_address], false);
-    else printf("\n");
+    fprintf(log_file, "OP_CONSTANT ");
+    fprintf(log_file, "%04d ", constant_address);
+    if (is_runtime) value_print_debug(bytecode->constants.values[constant_address], log_file);
     return off + 2;
 }
 
@@ -97,20 +113,36 @@ int debug_call_instruction(Bytecode* bytecode, int off) {
     uint32_t address = bytecode->code[off + 1];
     uint32_t args = bytecode->code[off + 2];
 
-    printf("OP_CALL ");
-    printf("%04d %04d\n", address, args);
+    fprintf(log_file, "OP_CALL ");
+    fprintf(log_file, "%04d %04d", address, args);
     return off + 3;
 }
 
-void debug_disassemble_stack(Value* stack, Value* top) {
-    if (stack != top) {
-        printf("stack: ");
-        for (Value* i = stack; i < top; i++) {
-            printf ("[ ");
-            value_print(*i, false);
-            printf(" (%d) ", i->type);
-            printf(" ]");
+const char* type_name(Value* v) {
+    switch (v->type) {
+    case TYPE_BOOLEAN: return "boolean";
+    case TYPE_CHAR: return "char";
+    case TYPE_FLOAT: return "float";
+    case TYPE_INT: return "int";
+    case TYPE_OBJ: {
+        switch (v->obj->type) {
+        case OBJ_STRING: return "string";
+        default: return "obj";
         }
-        printf("\n");
     }
+    default: "null";
+    }
+}
+
+void debug_disassemble_stack(Value* stack, Value* top) {
+    fprintf(log_file, "\tstack: ");
+    if (stack == top)
+        fprintf(log_file, "[ EMPTY ]");
+    for (Value* i = stack; i < top; i++) {
+        fprintf(log_file, "[ ");
+        value_print_debug(*i, log_file);
+        fprintf(log_file, " (%s) ", type_name(i));
+        fprintf(log_file, " ]");
+    }
+    fprintf(log_file, "\n");
 }
