@@ -37,20 +37,15 @@
 - The bug seems to actually have no connection with bin or hex...It seems it has to do with a memory leak.
 - Issue #2 has been resolved. The issue was that the virtual machine initializes 512 slots for random access memory. However, the incorrect capacity was being initialized meaning the incorrect number of Values was being set and reallocations were occurring when they should not have been. 
 - Hex and bin are supported!
-
 #### 10/21/2023
 - Working on unit tests.
-
 #### 10/22/2023
 - Adding input statement.
-
 #### 1/2/2024
 - working on input again, need to figure out how to make it return a value, it would be a string, maybe treat it like a function or simpler as a string constant.
 - Possible syntax could actually be input("prompt", int)
 - I need to get arrays working...the syntax should be similar to C/C++
 - i.e array : int [5] = { 1, 2, 3, 4, 5 };
 - Pointers???
-
-
 #### 1/7/2024
 - This will probably the last entry for Polaris, I feel like it is getting no where and does not have enough value/real world use to continue.
